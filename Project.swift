@@ -34,7 +34,6 @@ func makePetpionFrameworkTargets(
       infoPlist: .default,
       sources: ["Targets/\(name)/Sources/**"],
       resources: [],
-      entitlements: "./Tidify.entitlements",
       dependencies: dependencies,
       settings: .settings(base: .init()
         .swiftCompilationMode(.wholemodule))
@@ -74,7 +73,6 @@ func makePetpionAppTarget(
       resources: ["Targets/Petpion/Resources/**"],
       dependencies: dependencies,
       settings: makeConfiguration()
-      )
     )
   }
 
