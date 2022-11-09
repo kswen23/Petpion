@@ -10,6 +10,7 @@ import Foundation
 import UIKit
 
 import PetpionCore
+import PetpionDomain
 
 public protocol Coordinator: AnyObject {
     var childCoordinators: [Coordinator] { get set }
@@ -28,7 +29,10 @@ public final class MainCoordinator: Coordinator {
     }
     
     public func start() {
-        print("start!")
+        print("Coordinator start!")
+        guard let viewController = DIContainer.shared.resolve(MainViewController.self) else { return }
+        navigationController.pushViewController(viewController, animated: true)
     }
 
 }
+

@@ -1,7 +1,10 @@
 import UIKit
 
-import PetpionPresentation
 import PetpionCore
+import PetpionDomain
+import PetpionPresentation
+import PetpionData
+
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
@@ -41,8 +44,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 private extension SceneDelegate {
     func register() {
         guard let navigationController = navigationController else { return }
-        let container = DIContainer.shared
-        PresentationDIContainer(navigationController: navigationController,
-                                container: container).register()
+        
+        DataDIContainer().register()
+        DomainDIContainer().register()
+        PresentationDIContainer(navigationController: navigationController).register()
+        
+        
     }
 }

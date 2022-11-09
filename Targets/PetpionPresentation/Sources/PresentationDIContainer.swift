@@ -1,8 +1,8 @@
 //
 //  PresentationDIContainer.swift
-//  Petpion
+//  PetpionPresentation
 //
-//  Created by 김성원 on 2022/11/09.
+//  Created by 김성원 on 2022/11/10.
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
@@ -14,37 +14,42 @@ import Swinject
 
 public struct PresentationDIContainer: Containable {
     
+    public var container: Swinject.Container = DIContainer.shared
     private let navigationController: UINavigationController
-    private let container: Container
     
-    public init(navigationController: UINavigationController,
-                container: Container) {
+    public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
-        self.container = container
     }
     
     public func register() {
-        registerCoordinators()
-        registerViewControllers()
         registerViewModels()
+        registerViewControllers()
+        registerCoordinators()
     }
     
     // MARK: - Coordinator Container
     private func registerCoordinators() {
-        container.register(Coordinator.self, name: "MainCoordinator") { resolver in
-            let mainCoordinator = MainCoordinator(navigationController: navigationController)
-            return mainCoordinator
+        container.register(Coordinator.self, name: "MainCoordinator") { _ in
+            MainCoordinator(navigationController: navigationController)
         }
     }
     
     // MARK: - ViewController Container
     private func registerViewControllers() {
-        
+        guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self) else { return }
+                
+        container.register(MainViewController.self) { _ in
+            MainViewController(mainViewModel: mainViewModel)
+        }
     }
     
     // MARK: - ViewModel Container
     private func registerViewModels() {
+        guard let petpionUseCase: PetpionUseCase = container.resolve(PetpionUseCase.self) else { return }
         
+        container.register(MainViewModelProtocol.self) { _ in
+            MainViewModel(petpionUseCase: petpionUseCase)
+        }
     }
     
     // Scene 으로 추상화? Main, Vote, Upload scene..

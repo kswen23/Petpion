@@ -8,9 +8,13 @@
 import Swinject
 
 public protocol Containable {
+    
+    var container: Container { get set }
+    
     func register()
 }
 
 public final class DIContainer {
+    
     public static let shared: Container = Container()
 }
