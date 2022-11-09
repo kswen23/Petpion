@@ -95,7 +95,10 @@ let project: Project = .init(
         [makePetpionAppTarget(
             platform: .iOS,
             dependencies: [
+                .target(name: Layer.core.layerName),
                 .target(name: Layer.presentation.layerName),
+                .target(name: Layer.domain.layerName),
+                .target(name: Layer.data.layerName)
             ])],
         
         makePetpionFrameworkTargets(
