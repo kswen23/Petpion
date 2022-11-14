@@ -13,23 +13,28 @@ public protocol MainViewModelInputProtocol {
 }
 
 public protocol MainViewModelOutputProtocol {
-    
+//    func makeViewModel(for: WaterfallItem) -> PetCollectionViewCell.ViewModel
 }
 
 public protocol MainViewModelProtocol: MainViewModelInputProtocol, MainViewModelOutputProtocol {
-    var petpionUseCase: PetpionUseCase { get }
+    var fetchPetDataUseCase: FetchPetDataUseCase { get }
 }
 
 final class MainViewModel: MainViewModelProtocol {
     
-    let petpionUseCase: PetpionUseCase
+    let fetchPetDataUseCase: FetchPetDataUseCase
+    var sortingOption: SortingOption = .favorite
     
-    init(petpionUseCase: PetpionUseCase) {
-        self.petpionUseCase = petpionUseCase
+    init(fetchPetDataUseCase: FetchPetDataUseCase) {
+        self.fetchPetDataUseCase = fetchPetDataUseCase
     }
     
     func vmStart() {
         print("mainViewModel start")
-        petpionUseCase.doSomething()
+    }
+    
+    func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {
+        return PetCollectionViewCell.ViewModel(item: item)
     }
 }
+

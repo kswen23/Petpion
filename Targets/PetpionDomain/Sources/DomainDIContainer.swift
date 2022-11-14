@@ -21,8 +21,8 @@ public struct DomainDIContainer: Containable {
     
     private func registerUseCases() {
         guard let petpionRepository: PetpionRepository = container.resolve(PetpionRepository.self) else { return }
-        container.register(PetpionUseCase.self) { resolver in
-            return DefaultPetpionUseCase(petpionRepository: petpionRepository)
+        container.register(FetchPetDataUseCase.self) { resolver in
+            return DefaultFetchPetDataUseCase(petpionRepository: petpionRepository)
         }
     }
     

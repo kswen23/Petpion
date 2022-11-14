@@ -29,8 +29,8 @@ public final class MainCoordinator: Coordinator {
     }
     
     public func start() {
-        print("Coordinator start!")
         guard let viewController = DIContainer.shared.resolve(MainViewController.self) else { return }
+        viewController.coordinator = self
         navigationController.pushViewController(viewController, animated: true)
     }
 
