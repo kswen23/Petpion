@@ -42,6 +42,8 @@ final class MainViewController: UIViewController {
         layoutPetCollectionView()
         configurePetCollectionView()
         initializeData()
+        
+        viewModel.vmStart()
     }
     
     private func layoutPetCollectionView() {

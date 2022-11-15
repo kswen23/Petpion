@@ -1,5 +1,5 @@
 //
-//  FetchPetDataUseCase.swift
+//  FetchPetFeedUseCase.swift
 //  PetpionDomain
 //
 //  Created by 김성원 on 2022/11/09.
@@ -8,11 +8,11 @@
 
 import Foundation
 
-public protocol FetchPetDataUseCase {
+public protocol FetchPetFeedUseCase {
     
-    var petpionRepository: PetpionRepository { get }
+    var firestoreRepository: FirestoreRepository { get }
     
-    func fetchPetData(sortBy: SortingOption) -> [Pet]
+    func fetchPetFeedData(sortBy: SortingOption) -> [PetpionFeed]
 }
 
 public enum SortingOption {

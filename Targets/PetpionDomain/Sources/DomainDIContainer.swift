@@ -20,9 +20,14 @@ public struct DomainDIContainer: Containable {
     }
     
     private func registerUseCases() {
-        guard let petpionRepository: PetpionRepository = container.resolve(PetpionRepository.self) else { return }
-        container.register(FetchPetDataUseCase.self) { resolver in
-            return DefaultFetchPetDataUseCase(petpionRepository: petpionRepository)
+        guard let firestoreRepository: FirestoreRepository = container.resolve(FirestoreRepository.self) else { return }
+        
+        container.register(FetchPetFeedUseCase.self) { resolver in
+            return DefaultFetchPetFeedUseCase(firestoreRepository: firestoreRepository)
+        }
+        
+        container.register(UploadPetFeedUseCase.self) { resolver in
+            return DefaultUploadPetFeedUseCase(firestoreRepository: firestoreRepository)
         }
     }
     

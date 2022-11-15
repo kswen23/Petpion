@@ -6,6 +6,10 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
+import Foundation
+import UIKit
+//지울것
+
 import PetpionDomain
 
 public protocol MainViewModelInputProtocol {
@@ -17,20 +21,30 @@ public protocol MainViewModelOutputProtocol {
 }
 
 public protocol MainViewModelProtocol: MainViewModelInputProtocol, MainViewModelOutputProtocol {
-    var fetchPetDataUseCase: FetchPetDataUseCase { get }
+    var fetchPetFeedUseCase: FetchPetFeedUseCase { get }
 }
 
 final class MainViewModel: MainViewModelProtocol {
     
-    let fetchPetDataUseCase: FetchPetDataUseCase
+    let fetchPetFeedUseCase: FetchPetFeedUseCase
+    let uploadPetFeedUseCase: UploadPetFeedUseCase // 지울것
+    
     var sortingOption: SortingOption = .favorite
     
-    init(fetchPetDataUseCase: FetchPetDataUseCase) {
-        self.fetchPetDataUseCase = fetchPetDataUseCase
+    init(fetchPetDataUseCase: FetchPetFeedUseCase,
+         uploadPetFeedUseCase: UploadPetFeedUseCase) {
+        self.fetchPetFeedUseCase = fetchPetDataUseCase
+        self.uploadPetFeedUseCase = uploadPetFeedUseCase
     }
     
     func vmStart() {
-        print("mainViewModel start")
+        let tempFeed: PetpionFeed = PetpionFeed(feedID: "test",
+                                                uploader: User.init(nickName: "ken", profileImage: UIImage()),
+                                   uploadDate: Date.init(),
+                                   likeCount: 10,
+                                   images: [])
+        uploadPetFeedUseCase.uploadNewFeed(tempFeed)
+        
     }
     
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {

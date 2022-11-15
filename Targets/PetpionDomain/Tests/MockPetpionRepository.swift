@@ -10,7 +10,7 @@ import Foundation
 
 import PetpionDomain
 
-final class MockPetpionRepository: PetpionRepository {
+final class MockPetpionRepository: FirestoreRepository {
     
     func fetchSomething() {
         

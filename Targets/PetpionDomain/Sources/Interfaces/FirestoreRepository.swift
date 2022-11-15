@@ -8,7 +8,9 @@
 
 import Foundation
 
-public protocol PetpionRepository {
+public protocol FirestoreRepository {
+    
+    func createNewFeed(_ feed: PetpionFeed) async -> Result<String, Error>
     
     func fetchSomething()
 }

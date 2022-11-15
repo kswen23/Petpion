@@ -12,13 +12,13 @@ import XCTest
 
 final class FetchPetDataUseCaseTests: XCTestCase {
     
-    var sut: DefaultFetchPetDataUseCase!
-    var mockPetpionRepository: PetpionRepository!
+    var sut: DefaultFetchPetFeedUseCase!
+    var mockPetpionRepository: FirestoreRepository!
     
     override func setUpWithError() throws {
         try super.setUpWithError()
         mockPetpionRepository = MockPetpionRepository()
-        sut = DefaultFetchPetDataUseCase(petpionRepository: mockPetpionRepository)
+        sut = DefaultFetchPetFeedUseCase(petpionRepository: mockPetpionRepository)
     }
     
     override func tearDownWithError() throws {

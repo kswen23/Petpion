@@ -14,6 +14,10 @@ public struct User {
     public let nickName: String
     public let profileImage: UIImage
     
+    public init(nickName: String, profileImage: UIImage) {
+        self.nickName = nickName
+        self.profileImage = profileImage
+    }
 }
 
 extension User {
