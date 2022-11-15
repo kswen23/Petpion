@@ -32,16 +32,14 @@ class LayoutItemProvider {
     }
     
     func item(for indexPath: IndexPath) -> NSCollectionLayoutGroupCustomItem {
-        let frame = frame(for: indexPath) // set frame
-        columnHeights[columnIndex()] = frame.maxY + spacing // columHeght[index] 저장
+        let frame = frame(for: indexPath) 
+        columnHeights[columnIndex()] = frame.maxY + spacing
         return NSCollectionLayoutGroupCustomItem(frame: frame)
     }
     
     private func frame(for indexPath: IndexPath) -> CGRect {
         let size = itemSize(for: indexPath)
-        // 사각형의 사이즈
         let origin = itemOrigin(width: size.width)
-        // 그려질 좌표?
         return CGRect(origin: origin, size: size)
     }
     

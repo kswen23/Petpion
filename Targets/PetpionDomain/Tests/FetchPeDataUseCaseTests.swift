@@ -11,7 +11,7 @@ import XCTest
 @testable import PetpionDomain
 
 final class FetchPetDataUseCaseTests: XCTestCase {
-
+    
     var sut: DefaultFetchPetDataUseCase!
     var mockPetpionRepository: PetpionRepository!
     
@@ -20,10 +20,15 @@ final class FetchPetDataUseCaseTests: XCTestCase {
         mockPetpionRepository = MockPetpionRepository()
         sut = DefaultFetchPetDataUseCase(petpionRepository: mockPetpionRepository)
     }
-
+    
     override func tearDownWithError() throws {
         sut = nil
         try super.tearDownWithError()
     }
-
+    
+    func testAppModel_whenInitialized_isInNotStartedState() {
+        let test = 1
+        XCTAssertEqual(1, test)
+    }
+    
 }

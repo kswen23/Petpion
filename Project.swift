@@ -120,7 +120,11 @@ let project: Project = .init(
             platform: .iOS,
             dependencies: [
                 .target(name: Layer.core.layerName),
-                .target(name: Layer.domain.layerName)
+                .target(name: Layer.domain.layerName),
+                .external(name: "FirebaseAuth"),
+                .external(name: "FirebaseAnalytics"),
+                .external(name: "FirebaseFirestore"),
+                .external(name: "FirebaseStorage")
             ]),
         makePetpionFrameworkTargets(
             name: Layer.domain.layerName,
