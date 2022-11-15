@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>190977237483-glu0darbk7cgl2ekl44rf7h76idrvifc.apps.googleusercontent.com</string>
+	<string>657649765501-heau1engisabpo6qgikbeer20uivbb71.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.190977237483-glu0darbk7cgl2ekl44rf7h76idrvifc</string>
+	<string>com.googleusercontent.apps.657649765501-heau1engisabpo6qgikbeer20uivbb71</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAm1cN0u8DshKQzGZJlJ8MAVCL1lhK0oxY</string>
+	<string>AIzaSyCo8oHelREnqWJrelJNcGRblCH1hASTJKU</string>
 	<key>GCM_SENDER_ID</key>
-	<string>190977237483</string>
+	<string>657649765501</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.DangProject</string>
+	<string>com.Petpion</string>
 	<key>PROJECT_ID</key>
-	<string>dangproject-443e0</string>
+	<string>petpion</string>
 	<key>STORAGE_BUCKET</key>
-	<string>dangproject-443e0.appspot.com</string>
+	<string>petpion.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:190977237483:ios:c62e3ef7e1188b227cf9ae</string>
+	<string>1:657649765501:ios:d05a877e25b1a4f8af3514</string>
 </dict>
 </plist>
