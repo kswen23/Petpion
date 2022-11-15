@@ -8,7 +8,7 @@
 
 import Foundation
 
-public final class DefaultUploadPetFeedUseCase: UploadPetFeedUseCase {
+public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     

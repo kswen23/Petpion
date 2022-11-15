@@ -17,33 +17,35 @@ public protocol MainViewModelInputProtocol {
 }
 
 public protocol MainViewModelOutputProtocol {
-//    func makeViewModel(for: WaterfallItem) -> PetCollectionViewCell.ViewModel
+    //    func makeViewModel(for: WaterfallItem) -> PetCollectionViewCell.ViewModel
 }
 
 public protocol MainViewModelProtocol: MainViewModelInputProtocol, MainViewModelOutputProtocol {
-    var fetchPetFeedUseCase: FetchPetFeedUseCase { get }
+    var fetchFeedUseCase: FetchFeedUseCase { get }
 }
 
 final class MainViewModel: MainViewModelProtocol {
     
-    let fetchPetFeedUseCase: FetchPetFeedUseCase
-    let uploadPetFeedUseCase: UploadPetFeedUseCase // 지울것
+    let fetchFeedUseCase: FetchFeedUseCase
+    let uploadFeedUseCase: UploadFeedUseCase // 지울것
     
     var sortingOption: SortingOption = .favorite
     
-    init(fetchPetDataUseCase: FetchPetFeedUseCase,
-         uploadPetFeedUseCase: UploadPetFeedUseCase) {
-        self.fetchPetFeedUseCase = fetchPetDataUseCase
-        self.uploadPetFeedUseCase = uploadPetFeedUseCase
+    init(fetchFeedUseCase: FetchFeedUseCase,
+         uploadFeedUseCase: UploadFeedUseCase) {
+        self.fetchFeedUseCase = fetchFeedUseCase
+        self.uploadFeedUseCase = uploadFeedUseCase
     }
     
     func vmStart() {
-        let tempFeed: PetpionFeed = PetpionFeed(feedID: "test",
-                                                uploader: User.init(nickName: "ken", profileImage: UIImage()),
-                                   uploadDate: Date.init(),
-                                   likeCount: 10,
-                                   images: [])
-        uploadPetFeedUseCase.uploadNewFeed(tempFeed)
+        let tempFeed: PetpionFeed = PetpionFeed(id: "tempFeed0000", 
+                                                uploader: User.init(id: "tempUser000",
+                                                                    nickName: "user",
+                                                                    profileImage: Data()),
+                                                uploadDate: Date.init(),
+                                                likeCount: 10,
+                                                images: [])
+        uploadFeedUseCase.uploadNewFeed(tempFeed)
         
     }
     

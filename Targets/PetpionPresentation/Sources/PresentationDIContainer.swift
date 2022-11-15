@@ -45,12 +45,12 @@ public struct PresentationDIContainer: Containable {
     
     // MARK: - ViewModel Container
     private func registerViewModels() {
-        guard let fetchPetFeedUseCase: FetchPetFeedUseCase = container.resolve(FetchPetFeedUseCase.self),
-              let uploadPetFeedUseCase: UploadPetFeedUseCase = container.resolve(UploadPetFeedUseCase.self) else { return }
+        guard let fetchFeedUseCase: FetchFeedUseCase = container.resolve(FetchFeedUseCase.self),
+              let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self) else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
-            MainViewModel(fetchPetDataUseCase: fetchPetFeedUseCase,
-                          uploadPetFeedUseCase: uploadPetFeedUseCase)
+            MainViewModel(fetchFeedUseCase: fetchFeedUseCase,
+                          uploadFeedUseCase: uploadFeedUseCase)
         }
     }
     

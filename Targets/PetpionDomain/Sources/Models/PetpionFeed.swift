@@ -1,5 +1,5 @@
 //
-//  Pet.swift
+//  PetpionFeed.swift
 //  PetpionDomain
 //
 //  Created by 김성원 on 2022/11/14.
@@ -7,24 +7,25 @@
 //
 
 import Foundation
-import UIKit
 
-public struct PetpionFeed {
+public struct PetpionFeed: Identifiable {
     
-    public let feedID: String
+    public typealias Identifier = String
+    
+    public let id: Identifier
     public let uploader: User
     public let uploadDate: Date
     public var likeCount: Int
-    public let images: [UIImage]
+    public let images: [Data]
     public var message: String?
     
-    public init(feedID: String,
+    public init(id: Identifier,
                 uploader: User,
                 uploadDate: Date,
                 likeCount: Int,
-                images: [UIImage],
+                images: [Data],
                 message: String? = nil) {
-        self.feedID = feedID
+        self.id = id
         self.uploader = uploader
         self.uploadDate = uploadDate
         self.likeCount = likeCount

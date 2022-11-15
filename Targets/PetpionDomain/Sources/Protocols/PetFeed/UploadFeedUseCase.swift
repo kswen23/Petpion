@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol UploadPetFeedUseCase {
+public protocol UploadFeedUseCase {
  
     var firestoreRepository: FirestoreRepository { get }
     

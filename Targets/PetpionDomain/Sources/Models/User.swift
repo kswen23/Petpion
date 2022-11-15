@@ -7,20 +7,24 @@
 //
 
 import Foundation
-import UIKit
 
-public struct User {
+public struct User: Identifiable {
+    public typealias Identifier = String
     
+    public let id: Identifier
     public let nickName: String
-    public let profileImage: UIImage
+    public let profileImage: Data
     
-    public init(nickName: String, profileImage: UIImage) {
+    public init(id: String,
+                nickName: String,
+                profileImage: Data) {
+        self.id = id
         self.nickName = nickName
         self.profileImage = profileImage
     }
 }
 
-extension User {
+public extension User {
     
-    static let empty: Self = .init(nickName: "", profileImage: UIImage())
+    static let empty: Self = .init(id: "", nickName: "", profileImage: Data())
 }

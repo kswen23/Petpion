@@ -8,6 +8,7 @@
 
 import FirebaseFirestore
 import PetpionDomain
+import PetpionCore
 
 public final class DefaultFirestoreRepository: FirestoreRepository {
     
@@ -15,15 +16,13 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     
     // MARK: - Create
     public func createNewFeed(_ feed: PetpionFeed) async -> Result<String, Error> {
-        
-        let feed = [
-            "feedID": feed.feedID
-        ] as [String : Any]
 
+        let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
+        
         return await withCheckedContinuation { continuation in
             database
-                .document(Document.feed.reference)
-                .setData(feed) { error in
+                .document(Document.feed.reference + feed.id)
+                .setData(feedCollections) { error in
                     if let error = error {
                         continuation.resume(returning: .failure(error))
                     } else {
@@ -32,23 +31,23 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 }
         }
     }
-    
-    public func fetchSomething() {
-        print("petpionRepository start")
-    }
-    
 }
 
 extension DefaultFirestoreRepository {
     
     enum Document {
+        
         case feed
         
         var reference: String {
             switch self {
-            case .feed: return "app/feeds"
+            case .feed:
+                guard let year = DateComponents.currentDateTimeComponents().year,
+                      let month = DateComponents.currentDateTimeComponents().month else { return ""}
+                return "feeds/\(year)/\(month)/"
                 
             }
         }
+        
     }
 }

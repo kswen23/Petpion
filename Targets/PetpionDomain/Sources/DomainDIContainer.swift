@@ -22,12 +22,12 @@ public struct DomainDIContainer: Containable {
     private func registerUseCases() {
         guard let firestoreRepository: FirestoreRepository = container.resolve(FirestoreRepository.self) else { return }
         
-        container.register(FetchPetFeedUseCase.self) { resolver in
-            return DefaultFetchPetFeedUseCase(firestoreRepository: firestoreRepository)
+        container.register(FetchFeedUseCase.self) { resolver in
+            return DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository)
         }
         
-        container.register(UploadPetFeedUseCase.self) { resolver in
-            return DefaultUploadPetFeedUseCase(firestoreRepository: firestoreRepository)
+        container.register(UploadFeedUseCase.self) { resolver in
+            return DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository)
         }
     }
     

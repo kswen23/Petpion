@@ -8,11 +8,11 @@
 
 import Foundation
 
-public protocol FetchPetFeedUseCase {
+public protocol FetchFeedUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
     
-    func fetchPetFeedData(sortBy: SortingOption) -> [PetpionFeed]
+    func fetchFeeds(sortBy: SortingOption) -> [PetpionFeed]
 }
 
 public enum SortingOption {

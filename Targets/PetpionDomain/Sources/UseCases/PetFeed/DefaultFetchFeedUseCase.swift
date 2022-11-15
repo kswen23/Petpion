@@ -1,5 +1,5 @@
 //
-//  DefaultFetchPetFeedUseCase.swift
+//  DefaultFetchFeedUseCase.swift
 //  PetpionDomain
 //
 //  Created by 김성원 on 2022/11/09.
@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-public final class DefaultFetchPetFeedUseCase: FetchPetFeedUseCase {
+public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     
@@ -18,7 +18,7 @@ public final class DefaultFetchPetFeedUseCase: FetchPetFeedUseCase {
         self.firestoreRepository = firestoreRepository
     }
     
-    public func fetchPetFeedData(sortBy option: SortingOption) -> [PetpionFeed] {
+    public func fetchFeeds(sortBy option: SortingOption) -> [PetpionFeed] {
         let defaultPetFeed = fetchDefaultPetFeedData()
         
         return sortPetData(defaultPetFeed, by: option)
@@ -29,9 +29,8 @@ public final class DefaultFetchPetFeedUseCase: FetchPetFeedUseCase {
     private func fetchDefaultPetFeedData() -> [PetpionFeed] {
         
         // 단발성 호출로 받는것이 좋아보임 (Async await)
-        firestoreRepository.fetchSomething()
         
-        return [PetpionFeed.init(feedID: "", uploader: User.init(nickName: "", profileImage: UIImage()), uploadDate: Date(), likeCount: 0, images: [UIImage()])]
+        return [PetpionFeed.init(id: "", uploader: User.empty, uploadDate: Date(), likeCount: 0, images: [Data()])]
     }
     
     private func sortPetData(_ data: [PetpionFeed], by option: SortingOption) -> [PetpionFeed] {
