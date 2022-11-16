@@ -6,10 +6,8 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
-import Foundation
-
 public protocol FirestoreRepository {
     
     func createNewFeed(_ feed: PetpionFeed) async -> Result<String, Error>
-    
+    func fetchFeeds() async -> Result<[PetpionFeed], Error>
 }

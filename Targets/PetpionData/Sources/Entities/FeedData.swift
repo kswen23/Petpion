@@ -14,11 +14,11 @@ import PetpionDomain
 struct FeedData {
     public typealias Identifier = String
     
-    public let feedID: Identifier
-    public let uploaderID: Identifier
-    public let uploadTimestamp: Timestamp
+    public var feedID: Identifier
+    public var uploaderID: Identifier
+    public var uploadTimestamp: Timestamp
     public var likeCount: Double
-    public let imageReference: String
+    public var imageReference: String
     public let images: [Data]
     public var message: String
 
@@ -37,10 +37,20 @@ struct FeedData {
         self.uploaderID = feed.uploader.id
         self.uploadTimestamp = Timestamp.init()
         self.likeCount = Double(feed.likeCount)
-        self.images = feed.images
+        self.images = feed.images ?? []
         self.message = feed.message ?? ""
-        self.imageReference = feedID + uploaderID
+        self.imageReference = "\(feedID)-\(uploaderID)"
     }
+}
+
+extension FeedData {
+    
+    static var empty: Self = .init(feedID: "",
+                                    uploaderID: "",
+                                    uploadTimestamp: .init(),
+                                    likeCount: 0,
+                                    images: [],
+                                    message: "")
     
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
@@ -51,6 +61,23 @@ struct FeedData {
             "imageReference": data.imageReference,
             "message": data.message
         ]
+    }
+    
+    static func toFeedData(_ data: [String: Any]) -> Self {
+        var result: Self = .empty
+        for (key, value) in data {
+            switch key {
+            case "feedID": result.feedID = value as? String ?? ""
+            case "uploaderID": result.uploaderID = value as? String ?? ""
+            case "uploadTimestamp": result.uploadTimestamp = value as? Timestamp ?? Timestamp.init()
+            case "likeCount": result.likeCount = value as? Double ?? 0
+            case "imageReference": result.imageReference = value as? String ?? ""
+            case "message": result.message = value as? String ?? ""
+            default:
+                break
+            }
+        }
+        return result
     }
 }
 

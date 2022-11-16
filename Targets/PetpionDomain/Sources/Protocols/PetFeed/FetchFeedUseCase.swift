@@ -11,6 +11,7 @@ import Foundation
 public protocol FetchFeedUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
+    var firebaseStorageRepository: FirebaseStorageRepository { get }
     
     func fetchFeeds(sortBy: SortingOption) -> [PetpionFeed]
 }

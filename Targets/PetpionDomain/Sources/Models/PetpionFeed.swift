@@ -16,7 +16,7 @@ public struct PetpionFeed: Identifiable {
     public let uploader: User
     public let uploadDate: Date
     public var likeCount: Int
-    public let images: [Data]
+    public let images: [Data]?
     public var message: String?
     
     public init(id: Identifier,
@@ -33,4 +33,10 @@ public struct PetpionFeed: Identifiable {
         self.message = message
     }
     
+}
+
+public extension PetpionFeed {
+    static func getImageReference(_ feed: Self, number: Int) -> String {
+        feed.uploader.id + "/" + feed.id + String(number)
+    }
 }

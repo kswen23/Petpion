@@ -18,7 +18,7 @@ final class FetchPetDataUseCaseTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         mockPetpionRepository = MockPetpionRepository()
-        sut = DefaultFetchFeedUseCase(petpionRepository: mockPetpionRepository)
+//        sut = DefaultFetchFeedUseCase(petpionRepository: mockPetpionRepository)
     }
     
     override func tearDownWithError() throws {

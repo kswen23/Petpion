@@ -38,15 +38,16 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     func vmStart() {
-        let tempFeed: PetpionFeed = PetpionFeed(id: "tempFeed0000", 
-                                                uploader: User.init(id: "tempUser000",
+        let tempFeed: PetpionFeed = PetpionFeed(id: UUID().uuidString, 
+                                                uploader: User.init(id: UUID().uuidString,
                                                                     nickName: "user",
                                                                     profileImage: Data()),
                                                 uploadDate: Date.init(),
                                                 likeCount: 10,
                                                 images: [])
-        uploadFeedUseCase.uploadNewFeed(tempFeed)
-        
+//        uploadFeedUseCase.uploadNewFeed(tempFeed)
+//        fetchFeedUseCase.fetchFeeds(sortBy: .favorite)
+        uploadFeedUseCase.
     }
     
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {
