@@ -24,6 +24,10 @@ public struct DataDIContainer: Containable {
         container.register(FirestoreRepository.self) { resolver in
             return DefaultFirestoreRepository()
         }
+        
+        container.register(FirebaseStorageRepository.self) { resolver in
+            return DefaultFirebaseStorageRepository()
+        }
     }
     
 }
