@@ -13,30 +13,34 @@ public struct PetpionFeed: Identifiable {
     public typealias Identifier = String
     
     public let id: Identifier
-    public let uploader: User
+    public let uploaderID: User.ID
     public let uploadDate: Date
     public var likeCount: Int
-    public let images: [Data]?
+    public var imagesCount: Int
     public var message: String?
+    public var imageURLArr: [URL]?
     
     public init(id: Identifier,
-                uploader: User,
+                uploaderID: User.ID,
                 uploadDate: Date,
                 likeCount: Int,
-                images: [Data],
-                message: String? = nil) {
+                imageCount: Int,
+                message: String = "",
+                imageURLArr: [URL] = []) {
         self.id = id
-        self.uploader = uploader
+        self.uploaderID = uploaderID
         self.uploadDate = uploadDate
         self.likeCount = likeCount
-        self.images = images
+        self.imagesCount = imageCount
         self.message = message
+        self.imageURLArr = imageURLArr
     }
     
 }
 
 public extension PetpionFeed {
-    static func getImageReference(_ feed: Self, number: Int) -> String {
-        feed.uploader.id + "/" + feed.id + String(number)
+    
+    static func getImageReference(_ feed: Self) -> String {
+        "\(feed.uploaderID)/\(feed.id)"
     }
 }

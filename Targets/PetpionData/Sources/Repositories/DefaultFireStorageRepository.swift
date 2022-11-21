@@ -14,53 +14,135 @@ import PetpionDomain
 public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     
     private let storage = Storage.storage()
+    private let defaultURL: String = "gs://petpion.appspot.com/"
+    private typealias DataAndReference = (Data, String)
     
-    // MARK: - Create
-    public func uploadPetFeedImages(_ feed: PetpionFeed) async -> Result<String, Error> {
-        
-        return await withCheckedContinuation ({ continuation in
-            Task {
-                guard let images = feed.images else { return }
-                var imageUploadCount = 1
-                for i in 0 ..< images.count {
-                    let imageReference = PetpionFeed.getImageReference(feed,
-                                                                       number: i)
-                    let uploadSingleImage = await uploadSingleImage(images[i],
-                                                                    on: imageReference)
-                    switch uploadSingleImage {
-                    case .success(let success):
-                        imageUploadCount += 1
-                        print("image\(i) uploaded")
-                        if imageUploadCount == images.count {
-                            continuation.resume(returning: .success("all image uploaded"))
-                        }
-                    case .failure(let failure):
-                        continuation.resume(returning: .failure(failure))
-                    }
-                }
-            }
-            
-        })
+    // MARK: - Private Method
+    private func makeDataAndReferenceArray(feed: PetpionFeed,
+                                           imageDatas: [Data]) -> [DataAndReference] {
+        var array: [DataAndReference] = []
+        let imageRef: String = PetpionFeed.getImageReference(feed)
+        for i in 0 ..< feed.imagesCount {
+            array.append((imageDatas[i], imageRef + "/\(i)"))
+        }
+        return array
     }
     
-    private func uploadSingleImage(_ data: Data, on reference: String) async -> Result<String, Error> {
+    // MARK: - Public Create
+    public func uploadPetFeedImages(feed: PetpionFeed,
+                                    imageDatas: [Data]) {
+        let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
+        uploadSeveralImages(dataAndRefArray)
+    }
+    
+    public func uploadProfileImage(_ user: User) {
+        //        Task {
+        //            uploadSingleImage()
+        //        }
+    }
+    
+    // MARK: - Private Create
+    private func uploadSeveralImages(_ dataAndRefArray: [DataAndReference]) {
+        Task {
+            await withTaskGroup(of: Void.self, body: { taskGroup in
+                for dataAndRef in dataAndRefArray {
+                    taskGroup.addTask {
+                        await self.uploadSingleImage(dataAndRef)
+                    }
+                }
+            })
+        }
+    }
+    
+    private func uploadSingleImage(_ dataAndRef: DataAndReference) async {
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        storage
+            .reference()
+            .child(dataAndRef.1)
+            .putData(dataAndRef.0, metadata: metadata) { result in
+                switch result {
+                case .success(_): break
+                case .failure(let failure):
+                    print(failure)
+                }
+            }
+    }
+    
+    // MARK: - Public Read
+    public func fetchFeedImageURL(_ feed: PetpionFeed) async -> [URL] {
+        return await withCheckedContinuation{ continuation in
+            Task {
+                let feedImageRef: String = PetpionFeed.getImageReference(feed)
+                
+                var imageReferences: [String] = []
+                for i in 0 ..< feed.imagesCount {
+                    imageReferences.append(feedImageRef + "/\(i)")
+                }
+                
+                let imageURLs = await fetchSeveralImageURLs(from: imageReferences)
+                var urlArr: [URL] = []
+                for value in imageURLs {
+                    switch value {
+                    case .success(let url):
+                        urlArr.append(url)
+                    case .failure(let failure):
+                        print(failure.localizedDescription)
+                    }
+                }
+                let sortedURLArr = urlArr
+                    .map{ $0.description }
+                    .sorted(by: <)
+                    .map{ URL(string: $0)! }
+                
+                continuation.resume(returning: sortedURLArr)
+            }
+        }
+        
+    }
+    
+    // MARK: - Private Read
+    private func fetchSeveralImageURLs(from references: [String]) async -> [Result<URL, Error>] {
         
         return await withCheckedContinuation { continuation in
-            let metadata = StorageMetadata()
-            metadata.contentType = "image/jpeg"
+            Task {
+                let result = await withTaskGroup(of: Result<URL,Error>.self) { taskGroup -> [Result<URL,Error>] in
+                    for reference in references {
+                        taskGroup.addTask {
+                            let url = await self.fetchSingleImageURL(from: reference)
+                            return url
+                        }
+                    }
+                    var resultArr: [Result<URL,Error>] = []
+                    for await value in taskGroup {
+                        switch value {
+                        case .success(let url):
+                            resultArr.append(Result.success(url))
+                        case .failure(let error):
+                            resultArr.append(Result.failure(error))
+                        }
+                    }
+                    return resultArr
+                }
+                continuation.resume(returning: result)
+            }
+        }
+    }
+    
+    private func fetchSingleImageURL(from reference: String) async -> Result<URL, Error> {
+        
+        return await withCheckedContinuation { continuation in
             storage
-                .reference()
-                .child(reference)
-                .putData(data, metadata: metadata) { result in
+                .reference(forURL: defaultURL + reference)
+                .downloadURL { result in
                     switch result {
-                    case .success(let success):
-                        print(success)
-                        continuation.resume(returning: .success("success"))
-                    case .failure(let failure):
-                        continuation.resume(returning: .failure(failure))
+                    case .success(let url):
+                        continuation.resume(returning: .success(url))
+                    case .failure(let error):
+                        continuation.resume(returning: .failure(error))
                     }
                 }
         }
     }
+    
 }
-

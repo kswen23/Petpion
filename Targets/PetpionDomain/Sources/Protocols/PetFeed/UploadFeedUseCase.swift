@@ -13,5 +13,5 @@ public protocol UploadFeedUseCase {
     var firestoreRepository: FirestoreRepository { get }
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
-    func uploadNewFeed(_ feed: PetpionFeed)
+    func uploadNewFeed(feed: PetpionFeed, imageDatas: [Data])
 }

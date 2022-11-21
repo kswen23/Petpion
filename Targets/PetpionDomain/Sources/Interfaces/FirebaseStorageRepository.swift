@@ -6,7 +6,15 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
+import Foundation
+
 public protocol FirebaseStorageRepository {
     
-    func uploadPetFeedImages(_ feed: PetpionFeed) async -> Result<String, Error>
+    // MARK: - Create
+    func uploadPetFeedImages(feed: PetpionFeed, imageDatas: [Data])
+    func uploadProfileImage(_ user: User)
+    
+    // MARK: - Read
+    func fetchFeedImageURL(_ feed: PetpionFeed) async -> [URL]
+    
 }

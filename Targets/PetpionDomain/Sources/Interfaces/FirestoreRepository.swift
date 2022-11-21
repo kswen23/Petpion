@@ -8,6 +8,6 @@
 
 public protocol FirestoreRepository {
     
-    func createNewFeed(_ feed: PetpionFeed) async -> Result<String, Error>
+    func createNewFeed(_ feed: PetpionFeed)
     func fetchFeeds() async -> Result<[PetpionFeed], Error>
 }

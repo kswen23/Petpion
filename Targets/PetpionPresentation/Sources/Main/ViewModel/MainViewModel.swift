@@ -13,7 +13,7 @@ import UIKit
 import PetpionDomain
 
 public protocol MainViewModelInputProtocol {
-    func vmStart()
+    func uploadNewFeed(images: [UIImage], message: String?)
 }
 
 public protocol MainViewModelOutputProtocol {
@@ -35,19 +35,19 @@ final class MainViewModel: MainViewModelProtocol {
          uploadFeedUseCase: UploadFeedUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.uploadFeedUseCase = uploadFeedUseCase
+        fetchFeedUseCase.fetchFeeds(sortBy: .favorite)
     }
     
-    func vmStart() {
-        let tempFeed: PetpionFeed = PetpionFeed(id: UUID().uuidString, 
-                                                uploader: User.init(id: UUID().uuidString,
-                                                                    nickName: "user",
-                                                                    profileImage: Data()),
-                                                uploadDate: Date.init(),
-                                                likeCount: 10,
-                                                images: [])
-//        uploadFeedUseCase.uploadNewFeed(tempFeed)
-//        fetchFeedUseCase.fetchFeeds(sortBy: .favorite)
-        uploadFeedUseCase.
+    func uploadNewFeed(images: [UIImage], message: String?) {
+        let datas: [Data] = images.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
+        
+        let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
+                                            uploaderID: UUID().uuidString,
+                                            uploadDate: Date.init(),
+                                            likeCount: 10,
+                                            imageCount: datas.count,
+                                            message: message ?? "")
+        uploadFeedUseCase.uploadNewFeed(feed: feed, imageDatas: datas)
     }
     
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {

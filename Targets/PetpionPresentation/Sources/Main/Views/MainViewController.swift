@@ -9,6 +9,7 @@
 import UIKit
 
 import PetpionCore
+import YPImagePicker
 
 final class MainViewController: UIViewController {
     
@@ -17,6 +18,15 @@ final class MainViewController: UIViewController {
     
     lazy var petCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
+    lazy var imagePicker: YPImagePicker = {
+        var config = YPImagePickerConfiguration()
+        config.screens = [.library]
+        config.showsPhotoFilters = false
+        config.library.maxNumberOfItems = 5
+        config.library.mediaType = YPlibraryMediaType.photo
+        let pickerViewController = YPImagePicker(configuration: config)
+        return pickerViewController
+    }()
     
     private lazy var dataSource = makeDataSource()
     let indexArray = Array(0..<50)
@@ -40,10 +50,8 @@ final class MainViewController: UIViewController {
         self.view.backgroundColor = .systemBackground
         
         layoutPetCollectionView()
-        configurePetCollectionView()
+        configure()
         initializeData()
-        
-        viewModel.vmStart()
     }
     
     private func layoutPetCollectionView() {
@@ -58,9 +66,44 @@ final class MainViewController: UIViewController {
         petCollectionView.backgroundColor = .white
     }
     
+    // MARK: - Configure
+    private func configure() {
+        configureNavigationItem()
+        configurePetCollectionView()
+        configureImagePicker()
+    }
+    
+    private func configureNavigationItem() {
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: nil),
+            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTap))
+        ]
+        navigationController?.navigationBar.tintColor = .black
+    }
+    
+    @objc func cameraButtonDidTap() {
+        self.present(imagePicker, animated: true)
+    }
+    
     private func configurePetCollectionView() {
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: makeWaterfallLayoutConfiguration())
         petCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
+    }
+    
+    private func configureImagePicker() {
+        imagePicker.didFinishPicking { [unowned self] items, cancelled in
+            var images: [UIImage] = []
+            for item in items {
+                switch item {
+                case .photo(let photo):
+                    images.append(photo.image)
+                case .video:
+                    break
+                }
+            }
+            self.viewModel.uploadNewFeed(images: images, message: "newFeed!")
+            self.imagePicker.dismiss(animated: true, completion: nil)
+        }
     }
     
     private func initializeData() {
@@ -100,8 +143,7 @@ final class MainViewController: UIViewController {
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {
         return PetCollectionViewCell.ViewModel(item: item)
     }
-    
-    
+
 }
 struct WaterfallItem {
     

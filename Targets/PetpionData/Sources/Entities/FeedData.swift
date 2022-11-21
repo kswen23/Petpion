@@ -19,38 +19,38 @@ struct FeedData {
     public var uploadTimestamp: Timestamp
     public var likeCount: Double
     public var imageReference: String
-    public let images: [Data]
+    public var imageCount: Double
     public var message: String
-
-    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, likeCount: Double, images: [Data], message: String) {
+    
+    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, likeCount: Double, imageCount: Double, message: String) {
         self.feedID = feedID
         self.uploaderID = uploaderID
         self.uploadTimestamp = uploadTimestamp
         self.likeCount = likeCount
-        self.images = images
+        self.imageCount = imageCount
         self.message = message
         self.imageReference = feedID + uploaderID
     }
     
     public init(feed: PetpionFeed) {
         self.feedID = feed.id
-        self.uploaderID = feed.uploader.id
+        self.uploaderID = feed.uploaderID
         self.uploadTimestamp = Timestamp.init()
         self.likeCount = Double(feed.likeCount)
-        self.images = feed.images ?? []
+        self.imageCount = Double(feed.imagesCount)
         self.message = feed.message ?? ""
-        self.imageReference = "\(feedID)-\(uploaderID)"
+        self.imageReference = PetpionFeed.getImageReference(feed)
     }
 }
 
 extension FeedData {
     
     static var empty: Self = .init(feedID: "",
-                                    uploaderID: "",
-                                    uploadTimestamp: .init(),
-                                    likeCount: 0,
-                                    images: [],
-                                    message: "")
+                                   uploaderID: "",
+                                   uploadTimestamp: .init(),
+                                   likeCount: 0,
+                                   imageCount: 0,
+                                   message: "")
     
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
@@ -59,6 +59,7 @@ extension FeedData {
             "uploadTimestamp": data.uploadTimestamp,
             "likeCount": data.likeCount,
             "imageReference": data.imageReference,
+            "imageCount": data.imageCount,
             "message": data.message
         ]
     }
@@ -72,6 +73,7 @@ extension FeedData {
             case "uploadTimestamp": result.uploadTimestamp = value as? Timestamp ?? Timestamp.init()
             case "likeCount": result.likeCount = value as? Double ?? 0
             case "imageReference": result.imageReference = value as? String ?? ""
+            case "imageCount": result.imageCount = value as? Double ?? 0
             case "message": result.message = value as? String ?? ""
             default:
                 break
@@ -85,9 +87,10 @@ extension PetpionFeed {
     
     static func toPetpionFeed(data: FeedData) -> PetpionFeed {
         .init(id: data.feedID,
-              uploader: User.empty,
+              uploaderID: data.uploaderID,
               uploadDate: data.uploadTimestamp.dateValue(),
               likeCount: Int(data.likeCount),
-              images: data.images)
+              imageCount: Int(data.imageCount),
+              message: data.message)
     }
 }

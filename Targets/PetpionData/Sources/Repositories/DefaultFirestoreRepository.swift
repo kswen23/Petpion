@@ -15,21 +15,17 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private let database = Firestore.firestore()
     
     // MARK: - Create
-    public func createNewFeed(_ feed: PetpionFeed) async -> Result<String, Error> {
-        
+    public func createNewFeed(_ feed: PetpionFeed) {
+            
         let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
-        
-        return await withCheckedContinuation { continuation in
+
             database
                 .document(FirestoreCollection.feed.reference + "/\(feed.id)")
                 .setData(feedCollections) { error in
                     if let error = error {
-                        continuation.resume(returning: .failure(error))
-                    } else {
-                        continuation.resume(returning: .success("NewFeed Saved!"))
+                        print(error.localizedDescription)
                     }
                 }
-        }
     }
     
     // MARK: - Read
