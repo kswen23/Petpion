@@ -13,7 +13,7 @@ public protocol FetchFeedUseCase {
     var firestoreRepository: FirestoreRepository { get }
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
-    func fetchFeeds(sortBy: SortingOption) -> [PetpionFeed]
+    func fetchFeeds(sortBy: SortingOption) async -> [PetpionFeed]
 }
 
 public enum SortingOption {

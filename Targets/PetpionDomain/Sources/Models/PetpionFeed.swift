@@ -25,15 +25,13 @@ public struct PetpionFeed: Identifiable {
                 uploadDate: Date,
                 likeCount: Int,
                 imageCount: Int,
-                message: String = "",
-                imageURLArr: [URL] = []) {
+                message: String = "") {
         self.id = id
         self.uploaderID = uploaderID
         self.uploadDate = uploadDate
         self.likeCount = likeCount
         self.imagesCount = imageCount
         self.message = message
-        self.imageURLArr = imageURLArr
     }
     
 }

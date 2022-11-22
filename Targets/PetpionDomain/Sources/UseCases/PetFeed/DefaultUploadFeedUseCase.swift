@@ -29,7 +29,7 @@ public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
     
     // MARK: - Private
     private func uploadNewFeedOnFirestore(_ feed: PetpionFeed) {
-        firestoreRepository.createNewFeed(feed)
+        firestoreRepository.uploadNewFeed(feed)
     }
     
     private func uploadNewImageOnFirebaseStorage(feed: PetpionFeed,

@@ -14,6 +14,7 @@ import PetpionDomain
 
 public protocol MainViewModelInputProtocol {
     func uploadNewFeed(images: [UIImage], message: String?)
+    func fetchNextFeed()
 }
 
 public protocol MainViewModelOutputProtocol {
@@ -35,7 +36,7 @@ final class MainViewModel: MainViewModelProtocol {
          uploadFeedUseCase: UploadFeedUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.uploadFeedUseCase = uploadFeedUseCase
-        fetchFeedUseCase.fetchFeeds(sortBy: .favorite)
+//        fetchFeedUseCase.fetchFeeds(sortBy: sortingOption)
     }
     
     func uploadNewFeed(images: [UIImage], message: String?) {
@@ -52,6 +53,10 @@ final class MainViewModel: MainViewModelProtocol {
     
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {
         return PetCollectionViewCell.ViewModel(item: item)
+    }
+    
+    func fetchNextFeed() {
+//        fetchFeedUseCase.fetchFeeds(sortBy: sortingOption)
     }
 }
 

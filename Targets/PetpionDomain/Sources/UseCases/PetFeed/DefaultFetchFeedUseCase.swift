@@ -21,37 +21,32 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     }
     
     // MARK: - Public
-    public func fetchFeeds(sortBy option: SortingOption) -> [PetpionFeed] {
-        let defaultPetFeed = fetchDefaultPetFeedData()
-        
-        Task {
-            let result = await firestoreRepository.fetchFeeds()
-            switch result {
-            case .success(let success):
-                let data = await fetchFeedWithImageURL(feeds: success)
-                print(data)
-            case .failure(let failure):
-                print(failure)
+    public func fetchFeeds(sortBy option: SortingOption) async -> [PetpionFeed] {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let result = await firestoreRepository.fetchFeeds(by: option)
+                switch result {
+                case .success(let success):
+                    let feedWithImageURL = await addImageURL(feeds: success)
+                    // emit to viewModel
+                case .failure(let failure):
+                    print(failure)
+                }
             }
         }
-        
-        return sortPetData(defaultPetFeed, by: option)
     }
-    
-    public func fetchFeedWithImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
+
+    // MARK: - Private
+    private func addImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         return await withCheckedContinuation { continuation in
             Task {
                 let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
                     for feed in feeds {
                         taskGroup.addTask {
                             let urlArr = await self.firebaseStorageRepository.fetchFeedImageURL(feed)
-                            return PetpionFeed(id: feed.id,
-                                               uploaderID: feed.uploaderID,
-                                               uploadDate: feed.uploadDate,
-                                               likeCount: feed.likeCount,
-                                               imageCount: feed.imagesCount,
-                                               message: feed.message ?? "",
-                                               imageURLArr: urlArr)
+                            var withURLFeed = feed
+                            withURLFeed.imageURLArr = urlArr
+                            return withURLFeed
                         }
                         
                     }
@@ -65,28 +60,4 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             }
         }
     }
-}
-
-// MARK: - Private
-
-private func fetchDefaultPetFeedData() -> [PetpionFeed] {
-    
-    // 단발성 호출로 받는것이 좋아보임 (Async await)
-    
-    return [PetpionFeed.init(id: "", uploaderID: "", uploadDate: Date(), likeCount: 0, imageCount: 1, message: "")]
-}
-
-private func sortPetData(_ data: [PetpionFeed], by option: SortingOption) -> [PetpionFeed] {
-    var defaultData = data
-    
-    switch option {
-    case .favorite:
-        defaultData.sort { $0.likeCount < $1.likeCount }
-    case .latest:
-        defaultData.sort { $0.uploadDate > $1.uploadDate }
-    case .random:
-        defaultData.shuffle()
-    }
-    
-    return defaultData
 }

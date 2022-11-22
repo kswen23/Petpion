@@ -75,7 +75,7 @@ final class MainViewController: UIViewController {
     
     private func configureNavigationItem() {
         navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: nil),
+            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTap)),
             UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTap))
         ]
         navigationController?.navigationBar.tintColor = .black
@@ -83,6 +83,10 @@ final class MainViewController: UIViewController {
     
     @objc func cameraButtonDidTap() {
         self.present(imagePicker, animated: true)
+    }
+    
+    @objc func personButtonDidTap() {
+        viewModel.fetchNextFeed()
     }
     
     private func configurePetCollectionView() {

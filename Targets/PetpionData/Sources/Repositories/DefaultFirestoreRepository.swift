@@ -12,28 +12,36 @@ import PetpionCore
 
 public final class DefaultFirestoreRepository: FirestoreRepository {
     
-    private let database = Firestore.firestore()
-    
+    private let db = Firestore.firestore()
+    private var query: Query?
+    private var cursor: DocumentSnapshot?
     // MARK: - Create
-    public func createNewFeed(_ feed: PetpionFeed) {
-            
+    public func uploadNewFeed(_ feed: PetpionFeed) {
+        
         let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
-
-            database
-                .document(FirestoreCollection.feed.reference + "/\(feed.id)")
-                .setData(feedCollections) { error in
-                    if let error = error {
-                        print(error.localizedDescription)
-                    }
+        
+        db
+            .document(FirestoreCollection.feed.reference + "/\(feed.id)")
+            .setData(feedCollections) { error in
+                if let error = error {
+                    print(error.localizedDescription)
                 }
+            }
     }
     
-    // MARK: - Read
-    public func fetchFeeds() async -> Result<[PetpionFeed], Error> {
-
-        return await withCheckedContinuation({ continuation in
+    // MARK: - Public Read
+    public func fetchFeeds(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+        
+        return await withCheckedContinuation { continuation in
             Task {
-                let feedCollections = await fetchFeedsToCollection()
+                var feedCollections = Result<[[String : Any]], Error>.success([[:]])
+                
+                if query == getQuery(by: option) && cursor != nil {
+                    feedCollections = await fetchFeedCollection(by: option)
+                } else {
+                    feedCollections = await fetchFirstFeedCollection(by: option)
+                }
+                
                 switch feedCollections {
                 case .success(let collections):
                     let result = collections
@@ -44,26 +52,60 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     continuation.resume(returning: .failure(failure))
                 }
             }
-        })
+        }
     }
     
-    private func fetchFeedsToCollection() async -> Result<([[String: Any]]), Error> {
+    // MARK: - Private Read
+    private func fetchFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
         
-        return await withCheckedContinuation({ continuation in
-            database
-                .collection(FirestoreCollection.feed.reference)
+        return await withCheckedContinuation { [weak self] continuation in
+            guard let strongSelf = self,
+                  let query = query else { return }
+            
+            query.addSnapshotListener { (snapshot, error) in
+                guard snapshot != nil else {
+                    print("Error retreving feeds: \(error.debugDescription)")
+                    return
+                }
+                
+                strongSelf.query?
+                    .start(afterDocument: strongSelf.cursor!)
+                    .getDocuments { (snapshot, error) in
+                        if let error = error {
+                            continuation
+                                .resume(returning: .failure(error))
+                        } else {
+                            if let result = snapshot?.documents {
+                                continuation
+                                    .resume(returning: .success(result.map { $0.data() }))
+                            }
+                        }
+                        strongSelf.cursor = snapshot?.documents.last
+                    }
+            }
+        }
+    }
+
+    private func fetchFirstFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
+        return await withCheckedContinuation { [weak self] continuation in
+            guard let strongSelf = self else { return }
+            query = getQuery(by: option)
+            strongSelf.query?
                 .getDocuments { (snapshot, error) in
                     if let error = error {
-                        continuation.resume(returning: .failure(error))
+                        continuation
+                            .resume(returning: .failure(error))
                     } else {
                         if let result = snapshot?.documents {
-                            continuation.resume(returning: .success(result.map { $0.data() }))
+                            continuation
+                                .resume(returning: .success(result.map { $0.data() }))
                         }
                     }
+                    strongSelf.cursor = snapshot?.documents.last
                 }
-            
-        })
+        }
     }
+
 }
 
 extension DefaultFirestoreRepository {
@@ -82,5 +124,25 @@ extension DefaultFirestoreRepository {
             }
         }
         
+    }
+    
+    private func getQuery(by option: SortingOption) -> Query {
+        switch option {
+        case .favorite:
+            return db
+                .collection(FirestoreCollection.feed.reference)
+                .order(by: "likeCount", descending: true)
+                .limit(to: 20)
+        case .latest:
+            return db
+                .collection(FirestoreCollection.feed.reference)
+                .order(by: "uploadTimestamp", descending: true)
+                .limit(to: 20)
+        case .random:
+            return db
+                .collection(FirestoreCollection.feed.reference)
+                .order(by: "likeCount", descending: true)
+                .limit(to: 20)
+        }
     }
 }
