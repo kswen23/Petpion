@@ -8,47 +8,30 @@
 
 import Foundation
 import UIKit
-//지울것
 
 import PetpionDomain
 
-public protocol MainViewModelInputProtocol {
-    func uploadNewFeed(images: [UIImage], message: String?)
+public protocol MainViewModelInput {
     func fetchNextFeed()
 }
 
-public protocol MainViewModelOutputProtocol {
+public protocol MainViewModelOutput {
     //    func makeViewModel(for: WaterfallItem) -> PetCollectionViewCell.ViewModel
 }
 
-public protocol MainViewModelProtocol: MainViewModelInputProtocol, MainViewModelOutputProtocol {
+public protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
 }
 
 final class MainViewModel: MainViewModelProtocol {
     
     let fetchFeedUseCase: FetchFeedUseCase
-    let uploadFeedUseCase: UploadFeedUseCase // 지울것
     
     var sortingOption: SortingOption = .favorite
     
-    init(fetchFeedUseCase: FetchFeedUseCase,
-         uploadFeedUseCase: UploadFeedUseCase) {
+    init(fetchFeedUseCase: FetchFeedUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
-        self.uploadFeedUseCase = uploadFeedUseCase
 //        fetchFeedUseCase.fetchFeeds(sortBy: sortingOption)
-    }
-    
-    func uploadNewFeed(images: [UIImage], message: String?) {
-        let datas: [Data] = images.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
-        
-        let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
-                                            uploaderID: UUID().uuidString,
-                                            uploadDate: Date.init(),
-                                            likeCount: 10,
-                                            imageCount: datas.count,
-                                            message: message ?? "")
-        uploadFeedUseCase.uploadNewFeed(feed: feed, imageDatas: datas)
     }
     
     func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {

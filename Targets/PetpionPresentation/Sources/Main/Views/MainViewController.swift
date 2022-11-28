@@ -18,15 +18,6 @@ final class MainViewController: UIViewController {
     
     lazy var petCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
-    lazy var imagePicker: YPImagePicker = {
-        var config = YPImagePickerConfiguration()
-        config.screens = [.library]
-        config.showsPhotoFilters = false
-        config.library.maxNumberOfItems = 5
-        config.library.mediaType = YPlibraryMediaType.photo
-        let pickerViewController = YPImagePicker(configuration: config)
-        return pickerViewController
-    }()
     
     private lazy var dataSource = makeDataSource()
     let indexArray = Array(0..<50)
@@ -36,8 +27,8 @@ final class MainViewController: UIViewController {
     let defaultContentInsetsReference = UIContentInsetsReference.automatic
     
     // MARK: - Initialize
-    init(mainViewModel: MainViewModelProtocol) {
-        self.viewModel = mainViewModel
+    init(viewModel: MainViewModelProtocol) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -45,6 +36,7 @@ final class MainViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .systemBackground
@@ -70,19 +62,19 @@ final class MainViewController: UIViewController {
     private func configure() {
         configureNavigationItem()
         configurePetCollectionView()
-        configureImagePicker()
     }
     
     private func configureNavigationItem() {
         navigationItem.rightBarButtonItems = [
             UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTap)),
-            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTap))
+            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTap)),
+            UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(cameraButtonDidTap))
         ]
         navigationController?.navigationBar.tintColor = .black
     }
     
     @objc func cameraButtonDidTap() {
-        self.present(imagePicker, animated: true)
+        coordinator?.presentFeedImagePicker(viewController: self)
     }
     
     @objc func personButtonDidTap() {
@@ -92,22 +84,6 @@ final class MainViewController: UIViewController {
     private func configurePetCollectionView() {
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: makeWaterfallLayoutConfiguration())
         petCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
-    }
-    
-    private func configureImagePicker() {
-        imagePicker.didFinishPicking { [unowned self] items, cancelled in
-            var images: [UIImage] = []
-            for item in items {
-                switch item {
-                case .photo(let photo):
-                    images.append(photo.image)
-                case .video:
-                    break
-                }
-            }
-            self.viewModel.uploadNewFeed(images: images, message: "newFeed!")
-            self.imagePicker.dismiss(animated: true, completion: nil)
-        }
     }
     
     private func initializeData() {
@@ -153,7 +129,7 @@ struct WaterfallItem {
     
     let index: Int
     
-    let size = CGSize(width: 140, height: 50 + .random(in: 0...100))
+    let size = CGSize(width: 200, height: 50 + .random(in: 0...100))
     
     let color = UIColor.blue
 }

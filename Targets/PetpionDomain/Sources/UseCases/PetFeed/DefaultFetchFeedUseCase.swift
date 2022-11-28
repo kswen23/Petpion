@@ -48,7 +48,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
                             withURLFeed.imageURLArr = urlArr
                             return withURLFeed
                         }
-                        
                     }
                     var resultFeedArr = [PetpionFeed]()
                     for await value in taskGroup {

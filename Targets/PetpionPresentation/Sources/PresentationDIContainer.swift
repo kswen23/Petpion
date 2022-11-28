@@ -11,6 +11,7 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 import Swinject
+import YPImagePicker
 
 public struct PresentationDIContainer: Containable {
     
@@ -32,14 +33,27 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "MainCoordinator") { _ in
             MainCoordinator(navigationController: navigationController)
         }
+        
+        container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
+            FeedUploadCoordinator()
+        }
     }
     
     // MARK: - ViewController Container
     private func registerViewControllers() {
-        guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self) else { return }
-                
+        guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
+              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModel.self) else { return }
+        
         container.register(MainViewController.self) { _ in
-            MainViewController(mainViewModel: mainViewModel)
+            MainViewController(viewModel: mainViewModel)
+        }
+        
+        container.register(FeedUploadViewController.self) { _ in
+            FeedUploadViewController(viewModel: feedUploadViewModel)
+        }
+        
+        container.register(FeedImagePickerViewController.self) { _ in
+            FeedImagePickerViewController(viewModel: feedUploadViewModel)
         }
     }
     
@@ -49,8 +63,11 @@ public struct PresentationDIContainer: Containable {
               let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self) else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
-            MainViewModel(fetchFeedUseCase: fetchFeedUseCase,
-                          uploadFeedUseCase: uploadFeedUseCase)
+            MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
+        }
+        
+        container.register(FeedUploadViewModel.self) { _ in
+            FeedUploadViewModel(uploadFeedUseCase: uploadFeedUseCase)
         }
     }
     
