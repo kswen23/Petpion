@@ -28,7 +28,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
                 switch result {
                 case .success(let success):
                     let feedWithImageURL = await addImageURL(feeds: success)
-                    // emit to viewModel
+                    continuation.resume(returning: feedWithImageURL)
                 case .failure(let failure):
                     print(failure)
                 }

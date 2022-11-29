@@ -8,52 +8,83 @@
 
 import UIKit
 
+import PetpionDomain
+
 class PetCollectionViewCell: UICollectionViewCell {
     
-    private let indexLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .black
-        label.font = .preferredFont(forTextStyle: .title3)
-        label.textAlignment = .center
-        return label
-    }()
-    
+    private let thumbnailImageView: UIImageView = UIImageView()
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setUp()
+        layout()
+        self.backgroundColor = .lightGray
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with viewModel: ViewModel) {
-        indexLabel.text = viewModel.indexLabelText
-        contentView.backgroundColor = viewModel.contentViewBackgroundColor
+    // MARK: - Layout
+    private func layout() {
+        layoutImagePreview()
     }
     
-    private func setUp() {
-        contentView.addSubview(indexLabel)
+    private func layoutImagePreview() {
+        self.addSubview(thumbnailImageView)
+        thumbnailImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            indexLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            indexLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            thumbnailImageView.topAnchor.constraint(equalTo: self.topAnchor),
+            thumbnailImageView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            thumbnailImageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
         ])
+        thumbnailImageView.contentMode = .scaleAspectFit
+        thumbnailImageView.backgroundColor = .lightGray
     }
-
+    // MARK: - Configure
+    func configure(with viewModel: ViewModel) {
+        thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*viewModel.thumbnailRatio).isActive = true
+        
+        downloadImage(with: viewModel.thumbnail) { [weak self] image in
+            DispatchQueue.main.async {
+                self?.thumbnailImageView.image = image
+            }
+        }
+    }
+    
+    private func downloadImage(with url: URL, completion: @escaping (UIImage?) -> Void) {
+        let task = URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data = data else {
+                return
+            }
+            DispatchQueue.main.async {
+                let image = UIImage(data: data)
+                completion(image)
+            }
+        }
+        task.resume()
+    }
 }
 
 extension PetCollectionViewCell {
     
     struct ViewModel {
         
-        let indexLabelText: String
+        let thumbnail: URL
+        let thumbnailRatio: Double
+        let imageCount: Int
+        let userProfile: UIImage
+        let userNickname: String
+        let comment: String
+        let likeCount: Int
         
-        let contentViewBackgroundColor: UIColor
-        
-        init(item: WaterfallItem) {
-            indexLabelText = "\(item.index + 1)"
-            contentViewBackgroundColor = item.color
+        init(petpionFeed: PetpionFeed) {
+            self.thumbnail = petpionFeed.imageURLArr![0]
+            self.thumbnailRatio = petpionFeed.imageRatio
+            self.imageCount = petpionFeed.imagesCount
+            self.userProfile = UIImage()
+            self.userNickname = "TempUser"
+            self.comment = petpionFeed.message
+            self.likeCount = petpionFeed.likeCount
         }
     }
+    
 }

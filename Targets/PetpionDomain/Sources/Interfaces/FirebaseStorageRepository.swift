@@ -11,7 +11,8 @@ import Foundation
 public protocol FirebaseStorageRepository {
     
     // MARK: - Create
-    func uploadPetFeedImages(feed: PetpionFeed, imageDatas: [Data])
+    func uploadPetFeedImages(feed: PetpionFeed,
+                                    imageDatas: [Data]) async -> Bool
     func uploadProfileImage(_ user: User)
     
     // MARK: - Read

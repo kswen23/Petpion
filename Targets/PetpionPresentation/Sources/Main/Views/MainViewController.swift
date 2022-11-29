@@ -6,25 +6,22 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
+import Combine
 import UIKit
 
 import PetpionCore
-import YPImagePicker
+import PetpionDomain
 
 final class MainViewController: UIViewController {
     
     weak var coordinator: MainCoordinator?
     let viewModel: MainViewModelProtocol
+    private var cancellables = Set<AnyCancellable>()
     
     lazy var petCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
     
     private lazy var dataSource = makeDataSource()
-    let indexArray = Array(0..<50)
-    lazy var data = indexArray.map(WaterfallItem.init)
-    let defaultColumnCount = 2
-    let defaultSpacing = CGFloat(5)
-    let defaultContentInsetsReference = UIContentInsetsReference.automatic
     
     // MARK: - Initialize
     init(viewModel: MainViewModelProtocol) {
@@ -37,13 +34,21 @@ final class MainViewController: UIViewController {
     }
     
     // MARK: - Life Cycle
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.fetchNextFeed()
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .systemBackground
-        
-        layoutPetCollectionView()
+        layout()
         configure()
-        initializeData()
+        binding()
+    }
+    
+    // MARK: - Layout
+    private func layout() {
+        layoutPetCollectionView()
     }
     
     private func layoutPetCollectionView() {
@@ -61,7 +66,6 @@ final class MainViewController: UIViewController {
     // MARK: - Configure
     private func configure() {
         configureNavigationItem()
-        configurePetCollectionView()
     }
     
     private func configureNavigationItem() {
@@ -78,31 +82,15 @@ final class MainViewController: UIViewController {
     }
     
     @objc func personButtonDidTap() {
-        viewModel.fetchNextFeed()
+        
     }
     
     private func configurePetCollectionView() {
-        let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: makeWaterfallLayoutConfiguration())
+        let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: viewModel.makeWaterfallLayoutConfiguration())
         petCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
     }
     
-    private func initializeData() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, WaterfallItem>()
-        snapshot.appendSections([0])
-        snapshot.appendItems(data, toSection: 0)
-        dataSource.apply(snapshot)
-    }
-    
-    private func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration {
-        return UICollectionLayoutWaterfallConfiguration(
-            columnCount: defaultColumnCount,
-            spacing: defaultSpacing,
-            contentInsetsReference: defaultContentInsetsReference) { [self] indexPath in
-                data[indexPath.row].size
-            }
-    }
-    
-    private func makeDataSource() -> UICollectionViewDiffableDataSource<Int, WaterfallItem> {
+    private func makeDataSource() -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
         let registration = makeCellRegistration()
         return UICollectionViewDiffableDataSource(collectionView: petCollectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
@@ -113,29 +101,25 @@ final class MainViewController: UIViewController {
         }
     }
     
-    private func makeCellRegistration() -> UICollectionView.CellRegistration<PetCollectionViewCell, WaterfallItem> {
+    private func makeCellRegistration() -> UICollectionView.CellRegistration<PetCollectionViewCell, PetpionFeed> {
         UICollectionView.CellRegistration { cell, indexPath, item in
-            let viewModel = self.makeViewModel(for: item)
+            let viewModel = self.viewModel.makeViewModel(for: item)
             cell.configure(with: viewModel)
         }
     }
-    
-    func makeViewModel(for item: WaterfallItem) -> PetCollectionViewCell.ViewModel {
-        return PetCollectionViewCell.ViewModel(item: item)
-    }
 
-}
-struct WaterfallItem {
     
-    let index: Int
+    // MARK: - binding
     
-    let size = CGSize(width: 200, height: 50 + .random(in: 0...100))
+    private func binding() {
+        bindSnapshot()
+    }
     
-    let color = UIColor.blue
-}
-extension WaterfallItem: Hashable {
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(index)
+    private func bindSnapshot() {
+        viewModel.snapshotSubject.sink { [weak self] snapshot in
+            guard let strongSelf = self else { return }
+            self?.configurePetCollectionView()
+            self?.dataSource.apply(snapshot)
+        }.store(in: &cancellables)
     }
 }

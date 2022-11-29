@@ -18,8 +18,8 @@ public protocol ImagePreviewCollectionViewCellDelegate {
 public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
     
     var cellDelegation: ImagePreviewCollectionViewCellDelegate?
-    let imagePreview: UIImageView = UIImageView()
-    let editImageButton: UIButton = {
+    private let imagePreview: UIImageView = UIImageView()
+    private let editImageButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "crop.rotate"), for: .normal)
         button.backgroundColor = .gray
@@ -28,7 +28,7 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         return button
     }()
     
-    var imagePreviewHeight: NSLayoutConstraint?
+    private var imagePreviewHeight: NSLayoutConstraint?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -39,6 +39,7 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Layout
     private func layout() {
         layoutImagePreview()
         layoutEditImageButton()
@@ -52,7 +53,7 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
             imagePreview.leadingAnchor.constraint(equalTo: self.leadingAnchor),
             imagePreview.trailingAnchor.constraint(equalTo: self.trailingAnchor),
         ])
-        imagePreviewHeight = imagePreview.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.width)
+        imagePreviewHeight = imagePreview.heightAnchor.constraint(equalToConstant: self.frame.width)
         imagePreviewHeight?.isActive = true
         imagePreview.contentMode = .scaleAspectFit
     }
@@ -70,10 +71,11 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         editImageButton.addTarget(self, action: #selector(editButtonDidTapped), for: .touchUpInside)
     }
     
-    @objc func editButtonDidTapped() {
+    @objc private func editButtonDidTapped() {
         cellDelegation?.editButtonDidTapped(cell: self)
     }
     
+    // MARK: - Configure
     func configure(with image: UIImage, size: CGFloat) {
         imagePreview.image = image
         imagePreviewHeight?.isActive = false

@@ -53,6 +53,7 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
     public func dismissCropViewController() {
         navigationController.dismiss(animated: true)
     }
+    
     private func childDidFinish(_ child: Coordinator?) {
         for (index, coordinator) in childCoordinators.enumerated() {
             if coordinator === child {

@@ -50,7 +50,6 @@ public final class AspectRatioSelectButton: UIView {
     }()
     
     private lazy var currentButton: UIButton = self.makeCircleButton(diameter: buttonDiameter)
-    private var stackViewLeadingAnchor: NSLayoutConstraint?
     private var stackViewTrailingAnchor: NSLayoutConstraint?
     private var stackViewFolded: Bool = true
     
@@ -70,11 +69,10 @@ public final class AspectRatioSelectButton: UIView {
         selectingStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             selectingStackView.topAnchor.constraint(equalTo: self.topAnchor),
-            selectingStackView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+            selectingStackView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+            selectingStackView.leadingAnchor.constraint(equalTo: self.leadingAnchor)
         ])
-        stackViewLeadingAnchor = selectingStackView.leadingAnchor.constraint(equalTo: self.centerXAnchor, constant: -buttonDiameter/2)
-        stackViewLeadingAnchor?.isActive = true
-        stackViewTrailingAnchor = selectingStackView.trailingAnchor.constraint(equalTo: self.centerXAnchor, constant: buttonDiameter/2)
+        stackViewTrailingAnchor = selectingStackView.trailingAnchor.constraint(equalTo: self.leadingAnchor, constant: buttonDiameter)
         stackViewTrailingAnchor?.isActive = true
         ratioButtons.forEach { selectingStackView.addArrangedSubview($0) }
         selectingStackView.roundCorners(cornerRadius: buttonDiameter/2)
@@ -91,23 +89,19 @@ public final class AspectRatioSelectButton: UIView {
         currentButton.addTarget(self, action: #selector(currentButtonDidTapped), for: .touchUpInside)
     }
     
-    @objc func currentButtonDidTapped() {
+    @objc private func currentButtonDidTapped() {
         animateStackView()
     }
     
     private func animateStackView() {
         stackViewFolded.toggle()
-        stackViewLeadingAnchor?.isActive = false
         stackViewTrailingAnchor?.isActive = false
         switch stackViewFolded {
         case true:
-            stackViewLeadingAnchor = selectingStackView.leadingAnchor.constraint(equalTo: self.centerXAnchor, constant: -buttonDiameter/2)
-            stackViewTrailingAnchor = selectingStackView.trailingAnchor.constraint(equalTo: self.centerXAnchor, constant: buttonDiameter/2)
+            stackViewTrailingAnchor = selectingStackView.trailingAnchor.constraint(equalTo: self.leadingAnchor, constant: buttonDiameter)
         case false:
-            stackViewLeadingAnchor = selectingStackView.leadingAnchor.constraint(equalTo: self.leadingAnchor)
             stackViewTrailingAnchor = selectingStackView.trailingAnchor.constraint(equalTo: self.trailingAnchor)
         }
-        stackViewLeadingAnchor?.isActive = true
         stackViewTrailingAnchor?.isActive = true
         
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
@@ -124,7 +118,7 @@ public final class AspectRatioSelectButton: UIView {
         return button
     }
     
-    @objc func ratioButtonDidTapped(_ sender: UIButton) {
+    @objc private func ratioButtonDidTapped(_ sender: UIButton) {
         aspectRatioButtonDelegate?.aspectRatioButtonDidTapped(tag: sender.tag)
         animateStackView()
     }

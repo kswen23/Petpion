@@ -21,20 +21,19 @@ public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
     }
 
     // MARK: - Public
-    public func uploadNewFeed(feed: PetpionFeed, imageDatas: [Data]) {
-        uploadNewFeedOnFirestore(feed)
-        uploadNewImageOnFirebaseStorage(feed: feed,
-                                        imageDatas: imageDatas)
-    }
-    
-    // MARK: - Private
-    private func uploadNewFeedOnFirestore(_ feed: PetpionFeed) {
-        firestoreRepository.uploadNewFeed(feed)
-    }
-    
-    private func uploadNewImageOnFirebaseStorage(feed: PetpionFeed,
-                                                 imageDatas: [Data]) {
-        firebaseStorageRepository.uploadPetFeedImages(feed: feed,
-                                                      imageDatas: imageDatas)
+    public func uploadNewFeed(feed: PetpionFeed, imageDatas: [Data]) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let imageUploadIsCompleted = await firebaseStorageRepository.uploadPetFeedImages(feed: feed,
+                                                                                           imageDatas: imageDatas)
+                let feedUploadIsCompleted = await firestoreRepository.uploadNewFeed(feed)
+
+                if imageUploadIsCompleted && feedUploadIsCompleted {
+                    continuation.resume(returning: true)
+                } else {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
     }
 }

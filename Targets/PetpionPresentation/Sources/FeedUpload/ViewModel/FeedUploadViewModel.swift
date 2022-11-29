@@ -12,6 +12,11 @@ import UIKit
 
 import PetpionDomain
 
+public enum Loading {
+    case start
+    case finish
+}
+
 public enum CellAspectRatio: Int, CaseIterable {
     case square = 1
     case horizontalRectangle = 2
@@ -41,29 +46,33 @@ public enum CellAspectRatio: Int, CaseIterable {
     }
 }
 
-protocol FeedUploadViewModelInput {
+public protocol FeedUploadViewModelInput {
     var indexWillChange: Bool { get set }
     func imagesDidPicked(_ images: [UIImage])
     func imageDidCropped(_ image: UIImage)
-    func uploadNewFeed(images: [UIImage], message: String?)
+    func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
     func changeCurrentIndex(_ index: Int)
+    func imageSliderValueChanged(_ index: Int)
     
 }
-protocol FeedUploadViewModelOutput {
+public protocol FeedUploadViewModelOutput {
+    }
+public protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
+    var uploadFeedUseCase: UploadFeedUseCase { get }
     var currentImageIndexSubject: CurrentValueSubject<Int, Never> { get }
     var cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> { get }
     var imagesSubject: CurrentValueSubject<[UIImage], Never> { get }
-    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, UIImage>, Publishers.Map<PassthroughSubject<[UIImage], Never>, NSDiffableDataSourceSnapshot<Int, UIImage>>.Failure> { get }
+    var loadingSubject: PassthroughSubject<Loading, Never> { get }
+    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, UIImage>,Publishers.Map<PassthroughSubject<[UIImage], Never>,NSDiffableDataSourceSnapshot<Int, UIImage>>.Failure> { get }
+
 }
-protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
-    var uploadFeedUseCase: UploadFeedUseCase { get }
-}
-public final class FeedUploadViewModel: FeedUploadViewModelProtocol {
+final class FeedUploadViewModel: FeedUploadViewModelProtocol {
 
     let imagesSubject: CurrentValueSubject<[UIImage], Never> = .init([])
     let currentImageIndexSubject: CurrentValueSubject<Int, Never> = .init(0)
     let cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> = .init(.square)
+    let loadingSubject: PassthroughSubject<Loading, Never> = .init()
     var indexWillChange: Bool = true
     
     lazy var snapshotSubject = imagesSubject.map { items -> NSDiffableDataSourceSnapshot<Int, UIImage> in
@@ -91,16 +100,27 @@ public final class FeedUploadViewModel: FeedUploadViewModelProtocol {
 
     }
     
-    func uploadNewFeed(images: [UIImage], message: String?) {
-        let datas: [Data] = images.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
-        
+    func uploadNewFeed(message: String) {
+        loadingSubject.send(.start)
+        let datas: [Data] = imagesSubject.value.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
                                             uploaderID: UUID().uuidString,
                                             uploadDate: Date.init(),
-                                            likeCount: 10,
+                                            likeCount: 0,
                                             imageCount: datas.count,
-                                            message: message ?? "")
-        uploadFeedUseCase.uploadNewFeed(feed: feed, imageDatas: datas)
+                                            message: message,
+                                            feedSize: self.getFeedSize(imageRatio: cellRatioSubject.value,
+                                                                       message: message),
+                                            imageRatio: cellRatioSubject.value.heightRatio)
+        
+        Task {
+            let uploadingComplete = await uploadFeedUseCase.uploadNewFeed(feed: feed, imageDatas: datas)            
+            if uploadingComplete {
+                await MainActor.run {
+                    loadingSubject.send(.finish)
+                }
+            }
+        }
     }
     
     func changeRatio(tag: Int) {
@@ -120,6 +140,20 @@ public final class FeedUploadViewModel: FeedUploadViewModelProtocol {
             currentImageIndexSubject.send(index)
         }
     }
+    
+    func imageSliderValueChanged(_ index: Int) {
+        currentImageIndexSubject.send(index)
+    }
     // MARK: - Output
     
+    // MARK: - Private
+    private func getFeedSize(imageRatio: CellAspectRatio, message: String) -> CGSize {
+        var height = imageRatio.heightRatio*12 + 2
+        if message.count > 15 {
+            height += 2
+        } else if message.count > 0 {
+            height += 1
+        }
+        return CGSize(width: 12, height: height)
+    }
 }

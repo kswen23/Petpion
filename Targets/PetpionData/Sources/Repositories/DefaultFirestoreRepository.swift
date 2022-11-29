@@ -16,17 +16,23 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var query: Query?
     private var cursor: DocumentSnapshot?
     // MARK: - Create
-    public func uploadNewFeed(_ feed: PetpionFeed) {
+    public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
         
-        let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
-        
-        db
-            .document(FirestoreCollection.feed.reference + "/\(feed.id)")
-            .setData(feedCollections) { error in
-                if let error = error {
-                    print(error.localizedDescription)
-                }
+        return await withCheckedContinuation{ continuation in
+            Task {
+                let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
+                db
+                    .document(FirestoreCollection.feed.reference + "/\(feed.id)")
+                    .setData(feedCollections) { error in
+                        if let error = error {
+                            print(error.localizedDescription)
+                            continuation.resume(returning: false)
+                        } else {
+                            continuation.resume(returning: true)
+                        }
+                    }
             }
+        }
     }
     
     // MARK: - Public Read

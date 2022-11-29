@@ -30,9 +30,19 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     
     // MARK: - Public Create
     public func uploadPetFeedImages(feed: PetpionFeed,
-                                    imageDatas: [Data]) {
-        let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
-        uploadSeveralImages(dataAndRefArray)
+                                    imageDatas: [Data]) async -> Bool {
+        return await withCheckedContinuation{ continuation in
+            Task {
+                let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
+                let isCompleted = await uploadSeveralImages(dataAndRefArray)
+                switch isCompleted {
+                case .success(let success):
+                    continuation.resume(returning: success)
+                case .failure(let failure):
+                    print(failure.localizedDescription)
+                }
+            }
+        }
     }
     
     public func uploadProfileImage(_ user: User) {
@@ -42,31 +52,55 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     // MARK: - Private Create
-    private func uploadSeveralImages(_ dataAndRefArray: [DataAndReference]) {
-        Task {
-            await withTaskGroup(of: Void.self, body: { taskGroup in
-                for dataAndRef in dataAndRefArray {
-                    taskGroup.addTask {
-                        await self.uploadSingleImage(dataAndRef)
+    private func uploadSeveralImages(_ dataAndRefArray: [DataAndReference]) async -> Result<Bool, Error> {
+        return await withCheckedContinuation{ continuation in
+            Task {
+                let uploadResult = await withTaskGroup(of: Result<Bool, Error>.self) { taskGroup -> Result<Bool, Error> in
+                    for dataAndRef in dataAndRefArray {
+                        taskGroup.addTask {
+                            let uploadResult = await self.uploadSingleImage(dataAndRef)
+                            return uploadResult
+                        }
+                    }
+                    var successArr = [Bool]()
+                    for await value in taskGroup {
+                        switch value {
+                        case .success(let success):
+                            if success {
+                                successArr.append(success)
+                            }
+                        case .failure(let error):
+                            continuation.resume(returning: .failure(error))
+                        }
+                    }
+                    
+                    if successArr.count == dataAndRefArray.count {
+                        return Result.success(true)
+                    } else {
+                        return Result.success(false)
                     }
                 }
-            })
+                continuation.resume(returning: uploadResult)
+            }
         }
     }
     
-    private func uploadSingleImage(_ dataAndRef: DataAndReference) async {
-        let metadata = StorageMetadata()
-        metadata.contentType = "image/jpeg"
-        storage
-            .reference()
-            .child(dataAndRef.1)
-            .putData(dataAndRef.0, metadata: metadata) { result in
-                switch result {
-                case .success(_): break
-                case .failure(let failure):
-                    print(failure)
+    private func uploadSingleImage(_ dataAndRef: DataAndReference) async -> Result<Bool, Error> {
+        return await withCheckedContinuation{ continuation in
+            let metadata = StorageMetadata()
+            metadata.contentType = "image/jpeg"
+            storage
+                .reference()
+                .child(dataAndRef.1)
+                .putData(dataAndRef.0, metadata: metadata) { result in
+                    switch result {
+                    case .success(_):
+                        continuation.resume(returning: .success(true))
+                    case .failure(let failure):
+                        continuation.resume(returning: .failure(failure))
+                    }
                 }
-            }
+        }
     }
     
     // MARK: - Public Read
