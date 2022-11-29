@@ -86,10 +86,8 @@ public final class AspectRatioSelectButton: UIView {
         currentButton.leadingAnchor.constraint(equalTo: selectingStackView.leadingAnchor).isActive = true
         currentButton.setAttributedTitle(NSAttributedString(string: "1:1",
                                                             attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 16, weight: .medium)]), for: .normal)
-        currentButton.backgroundColor = .darkGray
         currentButton.setTitleColor(.white, for: .normal)
-        currentButton.alpha = 0.8
-        
+        currentButton.backgroundColor = .systemGray
         currentButton.addTarget(self, action: #selector(currentButtonDidTapped), for: .touchUpInside)
     }
     
@@ -98,6 +96,7 @@ public final class AspectRatioSelectButton: UIView {
     }
     
     private func animateStackView() {
+        stackViewFolded.toggle()
         stackViewLeadingAnchor?.isActive = false
         stackViewTrailingAnchor?.isActive = false
         switch stackViewFolded {
@@ -114,7 +113,6 @@ public final class AspectRatioSelectButton: UIView {
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
             self.layoutIfNeeded()
         }
-        stackViewFolded.toggle()
     }
     
     private func makeCircleButton(diameter: CGFloat) -> UIButton {
