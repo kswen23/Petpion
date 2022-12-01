@@ -24,26 +24,26 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     public func fetchFeeds(sortBy option: SortingOption) async -> [PetpionFeed] {
         return await withCheckedContinuation { continuation in
             Task {
-                let result = await firestoreRepository.fetchFeeds(by: option)
-                switch result {
+                let feedDataFromFirestore = await firestoreRepository.fetchFeedData(by: option)
+                switch feedDataFromFirestore {
                 case .success(let success):
-                    let feedWithImageURL = await addImageURL(feeds: success)
-                    continuation.resume(returning: feedWithImageURL)
+                    let feedWithImageURL = await addThumbnailImageURL(feeds: success)
+                    continuation.resume(returning: sortResultFeeds(sortBy: option, with: feedWithImageURL))
                 case .failure(let failure):
                     print(failure)
                 }
             }
         }
     }
-
+    
     // MARK: - Private
-    private func addImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
+    private func addThumbnailImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         return await withCheckedContinuation { continuation in
             Task {
                 let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
                     for feed in feeds {
                         taskGroup.addTask {
-                            let urlArr = await self.firebaseStorageRepository.fetchFeedImageURL(feed)
+                            let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
                             var withURLFeed = feed
                             withURLFeed.imageURLArr = urlArr
                             return withURLFeed
@@ -59,4 +59,17 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             }
         }
     }
+    
+    private func sortResultFeeds(sortBy option: SortingOption,
+                                 with feeds: [PetpionFeed]) -> [PetpionFeed] {
+        var resultFeeds = feeds
+        switch option {
+        case .popular:
+            resultFeeds.sort { $0.likeCount > $1.likeCount }
+        case .latest:
+            resultFeeds.sort { $0.uploadDate > $1.uploadDate }
+        }
+        return resultFeeds
+    }
+
 }

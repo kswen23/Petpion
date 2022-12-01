@@ -15,17 +15,18 @@ import PetpionDomain
 
 protocol MainViewModelInput {
     func fetchNextFeed()
+    func sortingOptionDidChanged(with option: SortingOption)
 }
 
 protocol MainViewModelOutput {
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
     func makeViewModel(for item: PetpionFeed) -> PetCollectionViewCell.ViewModel
-    //    func makeViewModel(for: WaterfallItem) -> PetCollectionViewCell.ViewModel
 }
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
+    var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
 
 }
@@ -33,6 +34,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
 public final class MainViewModel: MainViewModelProtocol {
     
     let petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
+    let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
     lazy var snapshotSubject = petpionFeedSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
         var snapshot = NSDiffableDataSourceSnapshot<Int, PetpionFeed>()
         snapshot.appendSections([0])
@@ -42,20 +44,28 @@ public final class MainViewModel: MainViewModelProtocol {
     
     let fetchFeedUseCase: FetchFeedUseCase
     
-    var sortingOption: SortingOption = .favorite
-    
     init(fetchFeedUseCase: FetchFeedUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
-//        fetchFeedUseCase.fetchFeeds(sortBy: sortingOption)
     }
     
     func fetchNextFeed() {
         Task {
-            let result = await fetchFeedUseCase.fetchFeeds(sortBy: sortingOption)
+            let result = await fetchFeedUseCase.fetchFeeds(sortBy: sortingOptionSubject.value)
             await MainActor.run {
                 petpionFeedSubject.send(result)
             }
         }
+    }
+    
+    func sortingOptionDidChanged(with option: SortingOption) {
+        guard option != sortingOptionSubject.value else { return }
+        switch option {
+        case .popular:
+            sortingOptionSubject.send(.popular)
+        case .latest:
+            sortingOptionSubject.send(.latest)
+        }
+        fetchNextFeed()
     }
     
     // MARK: - Output

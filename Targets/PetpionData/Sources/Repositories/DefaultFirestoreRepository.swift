@@ -36,17 +36,18 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Read
-    public func fetchFeeds(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+    public func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
         
         return await withCheckedContinuation { continuation in
             Task {
                 var feedCollections = Result<[[String : Any]], Error>.success([[:]])
                 
-                if query == getQuery(by: option) && cursor != nil {
-                    feedCollections = await fetchFeedCollection(by: option)
-                } else {
-                    feedCollections = await fetchFirstFeedCollection(by: option)
-                }
+//                if query == getQuery(by: option) && cursor != nil {
+//                    feedCollections = await fetchFeedCollection(by: option)
+//                } else {
+//                    feedCollections = await fetchFirstFeedCollection(by: option)
+//                }
+                feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
                 
                 switch feedCollections {
                 case .success(let collections):
@@ -125,8 +126,8 @@ extension DefaultFirestoreRepository {
             case .feed:
                 guard let year = DateComponents.currentDateTimeComponents().year,
                       let month = DateComponents.currentDateTimeComponents().month else { return ""}
-                return "feeds/\(year)/\(month)"
-                
+//                return "feeds/\(year)/\(month)"
+                return "feeds/2022/11"
             }
         }
         
@@ -134,7 +135,7 @@ extension DefaultFirestoreRepository {
     
     private func getQuery(by option: SortingOption) -> Query {
         switch option {
-        case .favorite:
+        case .popular:
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "likeCount", descending: true)
@@ -143,11 +144,6 @@ extension DefaultFirestoreRepository {
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "uploadTimestamp", descending: true)
-                .limit(to: 20)
-        case .random:
-            return db
-                .collection(FirestoreCollection.feed.reference)
-                .order(by: "likeCount", descending: true)
                 .limit(to: 20)
         }
     }

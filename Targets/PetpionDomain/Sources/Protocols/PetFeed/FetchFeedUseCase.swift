@@ -18,7 +18,6 @@ public protocol FetchFeedUseCase {
 
 public enum SortingOption {
     
-    case favorite
+    case popular
     case latest
-    case random
 }
