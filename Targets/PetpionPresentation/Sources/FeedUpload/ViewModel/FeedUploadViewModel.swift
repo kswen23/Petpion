@@ -57,6 +57,7 @@ public protocol FeedUploadViewModelInput {
     
 }
 public protocol FeedUploadViewModelOutput {
+    var textViewPlaceHolder: String { get }
     }
 public protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
     var uploadFeedUseCase: UploadFeedUseCase { get }
@@ -81,7 +82,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         snapshot.appendItems(items, toSection: 0)
         return snapshot
     }.eraseToAnyPublisher()
-    
+    let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
     let uploadFeedUseCase: UploadFeedUseCase
     
     init(uploadFeedUseCase: UploadFeedUseCase) {
@@ -148,7 +149,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     
     // MARK: - Private
     private func getFeedSize(imageRatio: CellAspectRatio, message: String) -> CGSize {
-        var height = imageRatio.heightRatio*12 + 2
+        var height = imageRatio.heightRatio*12 + 4
         if message.count > 15 {
             height += 2
         } else if message.count > 0 {

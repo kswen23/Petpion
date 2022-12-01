@@ -18,7 +18,7 @@ public final class AspectRatioSelectButton: UIView {
     
     var aspectRatioButtonDelegate: AspectRatioButtonDelegate?
     
-    let buttonDiameter: CGFloat
+    private let buttonDiameter: CGFloat
     
     private let selectingStackView: UIStackView = {
         let stackView = UIStackView()
@@ -31,7 +31,7 @@ public final class AspectRatioSelectButton: UIView {
         var tagNumber = 1
         var buttons = [UIButton]()
         CellAspectRatio.allCases.forEach { ratio in
-            let ratioButton = makeCircleButton(diameter: buttonDiameter)
+            let ratioButton = CircleButton(diameter: buttonDiameter)
             ratioButton.setAttributedTitle(NSAttributedString(string: ratio.ratioString,
                                                               attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 16, weight: .medium)]), for: .normal)
             ratioButton.setTitleColor(.white, for: .normal)
@@ -49,7 +49,7 @@ public final class AspectRatioSelectButton: UIView {
         return buttons
     }()
     
-    private lazy var currentButton: UIButton = self.makeCircleButton(diameter: buttonDiameter)
+    private lazy var currentButton: UIButton = CircleButton(diameter: buttonDiameter)
     private var stackViewTrailingAnchor: NSLayoutConstraint?
     private var stackViewFolded: Bool = true
     
@@ -107,15 +107,6 @@ public final class AspectRatioSelectButton: UIView {
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
             self.layoutIfNeeded()
         }
-    }
-    
-    private func makeCircleButton(diameter: CGFloat) -> UIButton {
-        let button = UIButton()
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.widthAnchor.constraint(equalToConstant: diameter).isActive = true
-        button.heightAnchor.constraint(equalToConstant: diameter).isActive = true
-        button.roundCorners(cornerRadius: diameter/2)
-        return button
     }
     
     @objc private func ratioButtonDidTapped(_ sender: UIButton) {

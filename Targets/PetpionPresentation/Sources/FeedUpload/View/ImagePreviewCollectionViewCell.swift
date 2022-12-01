@@ -19,8 +19,8 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
     
     var cellDelegation: ImagePreviewCollectionViewCellDelegate?
     private let imagePreview: UIImageView = UIImageView()
-    private let editImageButton: UIButton = {
-        let button = UIButton()
+    private let editImageButton: CircleButton = {
+        let button = CircleButton(diameter: 40)
         button.setImage(UIImage(systemName: "crop.rotate"), for: .normal)
         button.backgroundColor = .gray
         button.tintColor = .white
@@ -64,10 +64,7 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         NSLayoutConstraint.activate([
             editImageButton.bottomAnchor.constraint(equalTo: imagePreview.bottomAnchor, constant: -20),
             editImageButton.trailingAnchor.constraint(equalTo: imagePreview.trailingAnchor, constant: -20),
-            editImageButton.heightAnchor.constraint(equalToConstant: 40),
-            editImageButton.widthAnchor.constraint(equalToConstant: 40)
         ])
-        editImageButton.roundCorners(cornerRadius: 20)
         editImageButton.addTarget(self, action: #selector(editButtonDidTapped), for: .touchUpInside)
     }
     

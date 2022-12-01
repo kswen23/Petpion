@@ -16,7 +16,7 @@ import Mantis
 public final class FeedUploadViewController: UIViewController {
     
     weak var coordinator: FeedUploadCoordinator?
-    var viewModel: FeedUploadViewModelProtocol
+    private var viewModel: FeedUploadViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
     private lazy var baseScrollView: UIScrollView = {
@@ -43,7 +43,6 @@ public final class FeedUploadViewController: UIViewController {
             return pageControl
         }()
     private let textView: UITextView = UITextView()
-    private let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
     private var collectionViewHeightAnchor: NSLayoutConstraint?
     
     private lazy var loadingAlertController = UIAlertController(title: nil,
@@ -191,7 +190,7 @@ public final class FeedUploadViewController: UIViewController {
     }
     
     @objc private func uploadButtonDidTapped() {
-        if textView.text == textViewPlaceHolder {
+        if textView.text == viewModel.textViewPlaceHolder {
             textView.text = ""
         }
         viewModel.uploadNewFeed(message: textView.text)
@@ -203,7 +202,7 @@ public final class FeedUploadViewController: UIViewController {
         textView.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.7).cgColor
         textView.roundCorners(cornerRadius: 15)
         textView.font = .systemFont(ofSize: 15)
-        textView.text = textViewPlaceHolder
+        textView.text = viewModel.textViewPlaceHolder
         textView.textColor = .lightGray
         textView.delegate = self
     }
@@ -410,7 +409,7 @@ extension FeedUploadViewController: UIScrollViewDelegate {
 
 extension FeedUploadViewController: UITextViewDelegate {
     public func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == textViewPlaceHolder {
+        if textView.text == viewModel.textViewPlaceHolder {
             textView.text = nil
             textView.textColor = .black
         }
@@ -418,7 +417,7 @@ extension FeedUploadViewController: UITextViewDelegate {
     
     public func textViewDidEndEditing(_ textView: UITextView) {
         if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            textView.text = textViewPlaceHolder
+            textView.text = viewModel.textViewPlaceHolder
             textView.textColor = .lightGray
         }
     }
