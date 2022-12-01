@@ -16,6 +16,7 @@ public protocol FirebaseStorageRepository {
     func uploadProfileImage(_ user: User)
     
     // MARK: - Read
-    func fetchFeedImageURL(_ feed: PetpionFeed) async -> [URL]
+    func fetchFeedThumbnailImageURL(_ feed: PetpionFeed) async -> [URL]
+    func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL]
     
 }

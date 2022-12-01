@@ -11,6 +11,6 @@ public protocol FirestoreRepository {
     // MARK: - Create
     func uploadNewFeed(_ feed: PetpionFeed) async -> Bool
     // MARK: - Read
-    func fetchFeeds(by option: SortingOption) async -> Result<[PetpionFeed], Error>
+    func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error>
     
 }

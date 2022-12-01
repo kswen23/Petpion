@@ -104,19 +104,35 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     // MARK: - Public Read
-    public func fetchFeedImageURL(_ feed: PetpionFeed) async -> [URL] {
+    public func fetchFeedThumbnailImageURL(_ feed: PetpionFeed) async -> [URL] {
+        return await withCheckedContinuation{ continuation in
+            Task {
+                let thumbnailFeedImageRef: String = "\(PetpionFeed.getImageReference(feed))/0"
+                let thumbnailFeedImageURL = await fetchSingleImageURL(from: thumbnailFeedImageRef)
+
+                switch thumbnailFeedImageURL {
+                case .success(let url):
+                    continuation.resume(returning: [url])
+                case .failure(let failure):
+                    print(failure.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    public func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL] {
         return await withCheckedContinuation{ continuation in
             Task {
                 let feedImageRef: String = PetpionFeed.getImageReference(feed)
                 
                 var imageReferences: [String] = []
-                for i in 0 ..< feed.imagesCount {
+                for i in 1 ..< feed.imagesCount {
                     imageReferences.append(feedImageRef + "/\(i)")
                 }
                 
-                let imageURLs = await fetchSeveralImageURLs(from: imageReferences)
+                let totalImageURLs = await fetchSeveralImageURLs(from: imageReferences)
                 var urlArr: [URL] = []
-                for value in imageURLs {
+                for value in totalImageURLs {
                     switch value {
                     case .success(let url):
                         urlArr.append(url)
@@ -132,7 +148,6 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                 continuation.resume(returning: sortedURLArr)
             }
         }
-        
     }
     
     // MARK: - Private Read
