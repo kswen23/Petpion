@@ -18,17 +18,16 @@ public final class ImageCache {
         return await withCheckedContinuation { continuation in
             Task {
                 if let cachedImage = image(url: url) {
-                    print("cached")
                     return continuation.resume(with: .success(cachedImage))
                 }
                 do {
                     let fetchedImage = try await fetchImage(url: url)
-                    guard let imageDataCount = (fetchedImage.jpegData(compressionQuality: 0.8)?.count) else { return }
-                    self.cachedImages.setObject(fetchedImage, forKey: url, cost: imageDataCount)
-                    print("fetched")
+                    saveImageCache(image: fetchedImage, key: url)
                     return continuation.resume(with: .success(fetchedImage))
-                } catch {
-                    print("error")
+                } catch ImageDownloadError.invalidServerResponse {
+                    print("ImageDownloadError - invalidServerResponse")
+                } catch ImageDownloadError.unsupportedImage {
+                    print("ImageDownloadError - unsupportedImage")
                 }
             }
         }
@@ -42,21 +41,27 @@ public final class ImageCache {
     private func fetchImage(url: NSURL) async throws -> UIImage {
         
         let (data, response) = try await URLSession.shared.data(from: url as URL)
+        
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
-            throw DownloadError.unknown
+            throw ImageDownloadError.invalidServerResponse
         }
         
         guard let image = UIImage(data: data) else {
-            throw DownloadError.unknown
+            throw ImageDownloadError.unsupportedImage
         }
         
         return image
     }
     
+    private func saveImageCache(image: UIImage, key: NSURL) {
+        guard let imageDataCount = (image.jpegData(compressionQuality: 1.0)?.count) else { return }
+        self.cachedImages.setObject(image, forKey: key, cost: imageDataCount)
+    }
+    
 }
 
-enum DownloadError: String, Error {
-    case badImage = "badImage"
-    case unknown = "unknown"
+public enum ImageDownloadError: String, Error {
+    case invalidServerResponse = "invalidServerResponse"
+    case unsupportedImage = "unsupportedImage"
 }
