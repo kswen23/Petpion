@@ -28,7 +28,7 @@ public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
                                                                                            imageDatas: imageDatas)
                 let feedUploadIsCompleted = await firestoreRepository.uploadNewFeed(feed)
 
-                if imageUploadIsCompleted && feedUploadIsCompleted {
+                if imageUploadIsCompleted, feedUploadIsCompleted {
                     continuation.resume(returning: true)
                 } else {
                     continuation.resume(returning: false)

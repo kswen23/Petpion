@@ -12,7 +12,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     public var firebaseStorageRepository: FirebaseStorageRepository
-    
     // MARK: - Initialize
     init(firestoreRepository: FirestoreRepository,
          firebaseStorageRepository: FirebaseStorageRepository) {
@@ -24,10 +23,10 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     public func fetchFeeds(sortBy option: SortingOption) async -> [PetpionFeed] {
         return await withCheckedContinuation { continuation in
             Task {
-                let feedDataFromFirestore = await firestoreRepository.fetchFeedData(by: option)
+                let feedDataFromFirestore: Result<[PetpionFeed], Error> = await firestoreRepository.fetchFeedData(by: option)
                 switch feedDataFromFirestore {
-                case .success(let success):
-                    let feedWithImageURL = await addThumbnailImageURL(feeds: success)
+                case .success(let feedWithoutImageURL):
+                    let feedWithImageURL: [PetpionFeed] = await addThumbnailImageURL(feeds: feedWithoutImageURL)
                     continuation.resume(returning: sortResultFeeds(sortBy: option, with: feedWithImageURL))
                 case .failure(let failure):
                     print(failure)
