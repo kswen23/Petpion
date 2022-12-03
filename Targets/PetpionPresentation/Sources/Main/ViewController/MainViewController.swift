@@ -37,8 +37,8 @@ final class MainViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        viewModel.fetchNextFeed()
     }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .systemBackground
@@ -146,6 +146,7 @@ final class MainViewController: UIViewController {
     private func configurePetCollectionView() {
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: viewModel.makeWaterfallLayoutConfiguration())
         petCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
+        petCollectionView.delegate = self
     }
     
     private func makeDataSource() -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
@@ -185,5 +186,12 @@ final class MainViewController: UIViewController {
         viewModel.sortingOptionSubject.sink { [weak self] sortingOption in
             self?.configureLeftBarButton(with: sortingOption)
         }.store(in: &cancellables)
+    }
+}
+
+extension MainViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+//        print("\(indexPath)didEndDisplaying")
     }
 }

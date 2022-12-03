@@ -75,6 +75,15 @@ class PetCollectionViewCell: UICollectionViewCell {
         return stackView
     }()
     
+    private var heightLayoutAnchor: NSLayoutConstraint?
+
+    // MARK: - Cell LifeCycle
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        heightLayoutAnchor?.isActive = false
+    }
+    
+    // MARK: - Initialize
     override init(frame: CGRect) {
         super.init(frame: frame)
         layout()
@@ -149,20 +158,30 @@ class PetCollectionViewCell: UICollectionViewCell {
     }
     // MARK: - Configure
     func configure(with viewModel: ViewModel) {
-        setImageCountButtonTitle(with: viewModel.imageCount)
+        configureCellHeight(viewModel.thumbnailRatio)
+        configureThumbnailImageView(viewModel.thumbnailImageURL)
+        configureImageCountButtonTitle(with: viewModel.imageCount)
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
         likeCountLabel.text = String(viewModel.likeCount)
-        thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*viewModel.thumbnailRatio).isActive = true
-        downloadImage(with: viewModel.thumbnail) { [weak self] image in
-            DispatchQueue.main.async {
-                self?.thumbnailImageView.backgroundColor = .systemBackground
-                self?.thumbnailImageView.image = image
+    }
+    
+    private func configureCellHeight(_ thumbnailRatio: Double) {
+        heightLayoutAnchor = thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*thumbnailRatio)
+        heightLayoutAnchor?.isActive = true
+
+    }
+    
+    private func configureThumbnailImageView(_ url: URL) {
+        Task {
+            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
+            await MainActor.run {
+                thumbnailImageView.image = thumbnailImage
             }
         }
     }
     
-    func setImageCountButtonTitle(with imageCount: Int) {
+    private func configureImageCountButtonTitle(with imageCount: Int) {
         let buttonTitle = imageCount - 1
         guard buttonTitle > 0 else {
             return imageCountButton.isHidden = true
@@ -170,25 +189,13 @@ class PetCollectionViewCell: UICollectionViewCell {
         imageCountButton.setTitle("+\(buttonTitle)", for: .normal)
     }
     
-    private func downloadImage(with url: URL, completion: @escaping (UIImage?) -> Void) {
-        let task = URLSession.shared.dataTask(with: url) { data, _, _ in
-            guard let data = data else {
-                return
-            }
-            DispatchQueue.main.async {
-                let image = UIImage(data: data)
-                completion(image)
-            }
-        }
-        task.resume()
-    }
 }
 
 extension PetCollectionViewCell {
     
     struct ViewModel {
         
-        let thumbnail: URL
+        let thumbnailImageURL: URL
         let thumbnailRatio: Double
         let imageCount: Int
         let userProfile: UIImage
@@ -197,7 +204,7 @@ extension PetCollectionViewCell {
         let likeCount: Int
         
         init(petpionFeed: PetpionFeed) {
-            self.thumbnail = petpionFeed.imageURLArr![0]
+            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imagesCount
             self.userProfile = UIImage()

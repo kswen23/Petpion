@@ -46,6 +46,7 @@ public final class MainViewModel: MainViewModelProtocol {
     
     init(fetchFeedUseCase: FetchFeedUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
+        fetchNextFeed()
     }
     
     func fetchNextFeed() {
