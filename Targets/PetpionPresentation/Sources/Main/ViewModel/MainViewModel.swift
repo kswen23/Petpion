@@ -15,12 +15,17 @@ import PetpionDomain
 
 protocol MainViewModelInput {
     func fetchNextFeed()
-    func sortingOptionDidChanged(with option: SortingOption)
+    func sortingOptionWillChange(with option: SortingOption)
+    func sortingOptionDidChanged()
+    func baseCollectionViewDidScrolled(to index: Int)
 }
 
 protocol MainViewModelOutput {
+    var baseCollectionViewType: [SortingOption] { get }
+    var baseCollectionViewNeedToScroll: Bool { get set }
+    func makeBaseCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption>
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
-    func makeViewModel(for item: PetpionFeed) -> PetCollectionViewCell.ViewModel
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
 }
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
@@ -32,7 +37,12 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
 }
 
 public final class MainViewModel: MainViewModelProtocol {
+    enum Section {
+        case main
+    }
     
+    let baseCollectionViewType: [SortingOption] = SortingOption.allCases
+    var baseCollectionViewNeedToScroll: Bool = true
     let petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
     lazy var snapshotSubject = petpionFeedSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
@@ -51,24 +61,40 @@ public final class MainViewModel: MainViewModelProtocol {
     
     func fetchNextFeed() {
         Task {
-            let result = await fetchFeedUseCase.fetchFeeds(sortBy: sortingOptionSubject.value)
-            await MainActor.run {
-                petpionFeedSubject.send(result)
+            var resultFeed = petpionFeedSubject.value
+            let fetchedFeed = await fetchFeedUseCase.fetchFeeds(sortBy: sortingOptionSubject.value)
+            resultFeed = resultFeed + fetchedFeed
+            await MainActor.run { [resultFeed] in
+                petpionFeedSubject.send(resultFeed)
             }
         }
     }
     
-    func sortingOptionDidChanged(with option: SortingOption) {
+    func sortingOptionWillChange(with option: SortingOption) {
         guard option != sortingOptionSubject.value else { return }
+        baseCollectionViewNeedToScroll = false
         switch option {
         case .popular:
             sortingOptionSubject.send(.popular)
         case .latest:
             sortingOptionSubject.send(.latest)
         }
-        fetchNextFeed()
     }
     
+    func sortingOptionDidChanged() {
+        baseCollectionViewNeedToScroll = true
+    }
+    
+    func baseCollectionViewDidScrolled(to index: Int) {
+        guard index != sortingOptionSubject.value.rawValue else { return }
+        switch index {
+        case 0:
+            sortingOptionSubject.send(.popular)
+        case 1:
+            sortingOptionSubject.send(.latest)
+        default: break
+        }
+    }
     // MARK: - Output
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration {
         return UICollectionLayoutWaterfallConfiguration(
@@ -79,9 +105,46 @@ public final class MainViewModel: MainViewModelProtocol {
             }
     }
     
-    func makeViewModel(for item: PetpionFeed) -> PetCollectionViewCell.ViewModel {
-        return PetCollectionViewCell.ViewModel(petpionFeed: item)
+    func makeBaseCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption> {
+        let registration = makeBaseCollectionViewCellRegistration()
+        return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            collectionView.dequeueConfiguredReusableCell(
+                using: registration,
+                for: indexPath,
+                item: item
+            )
+        }
+    }
+    
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
+        let registration = makePetFeedCollectionViewCellRegistration()
+        return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
+            collectionView.dequeueConfiguredReusableCell(
+                using: registration,
+                for: indexPath,
+                item: item
+            )
+        }
+    }
+    
+    private func makeBaseCollectionViewCellRegistration() -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
+        UICollectionView.CellRegistration { [self] cell, indexPath, item in
+            cell.backgroundColor = .blue
+            cell.viewModel = self
+            cell.bindSnapshot()
+        }
+    }
+    
+    private func makePetFeedCollectionViewCellRegistration() -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
+        UICollectionView.CellRegistration { cell, indexPath, item in
+            let viewModel = self.makeViewModel(for: item)
+            cell.configure(with: viewModel)
+        }
+    }
+
+    
+    private func makeViewModel(for item:  PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
+        return PetFeedCollectionViewCell.ViewModel(petpionFeed: item)
     }
 
 }
-

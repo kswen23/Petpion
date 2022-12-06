@@ -50,7 +50,6 @@ public final class FeedUploadViewController: UIViewController {
                                                                 preferredStyle: .alert)
     
     private let aspectRatioSelectButton: AspectRatioSelectButton = .init(buttonDiameter: 50)
-    // need change
     lazy private var datasource = self.makeDataSource()
     
     // MARK: - Initialize

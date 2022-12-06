@@ -1,5 +1,5 @@
 //
-//  CollectionViewCell.swift
+//  PetFeedCollectionViewCell.swift
 //  PetpionPresentation
 //
 //  Created by 김성원 on 2022/11/11.
@@ -11,7 +11,7 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-class PetCollectionViewCell: UICollectionViewCell {
+class PetFeedCollectionViewCell: UICollectionViewCell {
     
     private let thumbnailImageView: UIImageView = UIImageView()
     private let imageCountButton: UIButton = {
@@ -191,7 +191,7 @@ class PetCollectionViewCell: UICollectionViewCell {
     
 }
 
-extension PetCollectionViewCell {
+extension PetFeedCollectionViewCell {
     
     struct ViewModel {
         

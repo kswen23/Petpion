@@ -16,8 +16,8 @@ public protocol FetchFeedUseCase {
     func fetchFeeds(sortBy: SortingOption) async -> [PetpionFeed]
 }
 
-public enum SortingOption {
+public enum SortingOption: Int, CaseIterable {
     
-    case popular
-    case latest
+    case popular = 0
+    case latest = 1
 }

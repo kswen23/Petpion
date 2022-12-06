@@ -13,17 +13,19 @@ import PetpionCore
 import PetpionDomain
 
 final class MainViewController: UIViewController {
-    
+        
     weak var coordinator: MainCoordinator?
     private let viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    lazy var petCollectionView: UICollectionView = UICollectionView(frame: .zero,
+    private lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
+                                                                             collectionViewLayout: UICollectionViewLayout())
+    private lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
     private lazy var popularBarButton = UIBarButtonItem(title: "#인기", style: .done, target: self, action: #selector(popularDidTapped))
     private lazy var latestBarButton = UIBarButtonItem(title: "#최신", style: .done, target: self, action: #selector(latestDidTapped))
-    private lazy var dataSource = makeDataSource()
-    
+    private lazy var petFeedDataSource = viewModel.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
+    private lazy var baseCollectionViewDataSource = viewModel.makeBaseCollectionViewDataSource(collectionView: baseCollectionView)
     // MARK: - Initialize
     init(viewModel: MainViewModelProtocol) {
         self.viewModel = viewModel
@@ -49,25 +51,40 @@ final class MainViewController: UIViewController {
     
     // MARK: - Layout
     private func layout() {
-        layoutPetCollectionView()
+//        layoutPetCollectionView()
+        layoutBaseCollectionView()
+    }
+    
+    private func layoutBaseCollectionView() {
+        view.addSubview(baseCollectionView)
+        baseCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            baseCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            baseCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            baseCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            baseCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        baseCollectionView.contentInsetAdjustmentBehavior = .never
+        baseCollectionView.alwaysBounceVertical = false
     }
     
     private func layoutPetCollectionView() {
-        view.addSubview(petCollectionView)
-        petCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(petFeedCollectionView)
+        petFeedCollectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            petCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            petCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            petCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            petCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            petFeedCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            petFeedCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            petFeedCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            petFeedCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        petCollectionView.backgroundColor = .white
-        petCollectionView.showsVerticalScrollIndicator = false
+        petFeedCollectionView.backgroundColor = .white
+        petFeedCollectionView.showsVerticalScrollIndicator = false
     }
     
     // MARK: - Configure
     private func configure() {
         configureNavigationItem()
+//        configureBaseCollectionView()
     }
     
     private func configureNavigationItem() {
@@ -83,6 +100,35 @@ final class MainViewController: UIViewController {
             UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(cameraButtonDidTap))
         ]
         navigationController?.navigationBar.tintColor = .black
+    }
+    
+    private func configureBaseCollectionView() {
+        baseCollectionView.setCollectionViewLayout(configureBaseCollectionViewLayout(), animated: true)
+        var snapshot = NSDiffableDataSourceSnapshot<MainViewModel.Section, SortingOption>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(viewModel.baseCollectionViewType)
+        baseCollectionViewDataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
+    private func configureBaseCollectionViewLayout() -> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                              heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                               heightDimension: .fractionalHeight(1.0))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
+                                                       subitems: [item])
+        let section = NSCollectionLayoutSection(group: group)
+        section.orthogonalScrollingBehavior = .groupPaging
+        section.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
+            guard self?.viewModel.baseCollectionViewNeedToScroll == true else { return }
+            let index = Int(max(0, round(point.x / environment.container.contentSize.width)))
+            self?.viewModel.baseCollectionViewDidScrolled(to: index)
+        }
+        let layout = UICollectionViewCompositionalLayout(section: section)
+        
+        return layout
     }
     
     private func configureLeftBarButton(with option: SortingOption) {
@@ -128,11 +174,11 @@ final class MainViewController: UIViewController {
     }
     
     @objc func popularDidTapped() {
-        viewModel.sortingOptionDidChanged(with: .popular)
+        viewModel.sortingOptionWillChange(with: .popular)
     }
     
     @objc func latestDidTapped() {
-        viewModel.sortingOptionDidChanged(with: .latest)
+        viewModel.sortingOptionWillChange(with: .latest)
     }
     
     @objc func cameraButtonDidTap() {
@@ -140,33 +186,14 @@ final class MainViewController: UIViewController {
     }
     
     @objc func personButtonDidTap() {
-        
+        viewModel.fetchNextFeed()
     }
     
     private func configurePetCollectionView() {
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: viewModel.makeWaterfallLayoutConfiguration())
-        petCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
-        petCollectionView.delegate = self
+        petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
+        petFeedCollectionView.delegate = self
     }
-    
-    private func makeDataSource() -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
-        let registration = makeCellRegistration()
-        return UICollectionViewDiffableDataSource(collectionView: petCollectionView) { collectionView, indexPath, item in
-            collectionView.dequeueConfiguredReusableCell(
-                using: registration,
-                for: indexPath,
-                item: item
-            )
-        }
-    }
-    
-    private func makeCellRegistration() -> UICollectionView.CellRegistration<PetCollectionViewCell, PetpionFeed> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let viewModel = self.viewModel.makeViewModel(for: item)
-            cell.configure(with: viewModel)
-        }
-    }
-
     
     // MARK: - binding
     
@@ -177,14 +204,19 @@ final class MainViewController: UIViewController {
     
     private func bindSnapshot() {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
-            self?.configurePetCollectionView()
-            self?.dataSource.apply(snapshot)
+//            self?.configurePetCollectionView()
+//            self?.petFeedDataSource.apply(snapshot)
+            self?.configureBaseCollectionView()
         }.store(in: &cancellables)
     }
     
     private func bindSortingOption() {
         viewModel.sortingOptionSubject.sink { [weak self] sortingOption in
             self?.configureLeftBarButton(with: sortingOption)
+            if self?.viewModel.baseCollectionViewNeedToScroll == false {
+                self?.baseCollectionView.scrollToItem(at: IndexPath(item: sortingOption.rawValue, section: 0), at: [], animated: true)
+                self?.viewModel.sortingOptionDidChanged()
+            }
         }.store(in: &cancellables)
     }
 }
@@ -194,4 +226,17 @@ extension MainViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
 //        print("\(indexPath)didEndDisplaying")
     }
+    
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
+        print(scrollViewHeight - scrollView.contentOffset.y)
+        if scrollViewHeight - scrollView.contentOffset.y <= 0 {
+//            count += 1
+//            let afterViewModels = Array(1*(count-1)...22*count).map { _ in SearchViewModel() }
+//            viewModels = viewModels + afterViewModels
+//            initialData(count: count)
+            viewModel.fetchNextFeed()
+        }
+    }
+
 }

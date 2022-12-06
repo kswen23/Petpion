@@ -42,7 +42,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             Task {
                 var feedCollections = Result<[[String : Any]], Error>.success([[:]])
                 
-//                if query == getQuery(by: option) && cursor != nil {
+//                if query == getQuery(by: option), cursor != nil {
 //                    feedCollections = await fetchFeedCollection(by: option)
 //                } else {
 //                    feedCollections = await fetchFirstFeedCollection(by: option)
@@ -51,6 +51,10 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 
                 switch feedCollections {
                 case .success(let collections):
+                    guard !collections.isEmpty else {
+                        // 데이터 없음
+                        return
+                    }
                     let result = collections
                         .map{ FeedData.toFeedData($0) }
                         .map{ PetpionFeed.toPetpionFeed(data: $0) }
@@ -67,7 +71,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         
         return await withCheckedContinuation { [weak self] continuation in
             guard let strongSelf = self,
-                  let query = query else { return }
+                  let query = query,
+                  let cursor = cursor else { return }
             
             query.addSnapshotListener { (snapshot, error) in
                 guard snapshot != nil else {
@@ -75,8 +80,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     return
                 }
                 
-                strongSelf.query?
-                    .start(afterDocument: strongSelf.cursor!)
+                query
+                    .start(afterDocument: cursor)
                     .getDocuments { (snapshot, error) in
                         if let error = error {
                             continuation
@@ -139,12 +144,12 @@ extension DefaultFirestoreRepository {
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "likeCount", descending: true)
-                .limit(to: 20)
+                .limit(to: 6)
         case .latest:
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "uploadTimestamp", descending: true)
-                .limit(to: 20)
+                .limit(to: 6)
         }
     }
 }
