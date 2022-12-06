@@ -27,7 +27,7 @@ public final class FeedUploadViewController: UIViewController {
     }()
     private let containerView: UIView = UIView()
     private lazy var imagePreviewCollectionView: UICollectionView = UICollectionView(frame: .zero,
-                                                                             collectionViewLayout: UICollectionViewLayout())
+                                                                                     collectionViewLayout: UICollectionViewLayout())
     private lazy var cropViewController: CropViewController = {
         let cropViewController = Mantis.cropViewController(image: UIImage())
         cropViewController.delegate = self
@@ -36,12 +36,12 @@ public final class FeedUploadViewController: UIViewController {
     }()
     
     private lazy var imageSlider: UIPageControl = {
-            let pageControl = UIPageControl()
-            pageControl.hidesForSinglePage = true
-            pageControl.currentPageIndicatorTintColor = .systemGray
-            pageControl.pageIndicatorTintColor = .systemGray3
-            return pageControl
-        }()
+        let pageControl = UIPageControl()
+        pageControl.hidesForSinglePage = true
+        pageControl.currentPageIndicatorTintColor = .systemGray
+        pageControl.pageIndicatorTintColor = .systemGray3
+        return pageControl
+    }()
     private let textView: UITextView = UITextView()
     private var collectionViewHeightAnchor: NSLayoutConstraint?
     
@@ -50,7 +50,7 @@ public final class FeedUploadViewController: UIViewController {
                                                                 preferredStyle: .alert)
     
     private let aspectRatioSelectButton: AspectRatioSelectButton = .init(buttonDiameter: 50)
-    lazy private var datasource = self.makeDataSource()
+    lazy private var datasource = viewModel.makeImagePreviewCollectionViewDataSource(parentViewController: self, collectionView: imagePreviewCollectionView)
     
     // MARK: - Initialize
     init(viewModel: FeedUploadViewModelProtocol) {
@@ -206,42 +206,6 @@ public final class FeedUploadViewController: UIViewController {
         textView.delegate = self
     }
     
-    private func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                              heightDimension: .fractionalWidth(1.0*ratio.heightRatio))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                               heightDimension: .fractionalHeight(1.0))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
-                                                       subitems: [item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPaging
-        section.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
-            let index = Int(max(0, round(point.x / environment.container.contentSize.width)))
-            self?.viewModel.changeCurrentIndex(index)
-        }
-        let layout = UICollectionViewCompositionalLayout(section: section)
-        
-        return layout
-    }
-
-    private func makeDataSource() -> UICollectionViewDiffableDataSource<Int, UIImage> {
-        let cellRegistration = makeCellRegistration()
-        return UICollectionViewDiffableDataSource(collectionView: imagePreviewCollectionView) { collectionView, indexPath, itemIdentifier in
-            collectionView.dequeueConfiguredReusableCell(using: cellRegistration,
-                                                         for: indexPath,
-                                                         item: itemIdentifier)
-        }
-    }
-    
-    private func makeCellRegistration() -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let heightRatio = self.viewModel.cellRatioSubject.value.heightRatio
-            cell.configure(with: item, size: self.view.frame.width * heightRatio)
-            cell.cellDelegation = self
-        }
-    }
-    
     // MARK: - Binding
     private func binding() {
         bindSnapshot()
@@ -253,8 +217,10 @@ public final class FeedUploadViewController: UIViewController {
     
     private func bindSnapshot() {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
-            guard let strongSelf = self else { return }
-            self?.imagePreviewCollectionView.setCollectionViewLayout(strongSelf.configureCollectionViewLayout(ratio: strongSelf.viewModel.cellRatioSubject.value), animated: false, completion: { isFinished in
+            guard let strongSelf = self,
+                  let ratio = self?.viewModel.cellRatioSubject.value,
+                  let collectionViewLayout = self?.viewModel.configureCollectionViewLayout(ratio: ratio) else { return }
+            self?.imagePreviewCollectionView.setCollectionViewLayout(collectionViewLayout, animated: false, completion: { isFinished in
                 if isFinished {
                     strongSelf.preventIndexReset()
                 }
@@ -265,8 +231,10 @@ public final class FeedUploadViewController: UIViewController {
     
     private func bindCellRatio() {
         viewModel.cellRatioSubject.sink { [weak self] ratio in
-            guard let strongSelf = self else { return }
-            self?.imagePreviewCollectionView.setCollectionViewLayout(strongSelf.configureCollectionViewLayout(ratio: strongSelf.viewModel.cellRatioSubject.value), animated: false, completion: { isFinished in
+            guard let strongSelf = self,
+                  let ratio = self?.viewModel.cellRatioSubject.value,
+                  let collectionViewLayout = self?.viewModel.configureCollectionViewLayout(ratio: ratio) else { return }
+            self?.imagePreviewCollectionView.setCollectionViewLayout(collectionViewLayout, animated: false, completion: { isFinished in
                 if isFinished {
                     strongSelf.preventIndexReset()
                     self?.animateCollectionView(to: ratio)
@@ -316,8 +284,8 @@ public final class FeedUploadViewController: UIViewController {
     
     @objc private func keyboardWillShow(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
-            let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
-                return
+              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+            return
         }
         let bottomContentInset = getBottomContentInset(keyBoardHeight: keyboardFrame.size.height)
         let contentInset = UIEdgeInsets(
@@ -340,7 +308,7 @@ public final class FeedUploadViewController: UIViewController {
         guard let collectionViewHeightAnchor = collectionViewHeightAnchor else { return 0 }
         return collectionViewHeightAnchor.constant + 200 + keyBoardHeight - baseScrollView.frame.height
     }
-
+    
     // MARK: - Animating
     private func animateCollectionView(to ratio: CellAspectRatio) {
         let cellHeight = self.view.frame.width * ratio.heightRatio

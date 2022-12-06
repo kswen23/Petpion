@@ -52,12 +52,15 @@ public protocol FeedUploadViewModelInput {
     func imageDidCropped(_ image: UIImage)
     func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
-    func changeCurrentIndex(_ index: Int)
     func imageSliderValueChanged(_ index: Int)
     
 }
 public protocol FeedUploadViewModelOutput {
     var textViewPlaceHolder: String { get }
+    func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout
+    func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
+                        collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage>
+    func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage>
     }
 public protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
     var uploadFeedUseCase: UploadFeedUseCase { get }
@@ -136,7 +139,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         }
     }
     
-    func changeCurrentIndex(_ index: Int) {
+    private func changeCurrentIndex(_ index: Int) {
         if indexWillChange {
             currentImageIndexSubject.send(index)
         }
@@ -146,7 +149,42 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         currentImageIndexSubject.send(index)
     }
     // MARK: - Output
+    func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                              heightDimension: .fractionalWidth(1.0*ratio.heightRatio))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                               heightDimension: .fractionalHeight(1.0))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
+                                                       subitems: [item])
+        let section = NSCollectionLayoutSection(group: group)
+        section.orthogonalScrollingBehavior = .groupPaging
+        section.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
+            let index = Int(max(0, round(point.x / environment.container.contentSize.width)))
+            self?.changeCurrentIndex(index)
+        }
+        let layout = UICollectionViewCompositionalLayout(section: section)
+        
+        return layout
+    }
+
+    func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
+                        collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage> {
+        let cellRegistration = makeCellRegistration(viewController: parentViewController)
+        return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, itemIdentifier in
+            collectionView.dequeueConfiguredReusableCell(using: cellRegistration,
+                                                         for: indexPath,
+                                                         item: itemIdentifier)
+        }
+    }
     
+    func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
+        UICollectionView.CellRegistration { cell, indexPath, item in
+            let heightRatio = self.cellRatioSubject.value.heightRatio
+            cell.configure(with: item, size: UIScreen.main.bounds.width * heightRatio)
+            cell.cellDelegation = viewController as? ImagePreviewCollectionViewCellDelegate
+        }
+    }
     // MARK: - Private
     private func getFeedSize(imageRatio: CellAspectRatio, message: String) -> CGSize {
         var height = imageRatio.heightRatio*12 + 4

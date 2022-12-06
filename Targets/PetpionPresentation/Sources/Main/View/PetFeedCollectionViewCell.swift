@@ -11,7 +11,7 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-class PetFeedCollectionViewCell: UICollectionViewCell {
+public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     private let thumbnailImageView: UIImageView = UIImageView()
     private let imageCountButton: UIButton = {
@@ -78,7 +78,7 @@ class PetFeedCollectionViewCell: UICollectionViewCell {
     private var heightLayoutAnchor: NSLayoutConstraint?
 
     // MARK: - Cell LifeCycle
-    override func prepareForReuse() {
+    public override func prepareForReuse() {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
     }
