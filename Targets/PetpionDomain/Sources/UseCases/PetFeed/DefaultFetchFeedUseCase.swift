@@ -21,42 +21,36 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     // MARK: - Public
     public func fetchFeeds(sortBy option: SortingOption) async -> [PetpionFeed] {
-        return await withCheckedContinuation { continuation in
-            Task {
-                let feedDataFromFirestore: Result<[PetpionFeed], Error> = await firestoreRepository.fetchFeedData(by: option)
-                switch feedDataFromFirestore {
-                case .success(let feedWithoutImageURL):
-                    let feedWithImageURL: [PetpionFeed] = await addThumbnailImageURL(feeds: feedWithoutImageURL)
-                    continuation.resume(returning: sortResultFeeds(sortBy: option, with: feedWithImageURL))
-                case .failure(let failure):
-                    print(failure)
-                }
-            }
+        let feedDataFromFirestore: Result<[PetpionFeed], Error> = await firestoreRepository.fetchFeedData(by: option)
+        var sortedResultFeeds: [PetpionFeed] = []
+        switch feedDataFromFirestore {
+        case .success(let feedWithoutImageURL):
+            let feedWithImageURL: [PetpionFeed] = await addThumbnailImageURL(feeds: feedWithoutImageURL)
+            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithImageURL)
+        case .failure(let failure):
+            print(failure)
         }
+        return sortedResultFeeds
     }
     
     // MARK: - Private
     private func addThumbnailImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
-        return await withCheckedContinuation { continuation in
-            Task {
-                let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
-                    for feed in feeds {
-                        taskGroup.addTask {
-                            let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
-                            var withURLFeed = feed
-                            withURLFeed.imageURLArr = urlArr
-                            return withURLFeed
-                        }
-                    }
-                    var resultFeedArr = [PetpionFeed]()
-                    for await value in taskGroup {
-                        resultFeedArr.append(value)
-                    }
-                    return resultFeedArr
+        let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in feeds {
+                taskGroup.addTask {
+                    let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
+                    var withURLFeed = feed
+                    withURLFeed.imageURLArr = urlArr
+                    return withURLFeed
                 }
-                continuation.resume(returning: result)
             }
+            var resultFeedArr = [PetpionFeed]()
+            for await value in taskGroup {
+                resultFeedArr.append(value)
+            }
+            return resultFeedArr
         }
+        return result
     }
     
     private func sortResultFeeds(sortBy option: SortingOption,
@@ -70,5 +64,5 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         }
         return resultFeeds
     }
-
+    
 }

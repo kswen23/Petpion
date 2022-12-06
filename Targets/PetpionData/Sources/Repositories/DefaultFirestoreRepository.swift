@@ -17,7 +17,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var cursor: DocumentSnapshot?
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
-        
         return await withCheckedContinuation{ continuation in
             Task {
                 let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
@@ -37,32 +36,27 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     
     // MARK: - Public Read
     public func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+        var feedCollections = Result<[[String : Any]], Error>.success([[:]])
         
-        return await withCheckedContinuation { continuation in
-            Task {
-                var feedCollections = Result<[[String : Any]], Error>.success([[:]])
-                
-//                if query == getQuery(by: option), cursor != nil {
-//                    feedCollections = await fetchFeedCollection(by: option)
-//                } else {
-//                    feedCollections = await fetchFirstFeedCollection(by: option)
-//                }
-                feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
-                
-                switch feedCollections {
-                case .success(let collections):
-                    guard !collections.isEmpty else {
-                        // 데이터 없음
-                        return
-                    }
-                    let result = collections
-                        .map{ FeedData.toFeedData($0) }
-                        .map{ PetpionFeed.toPetpionFeed(data: $0) }
-                    continuation.resume(returning: .success(result))
-                case .failure(let failure):
-                    continuation.resume(returning: .failure(failure))
-                }
+        //                if query == getQuery(by: option), cursor != nil {
+        //                    feedCollections = await fetchFeedCollection(by: option)
+        //                } else {
+        //                    feedCollections = await fetchFirstFeedCollection(by: option)
+        //                }
+        feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
+        
+        switch feedCollections {
+        case .success(let collections):
+            guard !collections.isEmpty else {
+                // 데이터 없음
+                return Result.success([])
             }
+            let result = collections
+                .map{ FeedData.toFeedData($0) }
+                .map{ PetpionFeed.toPetpionFeed(data: $0) }
+            return Result.success(result)
+        case .failure(let failure):
+            return Result.failure(failure)
         }
     }
     
@@ -97,7 +91,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
         }
     }
-
+    
     private func fetchFirstFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
         return await withCheckedContinuation { [weak self] continuation in
             guard let strongSelf = self else { return }
@@ -117,7 +111,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 }
         }
     }
-
+    
 }
 
 extension DefaultFirestoreRepository {
@@ -131,7 +125,7 @@ extension DefaultFirestoreRepository {
             case .feed:
                 guard let year = DateComponents.currentDateTimeComponents().year,
                       let month = DateComponents.currentDateTimeComponents().month else { return ""}
-//                return "feeds/\(year)/\(month)"
+                //                return "feeds/\(year)/\(month)"
                 return "feeds/2022/11"
             }
         }

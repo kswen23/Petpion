@@ -31,17 +31,14 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     // MARK: - Public Create
     public func uploadPetFeedImages(feed: PetpionFeed,
                                     imageDatas: [Data]) async -> Bool {
-        return await withCheckedContinuation{ continuation in
-            Task {
-                let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
-                let isCompleted = await uploadSeveralImages(dataAndRefArray)
-                switch isCompleted {
-                case .success(let success):
-                    continuation.resume(returning: success)
-                case .failure(let failure):
-                    print(failure.localizedDescription)
-                }
-            }
+        let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
+        let isCompleted = await uploadSeveralImages(dataAndRefArray)
+        switch isCompleted {
+        case .success(let success):
+            return success
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            return false
         }
     }
     
@@ -53,36 +50,33 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     
     // MARK: - Private Create
     private func uploadSeveralImages(_ dataAndRefArray: [DataAndReference]) async -> Result<Bool, Error> {
-        return await withCheckedContinuation{ continuation in
-            Task {
-                let uploadResult = await withTaskGroup(of: Result<Bool, Error>.self) { taskGroup -> Result<Bool, Error> in
-                    for dataAndRef in dataAndRefArray {
-                        taskGroup.addTask {
-                            let uploadResult = await self.uploadSingleImage(dataAndRef)
-                            return uploadResult
-                        }
-                    }
-                    var successArr = [Bool]()
-                    for await value in taskGroup {
-                        switch value {
-                        case .success(let success):
-                            if success {
-                                successArr.append(success)
-                            }
-                        case .failure(let error):
-                            continuation.resume(returning: .failure(error))
-                        }
-                    }
-                    
-                    if successArr.count == dataAndRefArray.count {
-                        return Result.success(true)
-                    } else {
-                        return Result.success(false)
-                    }
+        let uploadResult = await withTaskGroup(of: Result<Bool, Error>.self) { taskGroup -> Result<Bool, Error> in
+            for dataAndRef in dataAndRefArray {
+                taskGroup.addTask {
+                    let uploadResult = await self.uploadSingleImage(dataAndRef)
+                    return uploadResult
                 }
-                continuation.resume(returning: uploadResult)
+            }
+            var successArr = [Bool]()
+            for await value in taskGroup {
+                switch value {
+                case .success(let success):
+                    if success {
+                        successArr.append(success)
+                    }
+                case .failure(let error):
+                    print(error)
+                    return Result.failure(error)
+                }
+            }
+            
+            if successArr.count == dataAndRefArray.count {
+                return Result.success(true)
+            } else {
+                return Result.success(false)
             }
         }
+        return uploadResult
     }
     
     private func uploadSingleImage(_ dataAndRef: DataAndReference) async -> Result<Bool, Error> {
@@ -105,77 +99,65 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     
     // MARK: - Public Read
     public func fetchFeedThumbnailImageURL(_ feed: PetpionFeed) async -> [URL] {
-        return await withCheckedContinuation{ continuation in
-            Task {
-                let thumbnailFeedImageRef: String = "\(PetpionFeed.getImageReference(feed))/0"
-                let thumbnailFeedImageURL = await fetchSingleImageURL(from: thumbnailFeedImageRef)
-
-                switch thumbnailFeedImageURL {
-                case .success(let url):
-                    continuation.resume(returning: [url])
-                case .failure(let failure):
-                    print(failure.localizedDescription)
-                }
-            }
+        let thumbnailFeedImageRef: String = "\(PetpionFeed.getImageReference(feed))/0"
+        let thumbnailFeedImageURL = await fetchSingleImageURL(from: thumbnailFeedImageRef)
+        
+        switch thumbnailFeedImageURL {
+        case .success(let url):
+            return [url]
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            return []
         }
     }
     
     public func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL] {
-        return await withCheckedContinuation{ continuation in
-            Task {
-                let feedImageRef: String = PetpionFeed.getImageReference(feed)
-                
-                var imageReferences: [String] = []
-                for i in 1 ..< feed.imagesCount {
-                    imageReferences.append(feedImageRef + "/\(i)")
-                }
-                
-                let totalImageURLs = await fetchSeveralImageURLs(from: imageReferences)
-                var urlArr: [URL] = []
-                for value in totalImageURLs {
-                    switch value {
-                    case .success(let url):
-                        urlArr.append(url)
-                    case .failure(let failure):
-                        print(failure.localizedDescription)
-                    }
-                }
-                let sortedURLArr = urlArr
-                    .map{ $0.description }
-                    .sorted(by: <)
-                    .map{ URL(string: $0)! }
-                
-                continuation.resume(returning: sortedURLArr)
+        let feedImageRef: String = PetpionFeed.getImageReference(feed)
+        
+        var imageReferences: [String] = []
+        for i in 1 ..< feed.imagesCount {
+            imageReferences.append(feedImageRef + "/\(i)")
+        }
+        
+        let totalImageURLs = await fetchSeveralImageURLs(from: imageReferences)
+        var urlArr: [URL] = []
+        for value in totalImageURLs {
+            switch value {
+            case .success(let url):
+                urlArr.append(url)
+            case .failure(let failure):
+                print(failure.localizedDescription)
             }
         }
+        let sortedURLArr = urlArr
+            .map{ $0.description }
+            .sorted(by: <)
+            .map{ URL(string: $0)! }
+        
+        return sortedURLArr
     }
     
     // MARK: - Private Read
     private func fetchSeveralImageURLs(from references: [String]) async -> [Result<URL, Error>] {
-        
-        return await withCheckedContinuation { continuation in
-            Task {
-                let result = await withTaskGroup(of: Result<URL,Error>.self) { taskGroup -> [Result<URL,Error>] in
-                    for reference in references {
-                        taskGroup.addTask {
-                            let url = await self.fetchSingleImageURL(from: reference)
-                            return url
-                        }
-                    }
-                    var resultArr: [Result<URL,Error>] = []
-                    for await value in taskGroup {
-                        switch value {
-                        case .success(let url):
-                            resultArr.append(Result.success(url))
-                        case .failure(let error):
-                            resultArr.append(Result.failure(error))
-                        }
-                    }
-                    return resultArr
+        let result = await withTaskGroup(of: Result<URL,Error>.self) { taskGroup -> [Result<URL,Error>] in
+            for reference in references {
+                taskGroup.addTask {
+                    let url = await self.fetchSingleImageURL(from: reference)
+                    return url
                 }
-                continuation.resume(returning: result)
             }
+            var resultArr: [Result<URL,Error>] = []
+            for await value in taskGroup {
+                switch value {
+                case .success(let url):
+                    resultArr.append(Result.success(url))
+                case .failure(let error):
+                    resultArr.append(Result.failure(error))
+                }
+            }
+            return resultArr
         }
+        return result
     }
     
     private func fetchSingleImageURL(from reference: String) async -> Result<URL, Error> {
