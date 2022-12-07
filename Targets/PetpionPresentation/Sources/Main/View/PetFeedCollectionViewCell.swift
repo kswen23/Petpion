@@ -156,6 +156,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             likeCountStackView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5)
         ])
     }
+    
     // MARK: - Configure
     func configure(with viewModel: ViewModel) {
         configureCellHeight(viewModel.thumbnailRatio)

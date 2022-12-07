@@ -38,12 +38,13 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     public func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
         var feedCollections = Result<[[String : Any]], Error>.success([[:]])
         
-        //                if query == getQuery(by: option), cursor != nil {
-        //                    feedCollections = await fetchFeedCollection(by: option)
-        //                } else {
-        //                    feedCollections = await fetchFirstFeedCollection(by: option)
-        //                }
-        feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
+                        if query == getQuery(by: option), cursor != nil {
+                            feedCollections = await fetchFeedCollection(by: option)
+                        } else {
+                            feedCollections = await fetchFirstFeedCollection(by: option)
+                        }
+        
+//        feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
         
         switch feedCollections {
         case .success(let collections):

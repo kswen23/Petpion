@@ -46,7 +46,7 @@ public enum CellAspectRatio: Int, CaseIterable {
     }
 }
 
-public protocol FeedUploadViewModelInput {
+protocol FeedUploadViewModelInput {
     var indexWillChange: Bool { get set }
     func imagesDidPicked(_ images: [UIImage])
     func imageDidCropped(_ image: UIImage)
@@ -55,14 +55,16 @@ public protocol FeedUploadViewModelInput {
     func imageSliderValueChanged(_ index: Int)
     
 }
-public protocol FeedUploadViewModelOutput {
+
+protocol FeedUploadViewModelOutput {
     var textViewPlaceHolder: String { get }
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout
     func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
                         collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage>
     func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage>
     }
-public protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
+
+protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
     var uploadFeedUseCase: UploadFeedUseCase { get }
     var currentImageIndexSubject: CurrentValueSubject<Int, Never> { get }
     var cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> { get }

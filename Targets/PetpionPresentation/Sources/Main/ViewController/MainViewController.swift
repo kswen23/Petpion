@@ -20,12 +20,10 @@ final class MainViewController: UIViewController {
     
     private lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                              collectionViewLayout: UICollectionViewLayout())
-    private lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
-                                                                    collectionViewLayout: UICollectionViewLayout())
     private lazy var popularBarButton = UIBarButtonItem(title: "#인기", style: .done, target: self, action: #selector(popularDidTapped))
     private lazy var latestBarButton = UIBarButtonItem(title: "#최신", style: .done, target: self, action: #selector(latestDidTapped))
-    private lazy var petFeedDataSource = viewModel.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
     private lazy var baseCollectionViewDataSource = viewModel.makeBaseCollectionViewDataSource(collectionView: baseCollectionView)
+    
     // MARK: - Initialize
     init(viewModel: MainViewModelProtocol) {
         self.viewModel = viewModel
@@ -51,7 +49,6 @@ final class MainViewController: UIViewController {
     
     // MARK: - Layout
     private func layout() {
-//        layoutPetCollectionView()
         layoutBaseCollectionView()
     }
     
@@ -68,23 +65,10 @@ final class MainViewController: UIViewController {
         baseCollectionView.alwaysBounceVertical = false
     }
     
-    private func layoutPetCollectionView() {
-        view.addSubview(petFeedCollectionView)
-        petFeedCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            petFeedCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            petFeedCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            petFeedCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            petFeedCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        petFeedCollectionView.backgroundColor = .white
-        petFeedCollectionView.showsVerticalScrollIndicator = false
-    }
-    
     // MARK: - Configure
     private func configure() {
         configureNavigationItem()
-//        configureBaseCollectionView()
+        configureBaseCollectionView()
     }
     
     private func configureNavigationItem() {
@@ -103,32 +87,11 @@ final class MainViewController: UIViewController {
     }
     
     private func configureBaseCollectionView() {
-        baseCollectionView.setCollectionViewLayout(configureBaseCollectionViewLayout(), animated: true)
+        baseCollectionView.setCollectionViewLayout(viewModel.configureBaseCollectionViewLayout(), animated: true)
         var snapshot = NSDiffableDataSourceSnapshot<MainViewModel.Section, SortingOption>()
         snapshot.appendSections([.main])
         snapshot.appendItems(viewModel.baseCollectionViewType)
         baseCollectionViewDataSource.apply(snapshot, animatingDifferences: true)
-    }
-    
-    private func configureBaseCollectionViewLayout() -> UICollectionViewLayout {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                              heightDimension: .fractionalHeight(1.0))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                               heightDimension: .fractionalHeight(1.0))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
-                                                       subitems: [item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPaging
-        section.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
-            guard self?.viewModel.baseCollectionViewNeedToScroll == true else { return }
-            let index = Int(max(0, round(point.x / environment.container.contentSize.width)))
-            self?.viewModel.baseCollectionViewDidScrolled(to: index)
-        }
-        let layout = UICollectionViewCompositionalLayout(section: section)
-        
-        return layout
     }
     
     private func configureLeftBarButton(with option: SortingOption) {
@@ -189,25 +152,10 @@ final class MainViewController: UIViewController {
         viewModel.fetchNextFeed()
     }
     
-    private func configurePetCollectionView() {
-        let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: viewModel.makeWaterfallLayoutConfiguration())
-        petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
-        petFeedCollectionView.delegate = self
-    }
-    
     // MARK: - binding
     
     private func binding() {
-        bindSnapshot()
         bindSortingOption()
-    }
-    
-    private func bindSnapshot() {
-        viewModel.snapshotSubject.sink { [weak self] snapshot in
-//            self?.configurePetCollectionView()
-//            self?.petFeedDataSource.apply(snapshot)
-            self?.configureBaseCollectionView()
-        }.store(in: &cancellables)
     }
     
     private func bindSortingOption() {
@@ -219,24 +167,4 @@ final class MainViewController: UIViewController {
             }
         }.store(in: &cancellables)
     }
-}
-
-extension MainViewController: UICollectionViewDelegate {
-    
-    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-//        print("\(indexPath)didEndDisplaying")
-    }
-    
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
-        print(scrollViewHeight - scrollView.contentOffset.y)
-        if scrollViewHeight - scrollView.contentOffset.y <= 0 {
-//            count += 1
-//            let afterViewModels = Array(1*(count-1)...22*count).map { _ in SearchViewModel() }
-//            viewModels = viewModels + afterViewModels
-//            initialData(count: count)
-            viewModel.fetchNextFeed()
-        }
-    }
-
 }
