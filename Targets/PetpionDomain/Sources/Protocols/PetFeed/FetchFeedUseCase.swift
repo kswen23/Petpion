@@ -14,7 +14,7 @@ public protocol FetchFeedUseCase {
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
     func fetchInitialFeedPerSortingOption() async -> [[PetpionFeed]]
-    func fetchFeed(option: SortingOption) async -> [PetpionFeed]
+    func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed]
 }
 
 public enum SortingOption: Int, CaseIterable {

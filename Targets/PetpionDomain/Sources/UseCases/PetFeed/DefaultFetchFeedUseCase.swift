@@ -24,7 +24,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         let result = await withTaskGroup(of: (SortingOption, [PetpionFeed]).self) { taskGroup -> [[PetpionFeed]] in
             for option in SortingOption.allCases {
                 taskGroup.addTask {
-                    let fetchedFeed: [PetpionFeed] = await self.fetchFeed(option: option)
+                    let fetchedFeed: [PetpionFeed] = await self.fetchFeed(isFirst: true, option: option)
                     return (option, fetchedFeed)
                 }
             }
@@ -37,8 +37,14 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return result
     }
     
-    public func fetchFeed(option: SortingOption) async -> [PetpionFeed] {
-        let feedDataFromFirestore: Result<[PetpionFeed], Error> = await firestoreRepository.fetchFeedData(by: option)
+    public func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed] {
+        
+        var feedDataFromFirestore: Result<[PetpionFeed], Error> = .success([])
+        if isFirst {
+            feedDataFromFirestore = await firestoreRepository.fetchFirstFeedData(by: option)
+        } else {
+            feedDataFromFirestore = await firestoreRepository.fetchFeedData(by: option)
+        }
         var sortedResultFeeds: [PetpionFeed] = []
         switch feedDataFromFirestore {
         case .success(let feedWithoutImageURL):

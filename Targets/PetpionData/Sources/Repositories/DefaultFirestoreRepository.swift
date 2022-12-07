@@ -13,8 +13,9 @@ import PetpionCore
 public final class DefaultFirestoreRepository: FirestoreRepository {
     
     private let db = Firestore.firestore()
-    private var query: Query?
-    private var cursor: DocumentSnapshot?
+    private var popularCursor: DocumentSnapshot?
+    private var latestCursor: DocumentSnapshot?
+    
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
         return await withCheckedContinuation{ continuation in
@@ -35,23 +36,20 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Read
+    public func fetchFirstFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+        let feedCollection = await fetchFirstFeedCollection(by: option)
+        return convertCollectionToModel(feedCollection)
+    }
+    
     public func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
-        var feedCollections = Result<[[String : Any]], Error>.success([[:]])
-        
-                        if query == getQuery(by: option), cursor != nil {
-                            feedCollections = await fetchFeedCollection(by: option)
-                        } else {
-                            feedCollections = await fetchFirstFeedCollection(by: option)
-                        }
-        
-//        feedCollections = await fetchFirstFeedCollection(by: option) // 임시 (무한스크롤로직 전까지)
-        
-        switch feedCollections {
+        guard getCursor(by: option) != nil else { return Result.success([]) }
+        let feedCollection = await fetchFeedCollection(by: option)
+        return convertCollectionToModel(feedCollection)
+    }
+    
+    private func convertCollectionToModel(_ collection: Result<[[String : Any]], Error>) -> Result<[PetpionFeed], Error> {
+        switch collection {
         case .success(let collections):
-            guard !collections.isEmpty else {
-                // 데이터 없음
-                return Result.success([])
-            }
             let result = collections
                 .map{ FeedData.toFeedData($0) }
                 .map{ PetpionFeed.toPetpionFeed(data: $0) }
@@ -65,9 +63,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private func fetchFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
         
         return await withCheckedContinuation { [weak self] continuation in
-            guard let strongSelf = self,
-                  let query = query,
-                  let cursor = cursor else { return }
+            guard let cursor = getCursor(by: option) else { return }
+            let query = getQuery(by: option)
             
             query.addSnapshotListener { (snapshot, error) in
                 guard snapshot != nil else {
@@ -83,11 +80,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                                 .resume(returning: .failure(error))
                         } else {
                             if let result = snapshot?.documents {
+                                self?.setCursor(option: option, snapshot: result)
                                 continuation
                                     .resume(returning: .success(result.map { $0.data() }))
                             }
                         }
-                        strongSelf.cursor = snapshot?.documents.last
                     }
             }
         }
@@ -95,24 +92,23 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     
     private func fetchFirstFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
         return await withCheckedContinuation { [weak self] continuation in
-            guard let strongSelf = self else { return }
-            query = getQuery(by: option)
-            strongSelf.query?
+            let query = getQuery(by: option)
+            
+            query
                 .getDocuments { (snapshot, error) in
                     if let error = error {
                         continuation
                             .resume(returning: .failure(error))
                     } else {
                         if let result = snapshot?.documents {
+                            self?.setCursor(option: option, snapshot: result)
                             continuation
                                 .resume(returning: .success(result.map { $0.data() }))
                         }
                     }
-                    strongSelf.cursor = snapshot?.documents.last
                 }
         }
     }
-    
 }
 
 extension DefaultFirestoreRepository {
@@ -139,12 +135,30 @@ extension DefaultFirestoreRepository {
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "likeCount", descending: true)
-                .limit(to: 6)
+                .limit(to: 20)
         case .latest:
             return db
                 .collection(FirestoreCollection.feed.reference)
                 .order(by: "uploadTimestamp", descending: true)
-                .limit(to: 6)
+                .limit(to: 20)
+        }
+    }
+    
+    private func setCursor(option: SortingOption, snapshot: [QueryDocumentSnapshot]) {
+        switch option {
+        case .popular:
+            self.popularCursor = snapshot.last
+        case .latest:
+            self.latestCursor = snapshot.last
+        }
+    }
+    
+    private func getCursor(by option: SortingOption) -> DocumentSnapshot? {
+        switch option {
+        case .popular:
+            return popularCursor
+        case .latest:
+            return latestCursor
         }
     }
 }

@@ -23,7 +23,8 @@ protocol MainViewModelOutput {
     var baseCollectionViewType: [SortingOption] { get }
     var baseCollectionViewNeedToScroll: Bool { get }
     func configureBaseCollectionViewLayout() -> UICollectionViewLayout
-    func makeBaseCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption>
+    func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
+                                          collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption>
     }
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
@@ -66,7 +67,9 @@ final class MainViewModel: MainViewModelProtocol {
     func fetchNextFeed() {
         Task {
             var resultFeed = getCurrentFeed()
-            let fetchedFeed = await fetchFeedUseCase.fetchFeed(option: sortingOptionSubject.value)
+            let fetchedFeed = await fetchFeedUseCase.fetchFeed(isFirst: false,
+                                                               option: sortingOptionSubject.value)
+            guard fetchedFeed.count != 0 else { return }
             resultFeed = resultFeed + fetchedFeed
             await MainActor.run { [resultFeed] in
                 sendResultFeed(feed: resultFeed)
@@ -140,8 +143,9 @@ final class MainViewModel: MainViewModelProtocol {
         return layout
     }
         
-    func makeBaseCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption> {
-        let registration = makeBaseCollectionViewCellRegistration()
+    func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
+                                          collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption> {
+        let registration = makeBaseCollectionViewCellRegistration(parentViewController: parentViewController)
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
                 using: registration,
@@ -151,8 +155,9 @@ final class MainViewModel: MainViewModelProtocol {
         }
     }
         
-    func makeBaseCollectionViewCellRegistration() -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
+    private func makeBaseCollectionViewCellRegistration(parentViewController: BaseCollectionViewCellDelegation) -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
         UICollectionView.CellRegistration { cell, indexPath, item in
+            cell.parentViewController = parentViewController
             cell.viewModel = self.makeChildViewModel(index: indexPath)
             cell.bindSnapshot()
         }

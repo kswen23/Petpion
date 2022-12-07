@@ -11,8 +11,13 @@ import UIKit
 
 import PetpionDomain
 
+protocol BaseCollectionViewCellDelegation {
+    func baseCollectionViewNeedNewFeed()
+}
+
 class BaseCollectionViewCell: UICollectionViewCell {
     
+    var parentViewController: BaseCollectionViewCellDelegation?
     var viewModel: BaseViewModel?
     private var cancellables = Set<AnyCancellable>()
     private lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
@@ -52,7 +57,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
         guard let config = viewModel?.makeWaterfallLayoutConfiguration() else { return }
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: config)
         petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
-//        petFeedCollectionView.delegate = self
+        petFeedCollectionView.delegate = self
     }
 
 
@@ -65,22 +70,13 @@ class BaseCollectionViewCell: UICollectionViewCell {
     }
 }
 
-//extension MainViewController: UICollectionViewDelegate {
-//
-//    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-////        print("\(indexPath)didEndDisplaying")
-//    }
-//
-//    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-//        let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
-//        print(scrollViewHeight - scrollView.contentOffset.y)
-//        if scrollViewHeight - scrollView.contentOffset.y <= 0 {
-////            count += 1
-////            let afterViewModels = Array(1*(count-1)...22*count).map { _ in SearchViewModel() }
-////            viewModels = viewModels + afterViewModels
-////            initialData(count: count)
-//            viewModel.fetchNextFeed()
-//        }
-//    }
-//
-//}
+extension BaseCollectionViewCell: UICollectionViewDelegate {
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
+        if scrollViewHeight - scrollView.contentOffset.y <= 0 {
+            parentViewController?.baseCollectionViewNeedNewFeed()
+        }
+    }
+
+}

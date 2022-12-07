@@ -22,7 +22,7 @@ final class MainViewController: UIViewController {
                                                                              collectionViewLayout: UICollectionViewLayout())
     private lazy var popularBarButton = UIBarButtonItem(title: "#인기", style: .done, target: self, action: #selector(popularDidTapped))
     private lazy var latestBarButton = UIBarButtonItem(title: "#최신", style: .done, target: self, action: #selector(latestDidTapped))
-    private lazy var baseCollectionViewDataSource = viewModel.makeBaseCollectionViewDataSource(collectionView: baseCollectionView)
+    private lazy var baseCollectionViewDataSource = viewModel.makeBaseCollectionViewDataSource(parentViewController: self, collectionView: baseCollectionView)
     
     // MARK: - Initialize
     init(viewModel: MainViewModelProtocol) {
@@ -167,4 +167,11 @@ final class MainViewController: UIViewController {
             }
         }.store(in: &cancellables)
     }
+}
+
+extension MainViewController: BaseCollectionViewCellDelegation {
+    func baseCollectionViewNeedNewFeed() {
+        viewModel.fetchNextFeed()
+    }
+       
 }
