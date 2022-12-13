@@ -46,6 +46,7 @@ final class MainViewModel: MainViewModelProtocol {
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
     
+    // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase) {

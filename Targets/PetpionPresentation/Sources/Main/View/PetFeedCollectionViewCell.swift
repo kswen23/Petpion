@@ -13,7 +13,8 @@ import PetpionDomain
 
 public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
-    private let thumbnailImageView: UIImageView = UIImageView()
+    let baseView: UIView = UIView()
+    let thumbnailImageView: UIImageView = UIImageView()
     private let imageCountButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .gray
@@ -76,7 +77,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     }()
     
     private var heightLayoutAnchor: NSLayoutConstraint?
-
+    
     // MARK: - Cell LifeCycle
     public override func prepareForReuse() {
         super.prepareForReuse()
@@ -95,20 +96,32 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Layout
     private func layout() {
-        layoutImagePreview()
+        layoutBaseView()
+        layoutThumbnailImageView()
         layoutImageCountButton()
         layoutProfileStackView()
         layoutCommentLabel()
         layoutLikeCountStackView()
     }
     
-    private func layoutImagePreview() {
-        self.addSubview(thumbnailImageView)
+    private func layoutBaseView() {
+        self.addSubview(baseView)
+        baseView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            baseView.topAnchor.constraint(equalTo: self.topAnchor),
+            baseView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            baseView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            baseView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+        ])
+    }
+    
+    private func layoutThumbnailImageView() {
+        baseView.addSubview(thumbnailImageView)
         thumbnailImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            thumbnailImageView.topAnchor.constraint(equalTo: self.topAnchor),
-            thumbnailImageView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            thumbnailImageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            thumbnailImageView.topAnchor.constraint(equalTo: baseView.topAnchor),
+            thumbnailImageView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor),
+            thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.contentMode = .scaleAspectFit
         thumbnailImageView.roundCorners(cornerRadius: 10)
@@ -119,8 +132,8 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         thumbnailImageView.addSubview(imageCountButton)
         imageCountButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            imageCountButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 7),
-            imageCountButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -7),
+            imageCountButton.topAnchor.constraint(equalTo: baseView.topAnchor, constant: 7),
+            imageCountButton.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: -7),
             imageCountButton.heightAnchor.constraint(equalToConstant: 20),
             imageCountButton.widthAnchor.constraint(equalToConstant: 25)
         ])
@@ -129,31 +142,31 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     }
     
     private func layoutProfileStackView() {
-        self.addSubview(profileStackView)
+        baseView.addSubview(profileStackView)
         profileStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             profileStackView.topAnchor.constraint(equalTo: thumbnailImageView.bottomAnchor, constant: 5),
-            profileStackView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5)
+            profileStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5)
         ])
     }
     
     private func layoutCommentLabel() {
-        self.addSubview(commentLabel)
+        baseView.addSubview(commentLabel)
         commentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             commentLabel.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 5),
-            commentLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
-            commentLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5)
+            commentLabel.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5),
+            commentLabel.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: -5)
         ])
         commentLabel.numberOfLines = 2
     }
     
     private func layoutLikeCountStackView() {
-        self.addSubview(likeCountStackView)
+        baseView.addSubview(likeCountStackView)
         likeCountStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             likeCountStackView.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: 5),
-            likeCountStackView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5)
+            likeCountStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5)
         ])
     }
     
@@ -170,7 +183,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     private func configureCellHeight(_ thumbnailRatio: Double) {
         heightLayoutAnchor = thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*thumbnailRatio)
         heightLayoutAnchor?.isActive = true
-
+        
     }
     
     private func configureThumbnailImageView(_ url: URL) {
@@ -205,7 +218,8 @@ extension PetFeedCollectionViewCell {
         let likeCount: Int
         
         init(petpionFeed: PetpionFeed) {
-            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
+            //            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
+            self.thumbnailImageURL = petpionFeed.imageURLArr?[0] ?? URL(string:"https://picsum.photos.jpg")!
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imagesCount
             self.userProfile = UIImage()
@@ -214,5 +228,45 @@ extension PetFeedCollectionViewCell {
             self.likeCount = petpionFeed.likeCount
         }
     }
+}
+
+extension PetFeedCollectionViewCell {
     
+    // when Cell did tapped
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        bounceAnimate(isTouched: true)
+    }
+    
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        bounceAnimate(isTouched: false)
+    }
+    
+    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesCancelled(touches, with: event)
+        bounceAnimate(isTouched: false)
+    }
+    
+    private func bounceAnimate(isTouched: Bool) {
+        
+        if isTouched {
+            PetFeedCollectionViewCell.animate(withDuration: 0.5,
+                                              delay: 0,
+                                              usingSpringWithDamping: 1,
+                                              initialSpringVelocity: 1,
+                                              options: [.allowUserInteraction], animations: {
+                self.transform = .init(scaleX: 0.95, y: 0.95)
+                self.layoutIfNeeded()
+            }, completion: nil)
+        } else {
+            PetFeedCollectionViewCell.animate(withDuration: 0.5,
+                                              delay: 0,
+                                              usingSpringWithDamping: 1,
+                                              initialSpringVelocity: 0,
+                                              options: .allowUserInteraction, animations: {
+                self.transform = .identity
+            }, completion: nil)
+        }
+    }
 }

@@ -18,7 +18,7 @@ final class MainViewController: UIViewController {
     private let viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    private lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
+    lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                              collectionViewLayout: UICollectionViewLayout())
     private lazy var popularBarButton = UIBarButtonItem(title: "#인기", style: .done, target: self, action: #selector(popularDidTapped))
     private lazy var latestBarButton = UIBarButtonItem(title: "#최신", style: .done, target: self, action: #selector(latestDidTapped))
@@ -145,7 +145,7 @@ final class MainViewController: UIViewController {
     }
     
     @objc func cameraButtonDidTap() {
-        coordinator?.presentFeedImagePicker(viewController: self)
+        coordinator?.presentFeedImagePicker()
     }
     
     @objc func personButtonDidTap() {
@@ -170,8 +170,15 @@ final class MainViewController: UIViewController {
 }
 
 extension MainViewController: BaseCollectionViewCellDelegation {
+
     func baseCollectionViewNeedNewFeed() {
         viewModel.fetchNextFeed()
     }
-       
+    
+    func baseCollectionViewCellDidTapped(index: IndexPath, feed: PetpionFeed) {
+        let baseCellIndexPath: IndexPath = .init(row: viewModel.sortingOptionSubject.value.rawValue, section: 0)
+        let transitionDependency: FeedTransitionDependency = .init(baseCellIndexPath: baseCellIndexPath,
+                                                                   feedCellIndexPath: index)
+        coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+    }
 }

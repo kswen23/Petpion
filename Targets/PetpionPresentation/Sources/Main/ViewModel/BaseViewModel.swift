@@ -23,7 +23,7 @@ protocol BaseViewModelOutput {
     var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
     func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
-
+    func getSelectedFeed(index: IndexPath) -> PetpionFeed
 }
 protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput { }
 
@@ -72,6 +72,10 @@ final class BaseViewModel: BaseViewModelProtocol {
 
     func makeViewModel(for item:  PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
         return PetFeedCollectionViewCell.ViewModel(petpionFeed: item)
+    }
+    
+    func getSelectedFeed(index: IndexPath) -> PetpionFeed {
+        petpionFeedSubject.value[index.row]
     }
 
 }
