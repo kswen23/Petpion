@@ -42,7 +42,7 @@ public struct PresentationDIContainer: Containable {
     // MARK: - ViewController Container
     private func registerViewControllers() {
         guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
-              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModel.self) else { return }
+              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self) else { return }
         
         container.register(MainViewController.self) { _ in
             MainViewController(viewModel: mainViewModel)
@@ -66,7 +66,7 @@ public struct PresentationDIContainer: Containable {
             MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
         }
         
-        container.register(FeedUploadViewModel.self) { _ in
+        container.register(FeedUploadViewModelProtocol.self) { _ in
             FeedUploadViewModel(uploadFeedUseCase: uploadFeedUseCase)
         }
     }
