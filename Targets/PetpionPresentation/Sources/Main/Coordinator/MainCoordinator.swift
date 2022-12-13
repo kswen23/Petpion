@@ -23,7 +23,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-
+    
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
@@ -36,12 +36,20 @@ public final class MainCoordinator: NSObject, Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
-    public func presentFeedImagePicker(viewController: UIViewController) {
-        guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") else { return }
-        (feedUploadCoordinator as? FeedUploadCoordinator)?.parentCoordinator = self
+    public func presentFeedImagePicker() {
+        guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") as? FeedUploadCoordinator else { return }
+        feedUploadCoordinator.parentCoordinator = self
         childCoordinators.append(feedUploadCoordinator)
         feedUploadCoordinator.start()
-        viewController.present(feedUploadCoordinator.navigationController, animated: true)
+        navigationController.present(feedUploadCoordinator.navigationController, animated: true)
+    }
+    
+    public func presentDetailFeed(transitionDependency: FeedTransitionDependency, feed: PetpionFeed) {
+        guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else { return }
+        let detailFeedViewModel = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase)
+        let detailFeedViewController = DetailFeedViewController(dependency: transitionDependency,
+                                                                viewModel: detailFeedViewModel)
+        navigationController.present(detailFeedViewController, animated: true)
     }
     
     public func childDidFinish(_ child: Coordinator?) {
@@ -59,11 +67,11 @@ extension MainCoordinator: UINavigationControllerDelegate {
         guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else {
             return
         }
-
+        
         if navigationController.viewControllers.contains(fromViewController) {
             return
         }
-
+        
         if let detailFoodViewController = fromViewController as? FeedImagePickerViewController {
             childDidFinish(detailFoodViewController.coordinator)
         }

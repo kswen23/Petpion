@@ -13,6 +13,7 @@ import PetpionDomain
 
 protocol BaseCollectionViewCellDelegation {
     func baseCollectionViewNeedNewFeed()
+    func baseCollectionViewCellDidTapped(index: IndexPath, feed: PetpionFeed)
 }
 
 class BaseCollectionViewCell: UICollectionViewCell {
@@ -20,9 +21,9 @@ class BaseCollectionViewCell: UICollectionViewCell {
     var parentViewController: BaseCollectionViewCellDelegation?
     var viewModel: BaseViewModel?
     private var cancellables = Set<AnyCancellable>()
-    private lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
+    lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
-    lazy var petFeedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>? = self.viewModel?.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
+    private lazy var petFeedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>? = self.viewModel?.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
     
     // MARK: - Initialize
     override init(frame: CGRect) {
@@ -58,6 +59,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
         let waterfallLayout = UICollectionViewCompositionalLayout.makeWaterfallLayout(configuration: config)
         petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
         petFeedCollectionView.delegate = self
+        petFeedCollectionView.delaysContentTouches = false
     }
 
 
@@ -79,4 +81,8 @@ extension BaseCollectionViewCell: UICollectionViewDelegate {
         }
     }
 
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let selectedFeed = viewModel?.getSelectedFeed(index: indexPath) else { return }
+        parentViewController?.baseCollectionViewCellDidTapped(index: indexPath, feed: selectedFeed)
+    }
 }
