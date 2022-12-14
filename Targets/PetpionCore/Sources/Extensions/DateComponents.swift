@@ -21,4 +21,10 @@ public extension DateComponents {
         ]
         return userCalendar.dateComponents(requestedComponents, from: currentDateTime)
     }
+    
+    static func weekAgoDateComponents() -> DateComponents {
+        var currentDateComponents: DateComponents = .currentDateTimeComponents()
+        currentDateComponents.day = currentDateComponents.day! - 7
+        return currentDateComponents
+    }
 }
