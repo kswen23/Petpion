@@ -61,7 +61,6 @@ protocol FeedUploadViewModelOutput {
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout
     func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
                         collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage>
-    func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage>
     }
 
 protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
@@ -180,7 +179,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         }
     }
     
-    func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
+    private func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             let heightRatio = self.cellRatioSubject.value.heightRatio
             cell.configure(with: item, size: UIScreen.main.bounds.width * heightRatio)

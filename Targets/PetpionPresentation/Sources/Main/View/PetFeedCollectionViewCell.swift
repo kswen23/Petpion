@@ -123,7 +123,6 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor),
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
-        thumbnailImageView.contentMode = .scaleAspectFit
         thumbnailImageView.roundCorners(cornerRadius: 10)
         thumbnailImageView.backgroundColor = .lightGray
     }
@@ -196,8 +195,8 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     }
     
     private func configureImageCountButtonTitle(with imageCount: Int) {
-        let buttonTitle = imageCount - 1
-        guard buttonTitle > 0 else {
+        let buttonTitle = imageCount
+        guard buttonTitle > 1 else {
             return imageCountButton.isHidden = true
         }
         imageCountButton.setTitle("+\(buttonTitle)", for: .normal)
