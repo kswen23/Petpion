@@ -15,6 +15,7 @@ public protocol FetchFeedUseCase {
     
     func fetchInitialFeedPerSortingOption() async -> [[PetpionFeed]]
     func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed]
+    func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL]
 }
 
 public enum SortingOption: Int, CaseIterable {
