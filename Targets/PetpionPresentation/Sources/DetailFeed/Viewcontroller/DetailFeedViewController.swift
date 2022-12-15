@@ -16,12 +16,13 @@ final class DetailFeedViewController: CustomPresentableViewController {
     
     private let dependency: FeedTransitionDependency
     private lazy var detailFeedImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
-                                                                                     collectionViewLayout: UICollectionViewLayout())
+                                                                                        collectionViewLayout: UICollectionViewLayout())
     private lazy var datasource = viewModel.makeDetailFeedImageCollectionViewDataSource(parentViewController: self, collectionView: detailFeedImageCollectionView)
-    
-    private lazy var dismissButton: CircleButton = {
-        let button = CircleButton(diameter: 30)
-        button.backgroundColor = .blue
+    private lazy var dismissButton: UIButton = {
+        let button = UIButton()
+        let config = UIImage.SymbolConfiguration(pointSize: 30, weight: .medium, scale: .large)
+        button.setImage(UIImage(systemName: "xmark.circle.fill", withConfiguration: config), for: .normal)
+        button.tintColor = .systemGray6
         button.addTarget(self, action: #selector(dismissButtonDidTapped), for: .touchUpInside)
         return button
     }()
@@ -33,7 +34,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
     private lazy var imageSlider: UIPageControl = {
         let pageControl = UIPageControl()
         pageControl.hidesForSinglePage = true
-        pageControl.currentPageIndicatorTintColor = .systemGray
+        pageControl.currentPageIndicatorTintColor = .darkGray
         pageControl.pageIndicatorTintColor = .systemGray3
         pageControl.addTarget(self, action: #selector(imageSliderValueChanged), for: .valueChanged)
         return pageControl
@@ -43,11 +44,56 @@ final class DetailFeedViewController: CustomPresentableViewController {
         viewModel.pageControlValueChanged(imageSlider.currentPage)
     }
     
+    private let profileImageButton: CircleButton = {
+        let circleImageButton = CircleButton(diameter: 35)
+        circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
+        circleImageButton.tintColor = .darkGray
+        circleImageButton.backgroundColor = .white
+        circleImageButton.layer.borderWidth = 1
+        circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
+        return circleImageButton
+    }()
+    
+    private let profileNameLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textColor = .black
+        return label
+    }()
+    
+    private lazy var profileStackView: UIStackView = {
+        let stackView = UIStackView()
+        [profileImageButton, profileNameLabel].forEach {
+            stackView.addArrangedSubview($0)
+        }
+        stackView.spacing = 8
+        stackView.alignment = .center
+        return stackView
+    }()
+    
+    private lazy var settingButton: UIButton = {
+        let button = UIButton()
+        let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular, scale: .medium)
+        button.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(settingButtonDidTapped), for: .touchUpInside)
+        return button
+    }()
+    
+    @objc func settingButtonDidTapped() {
+        print("setting123")
+    }
+    
+    private lazy var commentLabel: UILabel = UILabel()
+    private lazy var timeLogLabel: UILabel = UILabel()
+    
     private var detailImageCollectionViewHeightAnchor: NSLayoutConstraint?
     private var viewTopAnchor: NSLayoutConstraint?
     private var viewLeadingAnchor: NSLayoutConstraint?
     private var viewTrailingAnchor: NSLayoutConstraint?
     private var viewBottomAnchor: NSLayoutConstraint?
+    private var dismissButtonTrailingAnchor: NSLayoutConstraint?
+    
     private var cancellables = Set<AnyCancellable>()
     let viewModel: DetailFeedViewModelProtocol
     
@@ -65,6 +111,40 @@ final class DetailFeedViewController: CustomPresentableViewController {
         self.modalPresentationCapturesStatusBarAppearance = true
     }
     
+    lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panAction(_ :)))
+    
+    @objc func panAction (_ gesture : UIPanGestureRecognizer){
+        let yValue = gesture.translation(in: self.view).y
+        guard yValue > 0 else { return }
+        
+        switch gesture.state {
+            
+        case .began, .changed:
+            animateShrink(currentY: yValue, until: 200)
+            
+        case .ended, .cancelled:
+            UIView.animate(withDuration: 0.2) {
+                self.view?.transform = CGAffineTransform.identity
+            }
+            
+        default:
+            break
+        }
+    }
+    
+    private func animateShrink(currentY: CGFloat,until lastPoint: CGFloat) {
+        let targetShrinkScale: CGFloat = 0.84
+        if currentY < lastPoint {
+            let willShrinkScale = (currentY*(1 - targetShrinkScale)) / lastPoint
+            let shrinkedScale: CGFloat = 1 - willShrinkScale
+            UIView.animate(withDuration: 0.2) {
+                self.view?.transform = CGAffineTransform(scaleX: shrinkedScale, y: shrinkedScale)
+            }
+        } else if currentY > lastPoint + 30 {
+                self.dismiss(animated: true)
+        }
+    }
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -74,19 +154,11 @@ final class DetailFeedViewController: CustomPresentableViewController {
         updateStatusBar(hidden: true, completion: nil)
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        if isBeingDismissed {
-            detailFeedImageCollectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: [], animated: false)
-        }
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
         configure()
         binding()
-        view.backgroundColor = .systemBackground
     }
     
     // MARK: - Layout
@@ -94,8 +166,12 @@ final class DetailFeedViewController: CustomPresentableViewController {
         layoutDetailFeedImageCollectionView()
         layoutDismissButton()
         layoutImageSlider()
+        layoutProfileStackView()
+        layoutSettingButton()
+        layoutCommentLabel()
+        layoutTimeLogLabel()
     }
-            
+    
     private func layoutDetailFeedImageCollectionView() {
         view.addSubview(detailFeedImageCollectionView)
         detailFeedImageCollectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -104,7 +180,6 @@ final class DetailFeedViewController: CustomPresentableViewController {
             detailFeedImageCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             detailFeedImageCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
-        detailFeedImageCollectionView.backgroundColor = .lightGray
         detailFeedImageCollectionView.roundCorners(cornerRadius: 10)
     }
     
@@ -112,29 +187,107 @@ final class DetailFeedViewController: CustomPresentableViewController {
         view.addSubview(dismissButton)
         dismissButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            dismissButton.topAnchor.constraint(equalTo: detailFeedImageCollectionView.topAnchor, constant: 25),
-            dismissButton.trailingAnchor.constraint(equalTo: detailFeedImageCollectionView.trailingAnchor, constant: -25)
+            dismissButton.topAnchor.constraint(equalTo: detailFeedImageCollectionView.topAnchor, constant: 18),
+            dismissButton.heightAnchor.constraint(equalToConstant: 35),
+            dismissButton.widthAnchor.constraint(equalToConstant: 35)
         ])
-        
+        dismissButtonTrailingAnchor = dismissButton.trailingAnchor.constraint(equalTo: detailFeedImageCollectionView.trailingAnchor, constant: 50)
+        dismissButtonTrailingAnchor?.isActive = true
     }
     
     private func layoutImageSlider() {
         view.addSubview(imageSlider)
         imageSlider.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            imageSlider.topAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor, constant: 5),
+            imageSlider.bottomAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor),
             imageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             imageSlider.heightAnchor.constraint(equalToConstant: 30)
         ])
+//        imageSlider.isHidden = true
+    }
+    
+    private func layoutProfileStackView() {
+        view.addSubview(profileStackView)
+        profileStackView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            profileStackView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor, constant: 10),
+            profileStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+        ])
+        profileStackView.isHidden = true
+    }
+    
+    private func layoutSettingButton() {
+        view.addSubview(settingButton)
+        settingButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            settingButton.centerYAnchor.constraint(equalTo: profileStackView.centerYAnchor),
+            settingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -25)
+        ])
+        settingButton.isHidden = true
+    }
+    
+    private func layoutCommentLabel() {
+        view.addSubview(commentLabel)
+        commentLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            commentLabel.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 20),
+            commentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            commentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+        commentLabel.isHidden = true
+    }
+    
+    private func layoutTimeLogLabel() {
+        view.addSubview(timeLogLabel)
+        timeLogLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            timeLogLabel.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: 10),
+            timeLogLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            timeLogLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+        timeLogLabel.isHidden = true
     }
     
     // MARK: - Configure
     private func configure() {
+        view.addGestureRecognizer(panGestureRecognizer)
+        view.backgroundColor = .systemBackground
+        configureDetailFeedImageCollectionView()
+        configureCommentLabel()
+        configureTimeLogLabel()
+        imageSlider.numberOfPages = viewModel.feed.imagesCount
+        profileNameLabel.text = "TempUser"
+        
+    }
+    
+    private func configureDetailFeedImageCollectionView() {
         detailFeedImageCollectionView.contentInsetAdjustmentBehavior = .never
         detailFeedImageCollectionView.alwaysBounceVertical = false
-        imageSlider.numberOfPages = viewModel.feed.imagesCount
+        detailFeedImageCollectionView.showsVerticalScrollIndicator = false
+        detailFeedImageCollectionView.showsHorizontalScrollIndicator = false
         detailFeedImageCollectionView.setCollectionViewLayout(viewModel.configureDetailFeedImageCollectionViewLayout(), animated: false)
+        
+        // make shadow hide when dismiss
+        detailFeedImageCollectionView.layer.shadowColor = UIColor.black.cgColor
+        detailFeedImageCollectionView.layer.masksToBounds = false
+        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        detailFeedImageCollectionView.layer.shadowRadius = 5
+        detailFeedImageCollectionView.layer.shadowOpacity = 0.3
+    }
+    
+    private func configureCommentLabel() {
+        commentLabel.text = viewModel.feed.message
+        commentLabel.numberOfLines = 0
+        commentLabel.font = UIFont.systemFont(ofSize: 16, weight: .light)
+        commentLabel.sizeToFit()
+    }
+    
+    private func configureTimeLogLabel() {
+        timeLogLabel.text = .petpionDateToString(viewModel.feed.uploadDate)
+        timeLogLabel.numberOfLines = 0
+        timeLogLabel.font = UIFont.systemFont(ofSize: 12, weight: .light)
+        timeLogLabel.textColor = .gray
     }
     
     // MARK: - Binding
@@ -148,7 +301,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
             self?.datasource.apply(snapshot)
         }.store(in: &cancellables)
     }
-
+    
     private func bindCurrentImageIndex() {
         viewModel.currentPageSubject.sink { [weak self] current in
             if self?.viewModel.currentPageChangedByPageControl == true {
@@ -158,35 +311,70 @@ final class DetailFeedViewController: CustomPresentableViewController {
             }
             
         }.store(in: &cancellables)
-
+        
     }
     // MARK: - Animating
-    
+    enum ZoomState {
+        case zoomIn
+        case zoomOut
+    }
     func setChildViewLayoutByZoomOut(childView: UIView,
                                      backgroundView: UIView,
                                      childViewFrame: CGRect,
                                      imageFrame: CGRect) {
-        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor].forEach { $0?.isActive = false }
-        viewTopAnchor = childView.topAnchor.constraint(equalTo: backgroundView.topAnchor, constant: childViewFrame.minY)
-        viewLeadingAnchor = childView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: childViewFrame.minX)
-        viewTrailingAnchor = childView.trailingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: childViewFrame.minX + childViewFrame.width)
-        viewBottomAnchor = childView.bottomAnchor.constraint(equalTo: backgroundView.topAnchor, constant: childViewFrame.minY + childViewFrame.height)
-        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor].forEach { $0?.isActive = true }
+        self.view.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+        imageSlider.isHidden = true
+        settingButton.isHidden = true
+        profileStackView.isHidden = true
+        commentLabel.isHidden = true
+        timeLogLabel.isHidden = true
+        view.backgroundColor = .clear
+        detailFeedImageCollectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: [], animated: false)
+        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 0)
+        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor, dismissButtonTrailingAnchor].forEach { $0?.isActive = false }
+        dismissButtonTrailingAnchor = dismissButton.trailingAnchor.constraint(equalTo: detailFeedImageCollectionView.trailingAnchor, constant: 50)
+        changeViewLayoutAnchors(state: .zoomOut, childView: childView, backgroundView: backgroundView, frame: childViewFrame)
+        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor, dismissButtonTrailingAnchor].forEach { $0?.isActive = true }
         setHeightAnchor(height: imageFrame.height)
     }
     
     func setupChildViewLayoutByZoomIn(childView: UIView,
                                       backgroundView: UIView) {
-        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor].forEach { $0?.isActive = false }
-        viewTopAnchor = childView.topAnchor.constraint(equalTo: backgroundView.topAnchor)
-        viewLeadingAnchor = childView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor)
-        viewTrailingAnchor = childView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor)
-        viewBottomAnchor = childView.bottomAnchor.constraint(equalTo: backgroundView.bottomAnchor)
-        
-        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor].forEach { $0?.isActive = true }
-        // 크기 지정 필요 
+        if viewModel.feed.imagesCount > 1 {
+            imageSlider.numberOfPages = viewModel.feed.imagesCount
+            imageSlider.isHidden = false
+        }
+        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        settingButton.isHidden = false
+        profileStackView.isHidden = false
+        commentLabel.isHidden = false
+        timeLogLabel.isHidden = false
+        view.backgroundColor = .systemBackground
+        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor, dismissButtonTrailingAnchor].forEach { $0?.isActive = false }
+        dismissButtonTrailingAnchor = dismissButton.trailingAnchor.constraint(equalTo: detailFeedImageCollectionView.trailingAnchor, constant: -18)
+        changeViewLayoutAnchors(state: .zoomIn, childView: childView, backgroundView: backgroundView)
+        [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor, dismissButtonTrailingAnchor].forEach { $0?.isActive = true }
+        // 크기 지정 필요
         let imageHeight = backgroundView.frame.width * viewModel.feed.imageRatio + 100
         setHeightAnchor(height: imageHeight)
+    }
+    
+    private func changeViewLayoutAnchors(state: ZoomState,
+                                         childView: UIView,
+                                         backgroundView: UIView,
+                                         frame: CGRect = .null) {
+        switch state {
+        case .zoomIn:
+            viewTopAnchor = childView.topAnchor.constraint(equalTo: backgroundView.topAnchor)
+            viewLeadingAnchor = childView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor)
+            viewTrailingAnchor = childView.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor)
+            viewBottomAnchor = childView.bottomAnchor.constraint(equalTo: backgroundView.bottomAnchor)
+        case .zoomOut:
+            viewTopAnchor = childView.topAnchor.constraint(equalTo: backgroundView.topAnchor, constant: frame.minY)
+            viewLeadingAnchor = childView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: frame.minX)
+            viewTrailingAnchor = childView.trailingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: frame.minX + frame.width)
+            viewBottomAnchor = childView.bottomAnchor.constraint(equalTo: backgroundView.topAnchor, constant: frame.minY + frame.height)
+        }
     }
     
     private func setHeightAnchor(height: CGFloat) {

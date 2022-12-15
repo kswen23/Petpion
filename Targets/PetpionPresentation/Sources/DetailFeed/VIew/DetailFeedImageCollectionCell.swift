@@ -25,7 +25,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
     
     override public func prepareForReuse() {
         super.prepareForReuse()
-        imageView.backgroundColor = .lightGray
+        imageView.backgroundColor = .systemBackground
     }
     
     // MARK: - Layout
@@ -38,7 +38,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
-        imageView.backgroundColor = .systemBackground
+        imageView.backgroundColor = .lightGray
         imageView.roundCorners(cornerRadius: 10)
     }
     

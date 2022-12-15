@@ -27,6 +27,8 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
         circleImageButton.tintColor = .darkGray
         circleImageButton.backgroundColor = .white
+        circleImageButton.layer.borderWidth = 1
+        circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
         return circleImageButton
     }()
     

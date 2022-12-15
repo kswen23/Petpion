@@ -35,6 +35,8 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
     // MARK: - Initialize
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
+    // no data일시 
+//    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
     let currentPageSubject: CurrentValueSubject<Int, Never> = .init(0)
     var currentPageChangedByPageControl = false
     lazy var snapshotSubject = urlSubject.map { items -> NSDiffableDataSourceSnapshot<Int, URL> in
