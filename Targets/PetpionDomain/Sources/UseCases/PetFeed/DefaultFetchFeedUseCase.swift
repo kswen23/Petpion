@@ -50,10 +50,15 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         case .success(let feedWithoutImageURL):
             let feedWithImageURL: [PetpionFeed] = await addThumbnailImageURL(feeds: feedWithoutImageURL)
             sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithImageURL)
+//            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithoutImageURL)
         case .failure(let failure):
             print(failure)
         }
         return sortedResultFeeds
+    }
+    
+    public func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL] {
+        return await firebaseStorageRepository.fetchFeedTotalImageURL(feed)
     }
     
     // MARK: - Private

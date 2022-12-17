@@ -84,6 +84,18 @@ final class DetailFeedViewController: CustomPresentableViewController {
         print("setting123")
     }
     
+    private lazy var battleStackView: UIStackView = {
+        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: 66, countDouble: nil)
+        let winCountView: UIStackView = makeSymbolCountStackView(symbol: "hand.thumbsup.fill", countInt: viewModel.feed.likeCount, countDouble: nil)
+        let winRateCountView: UIStackView = makeSymbolCountStackView(symbol: "flame.fill", countInt: nil, countDouble: viewModel.getWinRate())
+        let stackView = UIStackView()
+        [battleCountView, winCountView, winRateCountView].forEach {
+            stackView.addArrangedSubview($0)
+        }
+        stackView.spacing = view.frame.width/6
+        stackView.alignment = .bottom
+        return stackView
+    }()
     private lazy var commentLabel: UILabel = UILabel()
     private lazy var timeLogLabel: UILabel = UILabel()
     
@@ -141,10 +153,10 @@ final class DetailFeedViewController: CustomPresentableViewController {
                 self.view?.transform = CGAffineTransform(scaleX: shrinkedScale, y: shrinkedScale)
             }
         } else if currentY > lastPoint + 30 {
-                self.dismiss(animated: true)
+            self.dismiss(animated: true)
         }
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -168,6 +180,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         layoutImageSlider()
         layoutProfileStackView()
         layoutSettingButton()
+        layoutBattleStackView()
         layoutCommentLabel()
         layoutTimeLogLabel()
     }
@@ -204,7 +217,6 @@ final class DetailFeedViewController: CustomPresentableViewController {
             imageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             imageSlider.heightAnchor.constraint(equalToConstant: 30)
         ])
-//        imageSlider.isHidden = true
     }
     
     private func layoutProfileStackView() {
@@ -212,7 +224,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         profileStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             profileStackView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor, constant: 10),
-            profileStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            profileStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10)
         ])
         profileStackView.isHidden = true
     }
@@ -227,11 +239,21 @@ final class DetailFeedViewController: CustomPresentableViewController {
         settingButton.isHidden = true
     }
     
+    private func layoutBattleStackView() {
+        view.addSubview(battleStackView)
+        battleStackView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            battleStackView.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 10),
+            battleStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+        battleStackView.isHidden = true
+    }
+    
     private func layoutCommentLabel() {
         view.addSubview(commentLabel)
         commentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            commentLabel.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 20),
+            commentLabel.topAnchor.constraint(equalTo: battleStackView.bottomAnchor, constant: 20),
             commentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             commentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
@@ -326,6 +348,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         imageSlider.isHidden = true
         settingButton.isHidden = true
         profileStackView.isHidden = true
+        battleStackView.isHidden = true
         commentLabel.isHidden = true
         timeLogLabel.isHidden = true
         view.backgroundColor = .clear
@@ -347,6 +370,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
         settingButton.isHidden = false
         profileStackView.isHidden = false
+        battleStackView.isHidden = false
         commentLabel.isHidden = false
         timeLogLabel.isHidden = false
         view.backgroundColor = .systemBackground
@@ -355,14 +379,14 @@ final class DetailFeedViewController: CustomPresentableViewController {
         changeViewLayoutAnchors(state: .zoomIn, childView: childView, backgroundView: backgroundView)
         [viewTopAnchor, viewLeadingAnchor, viewTrailingAnchor, viewBottomAnchor, dismissButtonTrailingAnchor].forEach { $0?.isActive = true }
         // 크기 지정 필요
-        let imageHeight = backgroundView.frame.width * viewModel.feed.imageRatio + 100
+        let imageHeight = backgroundView.frame.width * viewModel.feed.imageRatio
         setHeightAnchor(height: imageHeight)
     }
     
     private func changeViewLayoutAnchors(state: ZoomState,
                                          childView: UIView,
                                          backgroundView: UIView,
-                                         frame: CGRect = .null) {
+                                         frame: CGRect = .init()) {
         switch state {
         case .zoomIn:
             viewTopAnchor = childView.topAnchor.constraint(equalTo: backgroundView.topAnchor)
@@ -381,6 +405,40 @@ final class DetailFeedViewController: CustomPresentableViewController {
         detailImageCollectionViewHeightAnchor?.isActive = false
         detailImageCollectionViewHeightAnchor = detailFeedImageCollectionView.heightAnchor.constraint(equalToConstant: height)
         detailImageCollectionViewHeightAnchor?.isActive = true
+    }
+    
+    private func makeSymbolCountStackView(symbol: String, countInt: Int?, countDouble: Double?) -> UIStackView {
+        
+        let symbolImageView: UIImageView = {
+            let imageView = UIImageView()
+            imageView.image = UIImage(systemName: symbol)
+            imageView.tintColor = .black
+            return imageView
+        }()
+        
+        let countLabel: UILabel = {
+            let label = UILabel()
+            label.font = UIFont.systemFont(ofSize: 15)
+            if let countInt = countInt {
+                label.text = String(countInt)
+            }
+            if let countDouble = countDouble {
+                label.text = String(countDouble)+"%"
+            }
+            return label
+        }()
+        
+        let symbolCountStackView: UIStackView = {
+            let stackView = UIStackView()
+            [symbolImageView, countLabel].forEach {
+                stackView.addArrangedSubview($0)
+            }
+            stackView.spacing = 5
+            stackView.alignment = .bottom
+            return stackView
+        }()
+        
+        return symbolCountStackView
     }
 }
 

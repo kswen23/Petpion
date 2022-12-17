@@ -1,6 +1,6 @@
 //
 //  String+Extension.swift
-//  PetpionPresentation
+//  PetpionCore
 //
 //  Created by 김성원 on 2022/12/14.
 //  Copyright © 2022 Petpion. All rights reserved.

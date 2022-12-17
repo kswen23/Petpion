@@ -21,6 +21,7 @@ protocol DetailFeedViewModelInput {
 protocol DetailFeedViewModelOutput {
     func configureDetailFeedImageCollectionViewLayout() -> UICollectionViewLayout
     func makeDetailFeedImageCollectionViewDataSource(parentViewController: UIViewController, collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL>
+    func getWinRate() -> Double
 }
 
 protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewModelOutput {
@@ -116,4 +117,7 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         }
     }
     
+    func getWinRate() -> Double {
+        ((Double(feed.likeCount)/66)*100).roundDecimal(to: 1)
+    }
 }
