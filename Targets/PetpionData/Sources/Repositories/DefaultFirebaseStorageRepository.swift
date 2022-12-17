@@ -9,6 +9,7 @@
 import Foundation
 
 import FirebaseStorage
+import PetpionCore
 import PetpionDomain
 
 public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
@@ -112,6 +113,11 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     public func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL] {
+        
+        if let cachedURLs = URLCache.shared.urls(id: feed.id as NSString) {
+            return cachedURLs
+        }
+        
         let feedImageRef: String = PetpionFeed.getImageReference(feed)
         
         var imageReferences: [String] = []
@@ -134,6 +140,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
             .sorted(by: <)
             .map{ URL(string: $0)! }
         
+        URLCache.shared.saveURLCache(urls: sortedURLArr as NSArray, key: feed.id as NSString)
         return sortedURLArr
     }
     
