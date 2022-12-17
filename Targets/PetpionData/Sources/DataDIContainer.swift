@@ -21,8 +21,12 @@ public struct DataDIContainer: Containable {
     }
     
     private func registerRepositories() {
-        container.register(PetpionRepository.self) { resolver in
-            return DefaultPetpionRepository()
+        container.register(FirestoreRepository.self) { resolver in
+            return DefaultFirestoreRepository()
+        }
+        
+        container.register(FirebaseStorageRepository.self) { resolver in
+            return DefaultFirebaseStorageRepository()
         }
     }
     

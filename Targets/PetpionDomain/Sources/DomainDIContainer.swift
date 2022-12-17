@@ -12,7 +12,7 @@ import Swinject
 public struct DomainDIContainer: Containable {
     
     public init() {}
-
+    
     public var container: Swinject.Container = DIContainer.shared
     
     public func register() {
@@ -20,9 +20,17 @@ public struct DomainDIContainer: Containable {
     }
     
     private func registerUseCases() {
-        guard let petpionRepository: PetpionRepository = container.resolve(PetpionRepository.self) else { return }
-        container.register(PetpionUseCase.self) { resolver in
-            return DefaultPetpionUseCase(petpionRepository: petpionRepository)
+        guard let firestoreRepository: FirestoreRepository = container.resolve(FirestoreRepository.self),
+              let firebaseStorageRepository: FirebaseStorageRepository = container.resolve(FirebaseStorageRepository.self) else { return }
+        
+        container.register(FetchFeedUseCase.self) { resolver in
+            return DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository,
+                                           firebaseStorageRepository: firebaseStorageRepository)
+        }
+        
+        container.register(UploadFeedUseCase.self) { resolver in
+            return DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
+                                            firebaseStorageRepository: firebaseStorageRepository)
         }
     }
     
