@@ -15,6 +15,7 @@ public struct PetpionFeed: Identifiable {
     public let id: Identifier
     public let uploaderID: User.ID
     public let uploadDate: Date
+    public var battleCount: Int
     public var likeCount: Int
     public var imagesCount: Int
     public var message: String
@@ -25,6 +26,7 @@ public struct PetpionFeed: Identifiable {
     public init(id: Identifier,
                 uploaderID: User.ID,
                 uploadDate: Date,
+                battleCount: Int,
                 likeCount: Int,
                 imageCount: Int,
                 message: String,
@@ -33,6 +35,7 @@ public struct PetpionFeed: Identifiable {
         self.id = id
         self.uploaderID = uploaderID
         self.uploadDate = uploadDate
+        self.battleCount = battleCount
         self.likeCount = likeCount
         self.imagesCount = imageCount
         self.message = message

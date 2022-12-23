@@ -111,6 +111,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
                                             uploaderID: UUID().uuidString,
                                             uploadDate: Date.init(),
+                                            battleCount: 0,
                                             likeCount: 0,
                                             imageCount: datas.count,
                                             message: message,
