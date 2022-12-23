@@ -36,27 +36,40 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Read
-    public func fetchFirstFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+    public func fetchFirstFeedArray(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
         let feedCollection = await fetchFirstFeedCollection(by: option)
         return convertCollectionToModel(feedCollection)
     }
     
-    public func fetchFeedData(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
+    public func fetchFeedArray(by option: SortingOption) async -> Result<[PetpionFeed], Error> {
         guard getCursor(by: option) != nil else { return Result.success([]) }
         let feedCollection = await fetchFeedCollection(by: option)
         return convertCollectionToModel(feedCollection)
     }
-    
-    private func convertCollectionToModel(_ collection: Result<[[String : Any]], Error>) -> Result<[PetpionFeed], Error> {
-        switch collection {
-        case .success(let collections):
-            let result = collections
-                .map{ FeedData.toFeedData($0) }
-                .map{ PetpionFeed.toPetpionFeed(data: $0) }
-            return Result.success(result)
-        case .failure(let failure):
-            return Result.failure(failure)
+        
+    public func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed] {
+        let result = await withTaskGroup(of: Result<[PetpionFeed], Error>.self) { taskGroup -> [PetpionFeed] in
+            for _ in 0 ..< count {
+                taskGroup.addTask {
+                    let singleCollection = await self.fetchSingleRandomFeedCollection()
+                    return self.convertCollectionToModel(singleCollection)
+                }
+            }
+            var resultArr: [PetpionFeed] = []
+            for await value in taskGroup {
+                switch value {
+                case .success(let feed):
+                    if feed.count == 1 {
+                        resultArr.append(feed[0])
+                    }
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+            return resultArr
         }
+        return result
+        
     }
     
     // MARK: - Private Read
@@ -107,6 +120,37 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         }
                     }
                 }
+        }
+    }
+    
+    private func fetchSingleRandomFeedCollection() async -> Result<[[String: Any]], Error> {
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.feed.reference)
+                .whereField("random", isGreaterThanOrEqualTo: Int.random(in: 0..<Int.max))
+                .limit(to: 1)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        continuation.resume(returning: .failure(error))
+                    } else {
+                        if let result = snapshot?.documents {
+                            continuation.resume(returning: .success(result.map{ $0.data() }))
+                        }
+                    }
+                }
+            
+        }
+    }
+    
+    private func convertCollectionToModel(_ collection: Result<[[String : Any]], Error>) -> Result<[PetpionFeed], Error> {
+        switch collection {
+        case .success(let collections):
+            let result = collections
+                .map{ FeedData.toFeedData($0) }
+                .map{ PetpionFeed.toPetpionFeed(data: $0) }
+            return Result.success(result)
+        case .failure(let failure):
+            return Result.failure(failure)
         }
     }
 }

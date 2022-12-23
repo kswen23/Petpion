@@ -12,6 +12,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     public var firebaseStorageRepository: FirebaseStorageRepository
+    
     // MARK: - Initialize
     init(firestoreRepository: FirestoreRepository,
          firebaseStorageRepository: FirebaseStorageRepository) {
@@ -41,9 +42,9 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         
         var feedDataFromFirestore: Result<[PetpionFeed], Error> = .success([])
         if isFirst {
-            feedDataFromFirestore = await firestoreRepository.fetchFirstFeedData(by: option)
+            feedDataFromFirestore = await firestoreRepository.fetchFirstFeedArray(by: option)
         } else {
-            feedDataFromFirestore = await firestoreRepository.fetchFeedData(by: option)
+            feedDataFromFirestore = await firestoreRepository.fetchFeedArray(by: option)
         }
         var sortedResultFeeds: [PetpionFeed] = []
         switch feedDataFromFirestore {
