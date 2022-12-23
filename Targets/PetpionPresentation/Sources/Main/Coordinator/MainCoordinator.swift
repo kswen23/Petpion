@@ -52,6 +52,13 @@ public final class MainCoordinator: NSObject, Coordinator {
         navigationController.present(detailFeedViewController, animated: true)
     }
     
+    public func pushVotePetpion() {
+        guard let votePetpionCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VotePetpionCoordinator") as? VotePetpionCoordinator else { return }
+        childCoordinators.append(votePetpionCoordinator)
+        votePetpionCoordinator.navigationController = navigationController
+        votePetpionCoordinator.start()
+    }
+    
     public func childDidFinish(_ child: Coordinator?) {
         for (index, coordinator) in childCoordinators.enumerated() {
             if coordinator === child {

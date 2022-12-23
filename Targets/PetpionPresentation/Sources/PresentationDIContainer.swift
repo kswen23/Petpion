@@ -37,12 +37,17 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
             FeedUploadCoordinator()
         }
+        
+        container.register(Coordinator.self, name: "VotePetpionCoordinator") { _ in
+            VotePetpionCoordinator()
+        }
     }
     
     // MARK: - ViewController Container
     private func registerViewControllers() {
         guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
-              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self) else { return }
+              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self),
+              let votePetpionViewModel: VotePetpionViewModelProtocol = container.resolve(VotePetpionViewModelProtocol.self) else { return }
         
         container.register(MainViewController.self) { _ in
             MainViewController(viewModel: mainViewModel)
@@ -55,12 +60,17 @@ public struct PresentationDIContainer: Containable {
         container.register(FeedImagePickerViewController.self) { _ in
             FeedImagePickerViewController(viewModel: feedUploadViewModel)
         }
+        
+        container.register(VotePetpionViewController.self) { _ in
+            VotePetpionViewController(viewModel: votePetpionViewModel)
+        }
     }
     
     // MARK: - ViewModel Container
     private func registerViewModels() {
         guard let fetchFeedUseCase: FetchFeedUseCase = container.resolve(FetchFeedUseCase.self),
-              let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self) else { return }
+              let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self),
+              let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self) else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
             MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
@@ -69,8 +79,11 @@ public struct PresentationDIContainer: Containable {
         container.register(FeedUploadViewModelProtocol.self) { _ in
             FeedUploadViewModel(uploadFeedUseCase: uploadFeedUseCase)
         }
+        
+        container.register(VotePetpionViewModelProtocol.self) { _ in
+            VotePetpionViewModel(makeVoteListUseCase: makeVoteListUseCase)
+        }
     }
     
-    // Scene 으로 추상화? Main, Vote, Upload scene..
 }
 

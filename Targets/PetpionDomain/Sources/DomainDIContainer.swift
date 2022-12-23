@@ -32,6 +32,11 @@ public struct DomainDIContainer: Containable {
             return DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
                                             firebaseStorageRepository: firebaseStorageRepository)
         }
+        
+        container.register(MakeVoteListUseCase.self) { resolver in
+            return DefaultMakeVoteListUseCase(firestoreRepository: firestoreRepository,
+                                              firebaseStorageRepository: firebaseStorageRepository)
+        }
     }
     
 }
