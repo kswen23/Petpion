@@ -64,21 +64,21 @@ func makePetpionAppTarget(
         
         let platform = platform
         let infoPlist: [String: InfoPlist.Value] = [
-                "CFBundleVersion": "1",
-                "UILaunchStoryboardName": "LaunchScreen",
-                "UIApplicationSceneManifest": [
-                    "UIApplicationSupportsMultipleScenes": false,
-                    "UISceneConfigurations": [
-                        "UIWindowSceneSessionRoleApplication": [
-                            [
-                                "UISceneConfigurationName": "Default Configuration",
-                                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
-                            ],
-                        ]
+            "CFBundleVersion": "1",
+            "UILaunchStoryboardName": "LaunchScreen",
+            "UIApplicationSceneManifest": [
+                "UIApplicationSupportsMultipleScenes": false,
+                "UISceneConfigurations": [
+                    "UIWindowSceneSessionRoleApplication": [
+                        [
+                            "UISceneConfigurationName": "Default Configuration",
+                            "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
+                        ],
                     ]
-                ],
-                "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청"
-            ]
+                ]
+            ],
+            "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청"
+        ]
         
         return .init(
             name: "Petpion",
@@ -111,7 +111,9 @@ let project: Project = .init(
         .remote(url: "https://github.com/firebase/firebase-ios-sdk", requirement: .upToNextMajor(from: "10.1.0")),
         .remote(url: "https://github.com/google/gtm-session-fetcher.git", requirement: .upToNextMajor(from: "3.0.0")),
         .remote(url: "https://github.com/Yummypets/YPImagePicker.git", requirement: .upToNextMajor(from: "5.2.0")),
-        .remote(url: "https://github.com/guoyingtao/Mantis.git", requirement: .exact("2.3.0"))
+        .remote(url: "https://github.com/guoyingtao/Mantis.git", requirement: .exact("2.3.0")),
+        .remote(url: "https://github.com/airbnb/lottie-ios.git"
+                ,requirement: .upToNextMajor(from: "4.0.0"))
     ],
     settings: makeConfiguration(),
     targets: [
@@ -130,7 +132,7 @@ let project: Project = .init(
             dependencies: [
                 .package(product: "Swinject")
             ]),
-
+        
         makePetpionFrameworkTargets(
             name: Layer.presentation.layerName,
             platform: .iOS,
@@ -138,7 +140,8 @@ let project: Project = .init(
                 .target(name: Layer.core.layerName),
                 .target(name: Layer.domain.layerName),
                 .package(product: "YPImagePicker"),
-                .package(product: "Mantis")
+                .package(product: "Mantis"),
+                .package(product: "Lottie")
             ]),
         makePetpionFrameworkTargets(
             name: Layer.data.layerName,

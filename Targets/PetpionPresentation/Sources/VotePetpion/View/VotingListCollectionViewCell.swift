@@ -6,10 +6,12 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
+import AVFoundation
 import Combine
 import Foundation
 import UIKit
 
+import Lottie
 import PetpionDomain
 
 enum ImageCollectionViewSection {
@@ -33,10 +35,12 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
                                                                                     collectionViewLayout: UICollectionViewLayout())
     private lazy var topImageCollectionViewDataSource = makeImageCollectionViewDataSource(collectionView: topImageCollectionView)
     private lazy var bottomImageCollectionViewDataSource = makeImageCollectionViewDataSource(collectionView: bottomImageCollectionView)
+    
     private var topImageCollectionViewBottomAnchor: NSLayoutConstraint?
     private var topImageCollectionViewHeightAnchor: NSLayoutConstraint?
     private var bottomImageCollectionViewTopAnchor: NSLayoutConstraint?
     private var bottomImageCollectionViewHeightAnchor: NSLayoutConstraint?
+    
     private lazy var versusImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "versusImage")
@@ -70,6 +74,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }()
     
     @objc private func doubleTapped(_ sender: UITapGestureRecognizer) {
+        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         if sender.view == topImageCollectionView {
             animateAfterVoting(section: .top) {
                 self.parentableViewController?.voteCollectionViewDidTapped(to: .top)
@@ -80,6 +85,13 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
             }
         }
     }
+    
+    private lazy var winEffectView: LottieAnimationView = {
+        let animationView: LottieAnimationView = .init(name: "winEffect")
+        animationView.contentMode = .scaleAspectFill
+        animationView.isHidden = true
+        return animationView
+    }()
     
     // MARK: - Cell LifeCycle
     public override func prepareForReuse() {
@@ -102,11 +114,14 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         topImageCollectionViewBottomAnchor?.isActive = true
         bottomImageCollectionViewTopAnchor?.isActive = true
         versusImageView.isHidden = false
+        topImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMinYCorner, .layerMinXMinYCorner])
+        bottomImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMaxYCorner, .layerMinXMaxYCorner])
     }
     
     // MARK: - Initialize
     override init(frame: CGRect) {
         super.init(frame: frame)
+        self.backgroundColor = .clear
         layout()
         configure()
     }
@@ -122,6 +137,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         layoutTopImagePagingButton()
         layoutBottomImagePagingButton()
         layoutVersusImageView()
+        layoutWinEffectAnimationView()
     }
     
     private func layoutTopImageCollectionView() {
@@ -183,6 +199,17 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         ])
     }
     
+    private func layoutWinEffectAnimationView() {
+        self.addSubview(winEffectView)
+        winEffectView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            winEffectView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            winEffectView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            winEffectView.heightAnchor.constraint(equalToConstant: 400),
+            winEffectView.widthAnchor.constraint(equalToConstant: 300)
+        ])
+    }
+    
     // MARK: - Configure
     private func configure() {
         configureTopImageCollectionView()
@@ -205,6 +232,9 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         topImageCollectionView.showsHorizontalScrollIndicator = false
         topImageCollectionView.isScrollEnabled = true
         topImageCollectionView.addGestureRecognizer(topDoubleTapGesture)
+        topImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMinYCorner, .layerMinXMinYCorner])
+        topImageCollectionView.layer.borderWidth = 10
+        topImageCollectionView.layer.borderColor = CustomColor.VotePetpionRedColor.cgColor
     }
     
     private func configureBottomImageCollectionView() {
@@ -221,7 +251,9 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         bottomImageCollectionView.showsHorizontalScrollIndicator = false
         bottomImageCollectionView.isScrollEnabled = true
         bottomImageCollectionView.addGestureRecognizer(bottomDoubleTapGesture)
-        
+        bottomImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMaxYCorner, .layerMinXMaxYCorner])
+        bottomImageCollectionView.layer.borderWidth = 10
+        bottomImageCollectionView.layer.borderColor = CustomColor.VotePetpionBlueColor.cgColor
     }
     
     private func configureImageCollectionViewSection() -> NSCollectionLayoutSection {
@@ -267,6 +299,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         bottomImagePagingButton.isHidden = bottomFeedImageCount > 1 ? false : true
         topImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
         bottomImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
+        
         viewModel?.topImageIndex.sink(receiveValue: { index in
             self.topImagePagingButton.setTitle("\(index)/\(topFeedImageCount)", for: .normal)
         }).store(in: &cancellables)
@@ -338,6 +371,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }
     
     private func increaseTopCollectionView(completion: @escaping (()-> Void)) {
+        topImageCollectionView.roundCorners(cornerRadius: 45)
         topImageCollectionViewBottomAnchor?.isActive = false
         topImageCollectionViewHeightAnchor?.isActive = false
         topImageCollectionViewBottomAnchor = topImageCollectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
@@ -347,7 +381,10 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         UIView.animate(withDuration: 0.4, delay: 0) {
             self.layoutIfNeeded()
         } completion: { _ in
+            self.winEffectView.isHidden = false
+            self.winEffectView.play()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.winEffectView.isHidden = true
                 completion()
             }
         }
@@ -372,6 +409,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }
     
     private func increaseBottomCollectionView(completion: @escaping (()-> Void)) {
+        bottomImageCollectionView.roundCorners(cornerRadius: 45)
         bottomImageCollectionViewTopAnchor?.isActive = false
         bottomImageCollectionViewHeightAnchor?.isActive = false
         bottomImageCollectionViewTopAnchor = bottomImageCollectionView.topAnchor.constraint(equalTo: self.topAnchor)
@@ -381,7 +419,10 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         UIView.animate(withDuration: 0.4, delay: 0) {
             self.layoutIfNeeded()
         } completion: { _ in
+            self.winEffectView.isHidden = false
+            self.winEffectView.play()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.winEffectView.isHidden = true
                 completion()
             }
         }

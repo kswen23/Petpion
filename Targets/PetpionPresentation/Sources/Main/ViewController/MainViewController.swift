@@ -9,6 +9,7 @@
 import Combine
 import UIKit
 
+import Lottie
 import PetpionCore
 import PetpionDomain
 
