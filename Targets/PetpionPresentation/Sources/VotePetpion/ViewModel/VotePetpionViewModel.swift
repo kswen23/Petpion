@@ -11,53 +11,64 @@ import UIKit
 
 import PetpionDomain
 
-protocol VotePetpionInput {
-    
+protocol VotePetpionViewModelInput {
+
 }
 
-protocol VotePetpionOutput {
+protocol VotePetpionViewModelOutput {
     func configureVotingListCollectionViewLayout() -> UICollectionViewLayout
-    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.Section, PetpionVotePare>
+    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView,
+                                                cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>
 }
 
-protocol VotePetpionViewModelProtocol: VotePetpionInput, VotePetpionOutput {
+protocol VotePetpionViewModelProtocol: VotePetpionViewModelInput, VotePetpionViewModelOutput {
     var makeVoteListUseCase: MakeVoteListUseCase { get }
-    var petpionVotePareSubject: CurrentValueSubject<[PetpionVotePare], Never> { get }
-    
-    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<VotePetpionViewModel.Section, PetpionVotePare>,Publishers.Map<PassthroughSubject<[PetpionVotePare], Never>,NSDiffableDataSourceSnapshot<VotePetpionViewModel.Section, PetpionVotePare>>.Failure> { get }
+    var fetchFeedUseCase: FetchFeedUseCase { get }
+    var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> { get }
+    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>,Publishers.Map<PassthroughSubject<[PetpionVotePare], Never>,NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>>.Failure> { get }
 }
 
 final class VotePetpionViewModel: VotePetpionViewModelProtocol {
-
-    enum Section {
+    
+    enum VoteCollectionViewSection {
         case base
     }
     
     private var cancellables = Set<AnyCancellable>()
     var makeVoteListUseCase: MakeVoteListUseCase
+    var fetchFeedUseCase: FetchFeedUseCase
     
-    var petpionVotePareSubject: CurrentValueSubject<[PetpionVotePare], Never> = .init([])
-    lazy var snapshotSubject = petpionVotePareSubject.map { items -> NSDiffableDataSourceSnapshot<VotePetpionViewModel.Section, PetpionVotePare> in
-        var snapshot = NSDiffableDataSourceSnapshot<VotePetpionViewModel.Section, PetpionVotePare>()
+    var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> = .init([])
+
+    lazy var snapshotSubject = petpionVotePareArraySubject.map { items -> NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare> in
+        var snapshot = NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>()
         snapshot.appendSections([.base])
         snapshot.appendItems(items, toSection: .base)
         return snapshot
     }.eraseToAnyPublisher()
-
+    
+    private lazy var prefetchedPareArray: [PetpionVotePare] = []
+    
     // MARK: - Initialize
-    init(makeVoteListUseCase: MakeVoteListUseCase) {
+    init(makeVoteListUseCase: MakeVoteListUseCase,
+         fetchFeedUseCase: FetchFeedUseCase) {
         self.makeVoteListUseCase = makeVoteListUseCase
+        self.fetchFeedUseCase = fetchFeedUseCase
         prepareVoteList()
     }
     
     private func prepareVoteList() {
         Task {
-            let petpionVotePare = await makeVoteListUseCase.fetchVoteList(pare: 10)
+            let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10)
+            prefetchPareDetailImage(index: 0, with: petpionVotePareArr)
+            prefetchPareDetailImage(index: 1, with: petpionVotePareArr)
+            // loading Finish 타이밍
             await MainActor.run {
-                petpionVotePareSubject.send(petpionVotePare)
+                petpionVotePareArraySubject.send(petpionVotePareArr)
             }
         }
     }
+    
     // MARK: - Input
     
     // MARK: - Output
@@ -68,23 +79,19 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                heightDimension: .fractionalHeight(1.0))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
-                                                       subitems: [item])
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize,
+                                                     subitems: [item])
         let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPaging
-        section.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
-            //            guard self?.baseCollectionViewNeedToScroll == true else { return }
-            //            let index = Int(max(0, round(point.x / environment.container.contentSize.width)))
-            //            self?.baseCollectionViewDidScrolled(to: index)
-        }
+        
         let layout = UICollectionViewCompositionalLayout(section: section)
         
         return layout
         
     }
     
-    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.Section, PetpionVotePare> {
-        let registration = makeVotingListCollectionViewCellRegistration()
+    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView,
+                                                cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare> {
+        let registration = makeVotingListCollectionViewCellRegistration(cellDelegate: cellDelegate)
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
                 using: registration,
@@ -94,11 +101,25 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         }
     }
     
-    private func makeVotingListCollectionViewCellRegistration() -> UICollectionView.CellRegistration<VotingListCollectionViewCell, PetpionVotePare> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            // detailImage fetch in here
-            cell
+    private func makeVotingListCollectionViewCellRegistration(cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionView.CellRegistration<VotingListCollectionViewCell, PetpionVotePare> {
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            guard let strongSelf = self else { return }
+            if strongSelf.prefetchedPareArray.indices.contains(indexPath.item) {
+                cell.viewModel = VotingListCollectionViewCellViewModel(votePare: strongSelf.prefetchedPareArray[indexPath.item])
+                cell.parentableViewController = cellDelegate
+                cell.bindViewModel()
+            } else {
+                print("prefetchedPare not contained")
+            }
+            strongSelf.prefetchPareDetailImage(index: indexPath.item+2,
+                                               with: strongSelf.petpionVotePareArraySubject.value)
         }
     }
     
+    private func prefetchPareDetailImage(index: Int, with arr: [PetpionVotePare]) {
+        Task {
+            guard index < arr.count else { return }
+            prefetchedPareArray.append(await fetchFeedUseCase.fetchVotePareDetailImages(pare: arr[index]))
+        }
+    }
 }

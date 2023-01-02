@@ -20,7 +20,17 @@ final class VotePetpionViewController: UIViewController {
     
     private lazy var votingListCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                              collectionViewLayout: UICollectionViewLayout())
-    private lazy var votingListCollectionViewDataSource = viewModel.makeVotingListCollectionViewDataSource(collectionView: votingListCollectionView)
+    private lazy var votingListCollectionViewDataSource = viewModel.makeVotingListCollectionViewDataSource(collectionView: votingListCollectionView, cellDelegate: self)
+
+    // 임시
+    var num = 1
+    func nextButtonDidTapped() {
+        votingListCollectionView.isScrollEnabled = true
+        votingListCollectionView.scrollToItem(at: IndexPath(item: num, section: 0), at: [], animated: true)
+
+        num += 1
+        votingListCollectionView.isScrollEnabled = false
+    }
     
     // MARK: - Initialize
     init(viewModel: VotePetpionViewModelProtocol) {
@@ -55,16 +65,27 @@ final class VotePetpionViewController: UIViewController {
             votingListCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         votingListCollectionView.contentInsetAdjustmentBehavior = .never
-        votingListCollectionView.alwaysBounceVertical = false
+        votingListCollectionView.alwaysBounceHorizontal = false
     }
     
     // MARK: - Configure
     private func configure() {
+        configureNavigationBar()
         configureVotingListCollectionView()
+    }
+    
+    private func configureNavigationBar() {
+        let navigationAppearance = UINavigationBarAppearance()
+        navigationAppearance.configureWithTransparentBackground()
+        self.navigationController?.navigationBar.standardAppearance = navigationAppearance
     }
 
     private func configureVotingListCollectionView() {
         votingListCollectionView.setCollectionViewLayout(viewModel.configureVotingListCollectionViewLayout(), animated: true)
+        votingListCollectionView.contentInsetAdjustmentBehavior = .never
+        votingListCollectionView.showsVerticalScrollIndicator = false
+        votingListCollectionView.showsHorizontalScrollIndicator = false
+        votingListCollectionView.isScrollEnabled = false
     }
 
     private func binding() {
@@ -75,5 +96,19 @@ final class VotePetpionViewController: UIViewController {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
             self?.votingListCollectionViewDataSource.apply(snapshot)
         }.store(in: &cancellables)
+    }
+}
+
+extension VotePetpionViewController: VotingListCollectionViewCellDelegate {
+    
+    func voteCollectionViewDidTapped(to section: ImageCollectionViewSection) {
+        switch section {
+            // send voting result
+        case .top:
+            print("top")
+        case .bottom:
+            print("bottom")
+        }
+        nextButtonDidTapped()
     }
 }

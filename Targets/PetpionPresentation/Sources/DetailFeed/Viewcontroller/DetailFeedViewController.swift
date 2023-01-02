@@ -278,7 +278,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         configureDetailFeedImageCollectionView()
         configureCommentLabel()
         configureTimeLogLabel()
-        imageSlider.numberOfPages = viewModel.feed.imagesCount
+        imageSlider.numberOfPages = viewModel.feed.imageCount
         profileNameLabel.text = "TempUser"
         
     }
@@ -363,8 +363,8 @@ final class DetailFeedViewController: CustomPresentableViewController {
     
     func setupChildViewLayoutByZoomIn(childView: UIView,
                                       backgroundView: UIView) {
-        if viewModel.feed.imagesCount > 1 {
-            imageSlider.numberOfPages = viewModel.feed.imagesCount
+        if viewModel.feed.imageCount > 1 {
+            imageSlider.numberOfPages = viewModel.feed.imageCount
             imageSlider.isHidden = false
         }
         detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)

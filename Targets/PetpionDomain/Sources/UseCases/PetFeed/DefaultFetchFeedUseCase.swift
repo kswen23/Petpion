@@ -62,6 +62,26 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return await firebaseStorageRepository.fetchFeedTotalImageURL(feed)
     }
     
+    public func fetchVotePareDetailImages(pare: PetpionVotePare) async -> PetpionVotePare {
+        let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> PetpionVotePare in
+            for feed in [pare.feed1, pare.feed2] {
+                taskGroup.addTask {
+                    var resultFeed = feed
+                    let urlArr = await self.fetchFeedDetailImages(feed: feed)
+                    resultFeed.imageURLArr = (resultFeed.imageURLArr ?? []) + urlArr
+                    return resultFeed
+                }
+            }
+            var resultFeedArr = [PetpionFeed]()
+            for await value in taskGroup {
+                resultFeedArr.append(value)
+            }
+            return PetpionVotePare(feed1: resultFeedArr[0],
+                                   feed2: resultFeedArr[1])
+        }
+        return result
+    }
+    
     // MARK: - Private
     private func addThumbnailImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in

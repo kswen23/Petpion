@@ -15,6 +15,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     let baseView: UIView = UIView()
     let thumbnailImageView: UIImageView = UIImageView()
+    
     private let imageCountButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .gray
@@ -197,11 +198,10 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     }
     
     private func configureImageCountButtonTitle(with imageCount: Int) {
-        let buttonTitle = imageCount
-        guard buttonTitle > 1 else {
+        guard imageCount > 1 else {
             return imageCountButton.isHidden = true
         }
-        imageCountButton.setTitle("+\(buttonTitle)", for: .normal)
+        imageCountButton.setTitle("+\(imageCount)", for: .normal)
     }
     
 }
@@ -222,7 +222,7 @@ extension PetFeedCollectionViewCell {
             //            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
             self.thumbnailImageURL = petpionFeed.imageURLArr?[0] ?? URL(string:"https://picsum.photos.jpg")!
             self.thumbnailRatio = petpionFeed.imageRatio
-            self.imageCount = petpionFeed.imagesCount
+            self.imageCount = petpionFeed.imageCount
             self.userProfile = UIImage()
             self.userNickname = "TempUser"
             self.comment = petpionFeed.message

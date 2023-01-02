@@ -81,7 +81,8 @@ public struct PresentationDIContainer: Containable {
         }
         
         container.register(VotePetpionViewModelProtocol.self) { _ in
-            VotePetpionViewModel(makeVoteListUseCase: makeVoteListUseCase)
+            VotePetpionViewModel(makeVoteListUseCase: makeVoteListUseCase,
+                                 fetchFeedUseCase: fetchFeedUseCase)
         }
     }
     
