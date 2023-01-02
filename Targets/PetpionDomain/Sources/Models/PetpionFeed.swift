@@ -17,7 +17,7 @@ public struct PetpionFeed: Identifiable {
     public let uploadDate: Date
     public var battleCount: Int
     public var likeCount: Int
-    public var imagesCount: Int
+    public var imageCount: Int
     public var message: String
     public var imageURLArr: [URL]?
     public var feedSize: CGSize
@@ -37,7 +37,7 @@ public struct PetpionFeed: Identifiable {
         self.uploadDate = uploadDate
         self.battleCount = battleCount
         self.likeCount = likeCount
-        self.imagesCount = imageCount
+        self.imageCount = imageCount
         self.message = message
         self.feedSize = feedSize
         self.imageRatio = imageRatio

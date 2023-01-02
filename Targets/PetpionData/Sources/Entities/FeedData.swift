@@ -45,7 +45,7 @@ struct FeedData {
         self.uploadTimestamp = Timestamp.init()
         self.likeCount = Double(feed.likeCount)
         self.battleCount = Double(feed.battleCount)
-        self.imageCount = Double(feed.imagesCount)
+        self.imageCount = Double(feed.imageCount)
         self.message = feed.message
         self.imageReference = PetpionFeed.getImageReference(feed)
         self.heightRatio = feed.feedSize.height

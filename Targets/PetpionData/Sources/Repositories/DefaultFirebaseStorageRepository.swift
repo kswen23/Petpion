@@ -23,7 +23,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                                            imageDatas: [Data]) -> [DataAndReference] {
         var array: [DataAndReference] = []
         let imageRef: String = PetpionFeed.getImageReference(feed)
-        for i in 0 ..< feed.imagesCount {
+        for i in 0 ..< feed.imageCount {
             array.append((imageDatas[i], imageRef + "/\(i)"))
         }
         return array
@@ -121,7 +121,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         let feedImageRef: String = PetpionFeed.getImageReference(feed)
         
         var imageReferences: [String] = []
-        for i in 1 ..< feed.imagesCount {
+        for i in 1 ..< feed.imageCount {
             imageReferences.append(feedImageRef + "/\(i)")
         }
         
