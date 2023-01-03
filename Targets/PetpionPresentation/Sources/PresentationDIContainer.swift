@@ -47,7 +47,8 @@ public struct PresentationDIContainer: Containable {
     private func registerViewControllers() {
         guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
               let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self),
-              let votePetpionViewModel: VotePetpionViewModelProtocol = container.resolve(VotePetpionViewModelProtocol.self) else { return }
+              let votePetpionViewModel: VotePetpionViewModelProtocol = container.resolve(VotePetpionViewModelProtocol.self),
+              let loginViewModel: LoginViewModelProtocol = container.resolve(LoginViewModelProtocol.self) else { return }
         
         container.register(MainViewController.self) { _ in
             MainViewController(viewModel: mainViewModel)
@@ -64,13 +65,19 @@ public struct PresentationDIContainer: Containable {
         container.register(VotePetpionViewController.self) { _ in
             VotePetpionViewController(viewModel: votePetpionViewModel)
         }
+        
+        container.register(LoginViewController.self) { _ in
+            LoginViewController(viewModel: loginViewModel)
+        }
     }
     
     // MARK: - ViewModel Container
     private func registerViewModels() {
         guard let fetchFeedUseCase: FetchFeedUseCase = container.resolve(FetchFeedUseCase.self),
               let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self),
-              let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self) else { return }
+              let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self),
+              let votePetpionUseCase: VotePetpionUseCase = container.resolve(VotePetpionUseCase.self),
+              let loginUseCase: LoginUseCase = container.resolve(LoginUseCase.self) else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
             MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
@@ -82,7 +89,12 @@ public struct PresentationDIContainer: Containable {
         
         container.register(VotePetpionViewModelProtocol.self) { _ in
             VotePetpionViewModel(makeVoteListUseCase: makeVoteListUseCase,
-                                 fetchFeedUseCase: fetchFeedUseCase)
+                                 fetchFeedUseCase: fetchFeedUseCase,
+                                 votePetpionUseCase: votePetpionUseCase)
+        }
+        
+        container.register(LoginViewModelProtocol.self) { _ in
+            LoginViewModel(loginUseCase: loginUseCase)
         }
     }
     

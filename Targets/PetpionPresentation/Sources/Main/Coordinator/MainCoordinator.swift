@@ -59,6 +59,14 @@ public final class MainCoordinator: NSObject, Coordinator {
         votePetpionCoordinator.start()
     }
     
+    public func presentLoginView() {
+        guard let mainViewController = navigationController.visibleViewController as? MainViewController,
+        let loginViewController = DIContainer.shared.resolve(LoginViewController.self) else  { return }
+        loginViewController.modalPresentationStyle = .custom
+        loginViewController.transitioningDelegate = mainViewController
+        mainViewController.present(loginViewController, animated: true)
+    }
+    
     public func childDidFinish(_ child: Coordinator?) {
         for (index, coordinator) in childCoordinators.enumerated() {
             if coordinator === child {

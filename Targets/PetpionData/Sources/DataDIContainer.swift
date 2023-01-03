@@ -28,6 +28,10 @@ public struct DataDIContainer: Containable {
         container.register(FirebaseStorageRepository.self) { resolver in
             return DefaultFirebaseStorageRepository()
         }
+        
+        container.register(FirebaseAuthRepository.self) { resolver in
+            return DefaultFirebaseAuthRepository()
+        }
     }
     
 }

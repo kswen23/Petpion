@@ -21,7 +21,8 @@ public struct DomainDIContainer: Containable {
     
     private func registerUseCases() {
         guard let firestoreRepository: FirestoreRepository = container.resolve(FirestoreRepository.self),
-              let firebaseStorageRepository: FirebaseStorageRepository = container.resolve(FirebaseStorageRepository.self) else { return }
+              let firebaseStorageRepository: FirebaseStorageRepository = container.resolve(FirebaseStorageRepository.self),
+              let firebaseAuthRepository: FirebaseAuthRepository = container.resolve(FirebaseAuthRepository.self) else { return }
         
         container.register(FetchFeedUseCase.self) { resolver in
             return DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository,
@@ -36,6 +37,14 @@ public struct DomainDIContainer: Containable {
         container.register(MakeVoteListUseCase.self) { resolver in
             return DefaultMakeVoteListUseCase(firestoreRepository: firestoreRepository,
                                               firebaseStorageRepository: firebaseStorageRepository)
+        }
+        
+        container.register(VotePetpionUseCase.self) { resolver in
+            return DefaultVotePetpionUseCase(firestoreRepository: firestoreRepository)
+        }
+        
+        container.register(LoginUseCase.self) { resolver in
+            return DefaultLoginUseCase(firebaseAuthRepository: firebaseAuthRepository)
         }
     }
     

@@ -150,7 +150,7 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func personButtonDidTapped() {
-        viewModel.fetchNextFeed()
+        coordinator?.presentLoginView()
     }
     
     @objc private func crownButtonDidTapped() {
@@ -158,7 +158,6 @@ final class MainViewController: UIViewController {
     }
     
     // MARK: - binding
-    
     private func binding() {
         bindSortingOption()
     }
@@ -185,5 +184,12 @@ extension MainViewController: BaseCollectionViewCellDelegation {
         let transitionDependency: FeedTransitionDependency = .init(baseCellIndexPath: baseCellIndexPath,
                                                                    feedCellIndexPath: index)
         coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+    }
+}
+
+extension MainViewController: UIViewControllerTransitioningDelegate {
+    
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+        LoginPresentationController(presentedViewController: presented, presenting: presenting)
     }
 }
