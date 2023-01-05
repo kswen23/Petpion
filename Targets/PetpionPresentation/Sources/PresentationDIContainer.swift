@@ -77,7 +77,8 @@ public struct PresentationDIContainer: Containable {
               let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self),
               let votePetpionUseCase: VotePetpionUseCase = container.resolve(VotePetpionUseCase.self),
-              let loginUseCase: LoginUseCase = container.resolve(LoginUseCase.self) else { return }
+              let loginUseCase: LoginUseCase = container.resolve(LoginUseCase.self),
+              let uploadUserInfoUseCase: UploadUserInfoUseCase = container.resolve(UploadUserInfoUseCase.self) else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
             MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
@@ -94,7 +95,8 @@ public struct PresentationDIContainer: Containable {
         }
         
         container.register(LoginViewModelProtocol.self) { _ in
-            LoginViewModel(loginUseCase: loginUseCase)
+            LoginViewModel(loginUseCase: loginUseCase,
+                           uploadUserInfoUseCase: uploadUserInfoUseCase)
         }
     }
     

@@ -7,13 +7,15 @@
 //
 
 import AuthenticationServices
+import Combine
 import CryptoKit
 import Foundation
 
+import PetpionCore
 import PetpionDomain
 
 protocol LoginViewModelInput {
-    func appleLoginButtonDidTap(with viewController: UIViewController)
+    func appleLoginButtonDidTapped(with viewController: UIViewController)
     func signIn(authorization: ASAuthorization)
 }
 
@@ -23,21 +25,28 @@ protocol LoginViewModelOutput {
 
 protocol LoginViewModelProtocol: LoginViewModelInput, LoginViewModelOutput {
     var loginUseCase: LoginUseCase { get }
+    var uploadUserInfoUseCase: UploadUserInfoUseCase { get }
+    
+    var canDismissSubject: CurrentValueSubject<Bool, Never> { get }
 }
 
 final class LoginViewModel: LoginViewModelProtocol {
     
     let loginUseCase: LoginUseCase
+    let uploadUserInfoUseCase: UploadUserInfoUseCase
+    let canDismissSubject: CurrentValueSubject<Bool, Never> = .init(false)
 
     //MARK: - Initialize
-    init(loginUseCase: LoginUseCase) {
+    init(loginUseCase: LoginUseCase,
+         uploadUserInfoUseCase: UploadUserInfoUseCase) {
         self.loginUseCase = loginUseCase
+        self.uploadUserInfoUseCase = uploadUserInfoUseCase
     }
     
     fileprivate var currentNonce: String?
     
     //MARK: - Input
-    func appleLoginButtonDidTap(with viewController: UIViewController) {
+    func appleLoginButtonDidTapped(with viewController: UIViewController) {
         let nonce = randomNonceString()
         currentNonce = nonce
         let appleIDProvider = ASAuthorizationAppleIDProvider()
@@ -64,13 +73,30 @@ final class LoginViewModel: LoginViewModelProtocol {
                 print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
                 return
             }
-            
-            Task {
-                print(await loginUseCase.signInToFirebaseAuth(providerID: "apple.com",
-                                                              idToken: idTokenString,
-                                                              rawNonce: nonce))
-            }
 
+            Task {
+                let firebaseAuthResult = await loginUseCase.signInToFirebaseAuth(providerID: "apple.com",
+                                                              idToken: idTokenString,
+                                                              rawNonce: nonce)
+                let loginResult: Bool = firebaseAuthResult.0
+                let userUID: String = firebaseAuthResult.1
+                let name = appleIDCredential.fullName?.description ?? ""
+                
+                if loginResult == true {
+                    UserDefaults.standard.setValue(true, forKey: UserInfoKey.isLogin)
+                    UserDefaults.standard.setValue(userUID, forKey: UserInfoKey.firebaseUID)
+                    
+                    uploadUserInfoUseCase.uploadNewUser(User.init(id: userUID, nickName: name, profileImage: .init()))
+                    
+                    await MainActor.run {
+                        canDismissSubject.send(true)
+                    }
+                    
+                    // 로그인 성공, 실패 여부 loginResult로 분기
+                    // isLogIn 활성화 -> 개인별기능시 보여줄 View 가 다르다, 파베서버에 사용자 db 생성 그리고 dismiss
+                }
+            }
+            
         }
     }
     

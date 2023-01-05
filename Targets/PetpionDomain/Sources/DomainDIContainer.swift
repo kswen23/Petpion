@@ -24,27 +24,31 @@ public struct DomainDIContainer: Containable {
               let firebaseStorageRepository: FirebaseStorageRepository = container.resolve(FirebaseStorageRepository.self),
               let firebaseAuthRepository: FirebaseAuthRepository = container.resolve(FirebaseAuthRepository.self) else { return }
         
-        container.register(FetchFeedUseCase.self) { resolver in
-            return DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository,
+        container.register(FetchFeedUseCase.self) { _ in
+            DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository,
                                            firebaseStorageRepository: firebaseStorageRepository)
         }
         
-        container.register(UploadFeedUseCase.self) { resolver in
-            return DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
+        container.register(UploadFeedUseCase.self) { _ in
+            DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
                                             firebaseStorageRepository: firebaseStorageRepository)
         }
         
-        container.register(MakeVoteListUseCase.self) { resolver in
-            return DefaultMakeVoteListUseCase(firestoreRepository: firestoreRepository,
+        container.register(MakeVoteListUseCase.self) { _ in
+            DefaultMakeVoteListUseCase(firestoreRepository: firestoreRepository,
                                               firebaseStorageRepository: firebaseStorageRepository)
         }
         
-        container.register(VotePetpionUseCase.self) { resolver in
-            return DefaultVotePetpionUseCase(firestoreRepository: firestoreRepository)
+        container.register(VotePetpionUseCase.self) { _ in
+            DefaultVotePetpionUseCase(firestoreRepository: firestoreRepository)
         }
         
-        container.register(LoginUseCase.self) { resolver in
-            return DefaultLoginUseCase(firebaseAuthRepository: firebaseAuthRepository)
+        container.register(LoginUseCase.self) { _ in
+            DefaultLoginUseCase(firebaseAuthRepository: firebaseAuthRepository)
+        }
+        
+        container.register(UploadUserInfoUseCase.self) { _ in
+            DefaultUploadUserInfoUseCase(firestoreRepository: firestoreRepository)
         }
     }
     

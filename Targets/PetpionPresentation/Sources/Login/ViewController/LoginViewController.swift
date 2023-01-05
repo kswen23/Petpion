@@ -7,12 +7,14 @@
 //
 
 import AuthenticationServices
+import Combine
 import Foundation
 import UIKit
 
 final class LoginViewController: UIViewController {
     
     var viewModel: LoginViewModelProtocol
+    private var cancellables = Set<AnyCancellable>()
     
     private let appleLoginButton: ASAuthorizationAppleIDButton = {
         let button = ASAuthorizationAppleIDButton(type: .continue, style: .black)
@@ -21,7 +23,7 @@ final class LoginViewController: UIViewController {
     }()
     
     @objc private func handleAuthorizationAppleIDButtonPress() {
-        viewModel.appleLoginButtonDidTap(with: self)
+        viewModel.appleLoginButtonDidTapped(with: self)
     }
     // MARK: - Initialize
     init(viewModel: LoginViewModelProtocol) {
@@ -38,6 +40,7 @@ final class LoginViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         layout()
+        binding()
     }
     
     // MARK: - Layout
@@ -54,6 +57,20 @@ final class LoginViewController: UIViewController {
             appleLoginButton.widthAnchor.constraint(equalToConstant: 300),
             appleLoginButton.heightAnchor.constraint(equalToConstant: 50)
         ])
+    }
+    
+    // MARK: - Binding
+    private func binding() {
+        bindCanDismissSubject()
+    }
+    
+    private func bindCanDismissSubject() {
+        viewModel.canDismissSubject
+            .sink { canDismiss in
+                if canDismiss {
+                    self.dismiss(animated: true)
+                }
+            }.store(in: &cancellables)
     }
 }
 

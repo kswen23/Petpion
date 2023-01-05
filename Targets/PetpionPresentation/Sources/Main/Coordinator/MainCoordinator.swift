@@ -37,6 +37,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func presentFeedImagePicker() {
+        guard UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) else { return presentLoginView() }
         guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") as? FeedUploadCoordinator else { return }
         feedUploadCoordinator.parentCoordinator = self
         childCoordinators.append(feedUploadCoordinator)
@@ -53,6 +54,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func pushVotePetpion() {
+        guard UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) else { return presentLoginView() }
         guard let votePetpionCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VotePetpionCoordinator") as? VotePetpionCoordinator else { return }
         childCoordinators.append(votePetpionCoordinator)
         votePetpionCoordinator.navigationController = navigationController

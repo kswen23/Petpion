@@ -18,21 +18,30 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
-        return await withCheckedContinuation{ continuation in
-            Task {
-                let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
-                db
-                    .document(FirestoreCollection.feed.reference + "/\(feed.id)")
-                    .setData(feedCollections) { error in
-                        if let error = error {
-                            print(error.localizedDescription)
-                            continuation.resume(returning: false)
-                        } else {
-                            continuation.resume(returning: true)
-                        }
+        return await withCheckedContinuation { continuation in
+            let feedCollections: [String: Any] = FeedData.toKeyValueCollections(.init(feed: feed))
+            db
+                .document(FirestoreCollection.feed.reference + "/\(feed.id)")
+                .setData(feedCollections) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    } else {
+                        continuation.resume(returning: true)
                     }
-            }
+                }
         }
+    }
+    
+    public func uploadNewUser(_ user: User) {
+        let userCollection: [String: Any] = UserData.toKeyValueCollections(.init(user: user))
+        db
+            .document(FirestoreCollection.user.reference + "/\(user.id)")
+            .setData(userCollection) { error in
+                if let error = error {
+                    print(error.localizedDescription)
+                }
+            }
     }
     
     // MARK: - Public Read
@@ -46,7 +55,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         let feedCollection = await fetchFeedCollection(by: option)
         return convertCollectionToModel(feedCollection)
     }
-        
+    
     public func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed] {
         let result = await withTaskGroup(of: Result<[PetpionFeed], Error>.self) { taskGroup -> [PetpionFeed] in
             for _ in 0 ..< count {
@@ -153,6 +162,27 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             return Result.failure(failure)
         }
     }
+    
+    // MARK: - Public Update
+    public func updateFeed(with feed: PetpionFeed, voteResult: VoteResult) {
+        db
+            .collection(FirestoreCollection.feed.reference)
+            .document(feed.id)
+            .updateData(makeCollection(voteResult)) { error in
+                print("done")
+            }
+    }
+    
+    // MARK: - Private Update
+    private func makeCollection(_ voteResult: VoteResult) -> [AnyHashable : Any] {
+        switch voteResult {
+        case .selected:
+            return ["likeCount": FieldValue.increment(Int64(1)),
+                    "battleCount": FieldValue.increment(Int64(1))]
+        case .deselected:
+            return ["battleCount": FieldValue.increment(Int64(1))]
+        }
+    }
 }
 
 extension DefaultFirestoreRepository {
@@ -160,6 +190,7 @@ extension DefaultFirestoreRepository {
     enum FirestoreCollection {
         
         case feed
+        case user
         
         var reference: String {
             switch self {
@@ -168,6 +199,8 @@ extension DefaultFirestoreRepository {
                       let month = DateComponents.currentDateTimeComponents().month else { return ""}
                 //                return "feeds/\(year)/\(month)"
                 return "feeds/2022/11"
+            case .user:
+                return "user"
             }
         }
         
