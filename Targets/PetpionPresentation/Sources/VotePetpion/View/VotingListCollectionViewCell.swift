@@ -6,7 +6,6 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
-import AVFoundation
 import Combine
 import Foundation
 import UIKit
@@ -74,7 +73,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }()
     
     @objc private func doubleTapped(_ sender: UITapGestureRecognizer) {
-        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
         if sender.view == topImageCollectionView {
             animateAfterVoting(section: .top) {
                 self.parentableViewController?.voteCollectionViewDidTapped(to: .top)
@@ -383,7 +382,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         } completion: { _ in
             self.winEffectView.isHidden = false
             self.winEffectView.play()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 self.winEffectView.isHidden = true
                 completion()
             }
@@ -421,7 +420,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         } completion: { _ in
             self.winEffectView.isHidden = false
             self.winEffectView.play()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 self.winEffectView.isHidden = true
                 completion()
             }
