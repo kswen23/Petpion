@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionCore
 import PetpionDomain
 
 public enum Loading {
@@ -108,8 +109,10 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     func uploadNewFeed(message: String) {
         loadingSubject.send(.start)
         let datas: [Data] = imagesSubject.value.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
+        guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+        
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
-                                            uploaderID: UUID().uuidString,
+                                            uploaderID: uploaderId,
                                             uploadDate: Date.init(),
                                             battleCount: 0,
                                             likeCount: 0,
