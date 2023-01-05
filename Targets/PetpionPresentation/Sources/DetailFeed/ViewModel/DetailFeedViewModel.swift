@@ -118,6 +118,7 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     }
     
     func getWinRate() -> Double {
-        ((Double(feed.likeCount)/66)*100).roundDecimal(to: 1)
+        let winRate = ((Double(feed.likeCount)/Double(feed.battleCount))*100).roundDecimal(to: 1)
+        return winRate.isNaN ? 0 : winRate
     }
 }
