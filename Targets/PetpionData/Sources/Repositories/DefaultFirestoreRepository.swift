@@ -16,6 +16,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var popularCursor: DocumentSnapshot?
     private var latestCursor: DocumentSnapshot?
     
+    private let numberOfShards = 10
+    
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
         return await withCheckedContinuation { continuation in
@@ -33,6 +35,21 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func createCounters(_ feed: PetpionFeed) async -> Bool {
+        let feedReference = db.collection(FirestoreCollection.feed.reference).document(feed.id)
+        let battleCountReference = getFeedCountsReference(reference: feedReference, type: .battle)
+        let likeCountReference = getFeedCountsReference(reference: feedReference, type: .like)
+        
+        let battleResult = await createDistributedCounter(to: battleCountReference)
+        let likeResult = await createDistributedCounter(to: likeCountReference)
+        
+        if battleResult, likeResult == true {
+            return true
+        } else {
+            return false
+        }
+    }
+    
     public func uploadNewUser(_ user: User) {
         let userCollection: [String: Any] = UserData.toKeyValueCollections(.init(user: user))
         db
@@ -42,6 +59,19 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     print(error.localizedDescription)
                 }
             }
+    }
+    
+    // MARK: - Private Create
+    private func createDistributedCounter(to reference: DocumentReference) async -> Bool {
+        let createDistributedCounterResult = await FirestoreDistributedCounter.createCounter(reference: reference, numberOfShards: numberOfShards)
+        
+        switch createDistributedCounterResult {
+        case .success(let success):
+            return success
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            return false
+        }
     }
     
     // MARK: - Public Read
@@ -81,6 +111,19 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         
     }
     
+    public func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed {
+        var resultFeed = feed
+        let feedReference = db.collection(FirestoreCollection.feed.reference).document(feed.id)
+        
+        let likeCount = await fetchCounts(reference: feedReference, type: .like)
+        let battleCount = await fetchCounts(reference: feedReference, type: .battle)
+        
+        resultFeed.likeCount = likeCount
+        resultFeed.battleCount = battleCount
+        
+        return resultFeed
+    }
+        
     // MARK: - Private Read
     private func fetchFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
         
@@ -163,32 +206,59 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    private func fetchCounts(reference: DocumentReference, type: FeedCountsType) async -> Int {
+        let result = await FirestoreDistributedCounter.getCount(reference: getFeedCountsReference(reference: reference, type: type))
+        var count = 0
+        switch result {
+        case .success(let resultCount):
+            count = resultCount
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            break
+        }
+        return count
+    }
+    
     // MARK: - Public Update
-    public func updateFeed(with feed: PetpionFeed, voteResult: VoteResult) {
-        db
-            .collection(FirestoreCollection.feed.reference)
-            .document(feed.id)
-            .updateData(makeCollection(voteResult)) { error in
-                print("done")
+    public func updateFeedCounts(with feed: PetpionFeed, voteResult: VoteResult) async -> Bool {
+        let feedReference = db.collection(FirestoreCollection.feed.reference).document(feed.id)
+        
+        let battleCountReference = getFeedCountsReference(reference: feedReference, type: .battle)
+        let incrementBattleCountResult = await incrementCounts(to: battleCountReference)
+        
+        switch voteResult {
+        case .selected:
+            let likeCountReference = getFeedCountsReference(reference: feedReference, type: .like)
+            let incrementLikeCountResult = await incrementCounts(to: likeCountReference)
+            
+            if incrementBattleCountResult, incrementLikeCountResult == true {
+                return true
+            } else {
+                return false
             }
+        case .deselected:
+            return incrementBattleCountResult
+        }
     }
     
     // MARK: - Private Update
-    private func makeCollection(_ voteResult: VoteResult) -> [AnyHashable : Any] {
-        switch voteResult {
-        case .selected:
-            return ["likeCount": FieldValue.increment(Int64(1)),
-                    "battleCount": FieldValue.increment(Int64(1))]
-        case .deselected:
-            return ["battleCount": FieldValue.increment(Int64(1))]
+    private func incrementCounts(to reference: DocumentReference) async -> Bool {
+        let incrementResult = await FirestoreDistributedCounter.incrementCounter(by: 1, reference: reference, numberOfShards: numberOfShards)
+        
+        switch incrementResult {
+        case .success(let success):
+            return success
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            return false
         }
     }
+    
 }
 
 extension DefaultFirestoreRepository {
     
     enum FirestoreCollection {
-        
         case feed
         case user
         
@@ -203,7 +273,21 @@ extension DefaultFirestoreRepository {
                 return "user"
             }
         }
+    }
+    
+    enum FeedCountsType {
+        case like
+        case battle
+    }
+    
+    private func getFeedCountsReference(reference: DocumentReference, type: FeedCountsType) -> DocumentReference {
         
+        switch type {
+        case .like:
+            return reference.collection("counts").document("likeCounts")
+        case .battle:
+            return reference.collection("counts").document("battleCounts")
+        }
     }
     
     private func getQuery(by option: SortingOption) -> Query {

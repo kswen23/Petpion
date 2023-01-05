@@ -10,12 +10,14 @@ public protocol FirestoreRepository {
     
     // MARK: - Create
     func uploadNewFeed(_ feed: PetpionFeed) async -> Bool
+    func createCounters(_ feed: PetpionFeed) async -> Bool
     func uploadNewUser(_ user: User)
+    
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> Result<[PetpionFeed], Error>
     func fetchFeedArray(by option: SortingOption) async -> Result<[PetpionFeed], Error>
     func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed]
-    
+    func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed
     // MARK: - Update
-     func updateFeed(with feed: PetpionFeed, voteResult: VoteResult)
+    func updateFeedCounts(with feed: PetpionFeed, voteResult: VoteResult) async -> Bool
 }
