@@ -12,14 +12,14 @@ public struct User: Identifiable {
     public typealias Identifier = String
     
     public let id: Identifier
-    public let nickName: String
+    public let nickname: String
     public let profileImage: Data
     
     public init(id: String,
                 nickName: String,
                 profileImage: Data) {
         self.id = id
-        self.nickName = nickName
+        self.nickname = nickName
         self.profileImage = profileImage
     }
 }

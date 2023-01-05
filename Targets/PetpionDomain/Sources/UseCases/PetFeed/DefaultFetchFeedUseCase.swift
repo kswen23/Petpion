@@ -49,9 +49,9 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         var sortedResultFeeds: [PetpionFeed] = []
         switch feedDataFromFirestore {
         case .success(let feedWithoutImageURL):
-            let feedWithImageURL: [PetpionFeed] = await addThumbnailImageURL(feeds: feedWithoutImageURL)
-            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithImageURL)
-//            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithoutImageURL)
+            let updatedFeed: [PetpionFeed] = await updateCountAndThumbnailImage(feeds: feedWithoutImageURL)
+            sortedResultFeeds = sortResultFeeds(sortBy: option, with: updatedFeed)
+            //            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithoutImageURL)
         case .failure(let failure):
             print(failure)
         }
@@ -64,7 +64,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public func fetchVotePareDetailImages(pare: PetpionVotePare) async -> PetpionVotePare {
         let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> PetpionVotePare in
-            for feed in [pare.feed1, pare.feed2] {
+            for feed in [pare.topFeed, pare.bottomFeed] {
                 taskGroup.addTask {
                     var resultFeed = feed
                     let urlArr = await self.fetchFeedDetailImages(feed: feed)
@@ -76,21 +76,22 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             for await value in taskGroup {
                 resultFeedArr.append(value)
             }
-            return PetpionVotePare(feed1: resultFeedArr[0],
-                                   feed2: resultFeedArr[1])
+            return PetpionVotePare(topFeed: resultFeedArr[0],
+                                   bottomFeed: resultFeedArr[1])
         }
         return result
     }
     
     // MARK: - Private
-    private func addThumbnailImageURL(feeds: [PetpionFeed]) async -> [PetpionFeed] {
+    private func updateCountAndThumbnailImage(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
             for feed in feeds {
                 taskGroup.addTask {
+                    let countUpdated = await self.firestoreRepository.fetchFeedCounts(feed)
                     let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
-                    var withURLFeed = feed
-                    withURLFeed.imageURLArr = urlArr
-                    return withURLFeed
+                    var resultFeed = countUpdated
+                    resultFeed.imageURLArr = urlArr
+                    return resultFeed
                 }
             }
             var resultFeedArr = [PetpionFeed]()

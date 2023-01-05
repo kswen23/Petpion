@@ -31,8 +31,8 @@ public final class DefaultMakeVoteListUseCase: MakeVoteListUseCase {
         var result: [PetpionVotePare] = .init()
         for i in 0 ..< feedArrHalfCount {
             let secondIndex = i + feedArrHalfCount
-            let pare: PetpionVotePare = .init(feed1: feedArr[i],
-                                              feed2: feedArr[secondIndex])
+            let pare: PetpionVotePare = .init(topFeed: feedArr[i],
+                                              bottomFeed: feedArr[secondIndex])
             result.append(pare)
         }
         return result

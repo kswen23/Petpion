@@ -21,12 +21,12 @@ final public class DefaultVotePetpionUseCase: VotePetpionUseCase {
     }
     
     // MARK: - Public
-    public func feedSelected(feed: PetpionFeed) {
-        firestoreRepository.updateFeed(with: feed, voteResult: .selected)
+    public func feedSelected(feed: PetpionFeed) async -> Bool {
+        await firestoreRepository.updateFeedCounts(with: feed, voteResult: .selected)
     }
     
-    public func feedDeselected(feed: PetpionFeed) {
-        firestoreRepository.updateFeed(with: feed, voteResult: .deselected)
+    public func feedDeselected(feed: PetpionFeed) async -> Bool {
+        await firestoreRepository.updateFeedCounts(with: feed, voteResult: .deselected)
     }
 }
 

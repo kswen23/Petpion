@@ -10,11 +10,11 @@ import Foundation
 
 public struct PetpionVotePare: Hashable {
     
-    public let feed1: PetpionFeed
-    public let feed2: PetpionFeed
+    public let topFeed: PetpionFeed
+    public let bottomFeed: PetpionFeed
     
-    init(feed1: PetpionFeed, feed2: PetpionFeed) {
-        self.feed1 = feed1
-        self.feed2 = feed2
+    init(topFeed: PetpionFeed, bottomFeed: PetpionFeed) {
+        self.topFeed = topFeed
+        self.bottomFeed = bottomFeed
     }
 }

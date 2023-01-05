@@ -293,8 +293,8 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }
     
     private func configureImagePagingIndex() {
-        guard let topFeedImageCount = viewModel?.votePare.feed1.imageCount,
-              let bottomFeedImageCount = viewModel?.votePare.feed2.imageCount else { return }
+        guard let topFeedImageCount = viewModel?.votePare.topFeed.imageCount,
+              let bottomFeedImageCount = viewModel?.votePare.bottomFeed.imageCount else { return }
         topImagePagingButton.isHidden = topFeedImageCount > 1 ? false : true
         bottomImagePagingButton.isHidden = bottomFeedImageCount > 1 ? false : true
         topImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
@@ -328,8 +328,8 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     
     // MARK: - binding
     func bindViewModel() {
-        guard let topURLArr = viewModel?.votePare.feed1.imageURLArr,
-              let bottomURLArr = viewModel?.votePare.feed2.imageURLArr else { return }
+        guard let topURLArr = viewModel?.votePare.topFeed.imageURLArr,
+              let bottomURLArr = viewModel?.votePare.bottomFeed.imageURLArr else { return }
         configureDetailImage(dataSource: topImageCollectionViewDataSource,
                              section: .top,
                              with: topURLArr)
