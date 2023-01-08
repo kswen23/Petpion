@@ -234,7 +234,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         topImageCollectionView.addGestureRecognizer(topDoubleTapGesture)
         topImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMinYCorner, .layerMinXMinYCorner])
         topImageCollectionView.layer.borderWidth = 10
-        topImageCollectionView.layer.borderColor = CustomColor.VotePetpionRedColor.cgColor
+        topImageCollectionView.layer.borderColor = UIColor.petpionRed?.cgColor
     }
     
     private func configureBottomImageCollectionView() {
@@ -253,7 +253,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         bottomImageCollectionView.addGestureRecognizer(bottomDoubleTapGesture)
         bottomImageCollectionView.roundCorners(cornerRadius: 45, maskedCorners: [.layerMaxXMaxYCorner, .layerMinXMaxYCorner])
         bottomImageCollectionView.layer.borderWidth = 10
-        bottomImageCollectionView.layer.borderColor = CustomColor.VotePetpionBlueColor.cgColor
+        bottomImageCollectionView.layer.borderColor = UIColor.petpionBlue?.cgColor
     }
     
     private func configureImageCollectionViewSection() -> NSCollectionLayoutSection {
