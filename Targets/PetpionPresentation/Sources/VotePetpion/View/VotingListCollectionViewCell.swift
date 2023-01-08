@@ -25,7 +25,6 @@ protocol VotingListCollectionViewCellDelegate {
 final class VotingListCollectionViewCell: UICollectionViewCell {
     private var cancellables = Set<AnyCancellable>()
     
-    var viewModel: VotingListCollectionViewCellViewModelProtocol?
     var parentableViewController: VotingListCollectionViewCellDelegate?
     
     private lazy var topImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
@@ -86,11 +85,14 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }
     
     private lazy var winEffectView: LottieAnimationView = {
-        let animationView: LottieAnimationView = .init(name: "winEffect")
+        let animationView: LottieAnimationView = .init(name: LottieJson.winEffect)
         animationView.contentMode = .scaleAspectFill
         animationView.isHidden = true
         return animationView
     }()
+    
+    var topImageIndex: CurrentValueSubject<Int, Never> = .init(1)
+    var bottomImageIndex: CurrentValueSubject<Int, Never> = .init(1)
     
     // MARK: - Cell LifeCycle
     public override func prepareForReuse() {
@@ -99,7 +101,6 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
     }
     
     private func resetLayout() {
-        viewModel = nil
         topImageCollectionViewHeightAnchor?.isActive = false
         bottomImageCollectionViewHeightAnchor?.isActive = false
         topImageCollectionViewBottomAnchor?.isActive = false
@@ -221,7 +222,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         let topLayoutSection = configureImageCollectionViewSection()
         topLayoutSection.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
             let index = Int(max(0, round(point.x / environment.container.contentSize.width))) + 1
-            self?.viewModel?.topImageIndex.send(index)
+            self?.topImageIndex.send(index)
         }
         topImageCollectionView.setCollectionViewLayout(UICollectionViewCompositionalLayout(section: topLayoutSection), animated: true)
         topImageCollectionView.backgroundColor = .systemBackground
@@ -240,7 +241,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         let bottomLayoutSection = configureImageCollectionViewSection()
         bottomLayoutSection.visibleItemsInvalidationHandler = { [weak self] visibleItems, point, environment in
             let index = Int(max(0, round(point.x / environment.container.contentSize.width))) + 1
-            self?.viewModel?.bottomImageIndex.send(index)
+            self?.bottomImageIndex.send(index)
         }
         bottomImageCollectionView.setCollectionViewLayout(UICollectionViewCompositionalLayout(section: bottomLayoutSection), animated: true)
         bottomImageCollectionView.backgroundColor = .systemBackground
@@ -281,33 +282,7 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
         bottomImagePagingButton.titleLabel?.font = .systemFont(ofSize: 14)
         bottomImagePagingButton.isHidden = true
     }
-    
-    private func configureDetailImage(dataSource: UICollectionViewDiffableDataSource<ImageCollectionViewSection, URL>,
-                                      section: ImageCollectionViewSection,
-                                      with urlArr: [URL]) {
-        var collectionViewSnapshot = NSDiffableDataSourceSnapshot<ImageCollectionViewSection, URL>()
-        collectionViewSnapshot.appendSections([section])
-        collectionViewSnapshot.appendItems(urlArr, toSection: section)
-        dataSource.apply(collectionViewSnapshot)
-    }
-    
-    private func configureImagePagingIndex() {
-        guard let topFeedImageCount = viewModel?.votePare.topFeed.imageCount,
-              let bottomFeedImageCount = viewModel?.votePare.bottomFeed.imageCount else { return }
-        topImagePagingButton.isHidden = topFeedImageCount > 1 ? false : true
-        bottomImagePagingButton.isHidden = bottomFeedImageCount > 1 ? false : true
-        topImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
-        bottomImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
-        
-        viewModel?.topImageIndex.sink(receiveValue: { index in
-            self.topImagePagingButton.setTitle("\(index)/\(topFeedImageCount)", for: .normal)
-        }).store(in: &cancellables)
-        
-        viewModel?.bottomImageIndex.sink(receiveValue: { index in
-            self.bottomImagePagingButton.setTitle("\(index)/\(bottomFeedImageCount)", for: .normal)
-        }).store(in: &cancellables)
-    }
-    
+            
     private func makeImageCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<ImageCollectionViewSection, URL> {
         let registration = makeImageCollectionViewCellRegistration()
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -324,20 +299,45 @@ final class VotingListCollectionViewCell: UICollectionViewCell {
             cell.configureImageView(with: item)
         }
     }
-    
-    // MARK: - binding
-    func bindViewModel() {
-        guard let topURLArr = viewModel?.votePare.topFeed.imageURLArr,
-              let bottomURLArr = viewModel?.votePare.bottomFeed.imageURLArr else { return }
+
+    func configureItem(item pare: PetpionVotePare) {
+        guard let topURLArr = pare.topFeed.imageURLArr,
+              let bottomURLArr = pare.bottomFeed.imageURLArr else { return }
         configureDetailImage(dataSource: topImageCollectionViewDataSource,
                              section: .top,
                              with: topURLArr)
         configureDetailImage(dataSource: bottomImageCollectionViewDataSource,
                              section: .bottom,
                              with: bottomURLArr)
-        configureImagePagingIndex()
+        configureImagePagingIndex(pare: pare)
+
     }
     
+    private func configureImagePagingIndex(pare: PetpionVotePare) {
+        let topFeedImageCount = pare.topFeed.imageCount
+        let bottomFeedImageCount = pare.bottomFeed.imageCount
+        topImagePagingButton.isHidden = topFeedImageCount > 1 ? false : true
+        bottomImagePagingButton.isHidden = bottomFeedImageCount > 1 ? false : true
+        topImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
+        bottomImageCollectionView.scrollToItem(at: IndexPath(row: 0, section: 0), at: [], animated: false)
+        
+        topImageIndex.sink(receiveValue: { index in
+            self.topImagePagingButton.setTitle("\(index)/\(topFeedImageCount)", for: .normal)
+        }).store(in: &cancellables)
+        
+        bottomImageIndex.sink(receiveValue: { index in
+            self.bottomImagePagingButton.setTitle("\(index)/\(bottomFeedImageCount)", for: .normal)
+        }).store(in: &cancellables)
+    }
+
+    private func configureDetailImage(dataSource: UICollectionViewDiffableDataSource<ImageCollectionViewSection, URL>,
+                                      section: ImageCollectionViewSection,
+                                      with urlArr: [URL]) {
+        var collectionViewSnapshot = NSDiffableDataSourceSnapshot<ImageCollectionViewSection, URL>()
+        collectionViewSnapshot.appendSections([section])
+        collectionViewSnapshot.appendItems(urlArr, toSection: section)
+        dataSource.apply(collectionViewSnapshot)
+    }
     // MARK: - Animating
     func animateAfterVoting(section: ImageCollectionViewSection, completion: @escaping (()-> Void)) {
         [topImagePagingButton, bottomImagePagingButton, versusImageView].forEach { view in
