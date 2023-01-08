@@ -12,10 +12,12 @@ import Foundation
 import PetpionDomain
 
 protocol VoteMainViewModelInput {
-    
+    func startFetchingVotePareArray()
+    func startVoting()
 }
 
 protocol VoteMainViewModelOutput {
+    var fetchedVotePare: [PetpionVotePare] { get }
     func fetchChanceCreationRemainingTime()
 }
 
@@ -43,18 +45,43 @@ enum VoteMainState {
 final class VoteMainViewModel: VoteMainViewModelProtocol {
 
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
-    var voteMainStateSubject: CurrentValueSubject<VoteMainState, Never> = .init(.preparing)
+    let makeVoteListUseCase: MakeVoteListUseCase
+    let fetchFeedUseCase: FetchFeedUseCase
+    
+    lazy var voteMainStateSubject: CurrentValueSubject<VoteMainState, Never> = .init(getCurrentState())
     lazy var heartSubject: CurrentValueSubject<[HeartType], Never> = .init(fetchUserVoteChance())
     lazy var remainingTimeSubject: CurrentValueSubject<TimeInterval, Never> = .init(calculateVoteChanceUseCase.getChanceCreationTimeRemaining())
     var maxTimeInterval: TimeInterval = .infinity
     
+    lazy var fetchedVotePare: [PetpionVotePare] = .init()
     // MARK: - Initialize
-    init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase) {
+    init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
+         makeVoteListUseCase: MakeVoteListUseCase,
+         fetchFeedUseCase: FetchFeedUseCase) {
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
+        self.makeVoteListUseCase = makeVoteListUseCase
+        self.fetchFeedUseCase = fetchFeedUseCase
     }
     
     // MARK: - Input
+    func startFetchingVotePareArray() {
+        Task {
+            let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10)
+            fetchedVotePare = await prefetchAllPareDetailImage(origin: petpionVotePareArr)
+            print(fetchedVotePare)
+            if fetchedVotePare.isEmpty == false {
+                await MainActor.run {
+                    voteMainStateSubject.send(.ready)
+                }
+            }
+            
+        }
+    }
     
+    func startVoting() {
+        // 서버에 하트 -1, 시간 재등록 -> 하트 -1 후 push~
+        voteMainStateSubject.send(.start)
+    }
     // MARK: - Output
     func fetchChanceCreationRemainingTime() {
         if calculateVoteChanceUseCase.getVoteChance() == User.voteMaxCountPolicy {
@@ -78,5 +105,22 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
             resultHeartArr[i] = .empty
         }
         return resultHeartArr
+    }
+    
+    private func getCurrentState() -> VoteMainState {
+        let availableChance = calculateVoteChanceUseCase.getVoteChance()
+        if availableChance == 0 {
+            return .disable
+        } else {
+            return .preparing
+        }
+    }
+    
+    private func prefetchAllPareDetailImage(origin: [PetpionVotePare]) async -> [PetpionVotePare] {
+        var resultArr = [PetpionVotePare]()
+        for pare in origin {
+            resultArr.append(await fetchFeedUseCase.fetchVotePareDetailImages(pare: pare))
+        }
+        return resultArr
     }
 }

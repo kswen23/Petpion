@@ -13,7 +13,6 @@ import PetpionDomain
 
 protocol VotePetpionViewModelInput {
     func petpionFeedSelected(to section: ImageCollectionViewSection)
-    func fetchVoteList()
 }
 
 protocol VotePetpionViewModelOutput {
@@ -23,8 +22,7 @@ protocol VotePetpionViewModelOutput {
 }
 
 protocol VotePetpionViewModelProtocol: VotePetpionViewModelInput, VotePetpionViewModelOutput {
-    var makeVoteListUseCase: MakeVoteListUseCase { get }
-    var fetchFeedUseCase: FetchFeedUseCase { get }
+    var fetchedVotePare: [PetpionVotePare] { get }
     var votePetpionUseCase: VotePetpionUseCase { get }
     var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>,Publishers.Map<PassthroughSubject<[PetpionVotePare], Never>,NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>>.Failure> { get }
@@ -37,12 +35,10 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         case base
     }
     
-    private var cancellables = Set<AnyCancellable>()
-    var makeVoteListUseCase: MakeVoteListUseCase
-    var fetchFeedUseCase: FetchFeedUseCase
-    var votePetpionUseCase: VotePetpionUseCase
+    let fetchedVotePare: [PetpionVotePare]
+    let votePetpionUseCase: VotePetpionUseCase
     
-    var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> = .init([])
+    lazy var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> = .init(fetchedVotePare)
 
     lazy var snapshotSubject = petpionVotePareArraySubject.map { items -> NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare> in
         var snapshot = NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>()
@@ -55,32 +51,13 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
     private var currentIndex = 0
     
     // MARK: - Initialize
-    init(makeVoteListUseCase: MakeVoteListUseCase,
-         fetchFeedUseCase: FetchFeedUseCase,
+    init(fetchedVotePare: [PetpionVotePare],
          votePetpionUseCase: VotePetpionUseCase) {
-        self.makeVoteListUseCase = makeVoteListUseCase
-        self.fetchFeedUseCase = fetchFeedUseCase
+        self.fetchedVotePare = fetchedVotePare
         self.votePetpionUseCase = votePetpionUseCase
-        // fetch user PlayLog
-        // 3시간 이전 접속 -> 저장된voteList, 3시간 이후 접속 -> 새로 voteList생성
-//        prepareVoteList()
     }
     
     // MARK: - Input
-    func fetchVoteList() {
-        currentIndex = 0
-        Task {
-            let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10)
-            let fetchedVotePare = await prefetchAllPareDetailImage(origin: petpionVotePareArr)
-
-            // loading Finish 타이밍
-            await MainActor.run {
-                petpionVotePareArraySubject.send(fetchedVotePare)
-                voteIndexSubject.send(currentIndex)
-            }
-        }
-    }
-    
     func petpionFeedSelected(to section: ImageCollectionViewSection) {
         let nextIndex = currentIndex + 1
         guard nextIndex < petpionVotePareArraySubject.value.count else { return }
@@ -145,13 +122,5 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
             cell.configureItem(item: item)
             cell.parentableViewController = cellDelegate
         }
-    }
-    
-    private func prefetchAllPareDetailImage(origin: [PetpionVotePare]) async -> [PetpionVotePare] {
-        var resultArr = [PetpionVotePare]()
-        for pare in origin {
-            resultArr.append(await fetchFeedUseCase.fetchVotePareDetailImages(pare: pare))
-        }
-        return resultArr
     }
 }

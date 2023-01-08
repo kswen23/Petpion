@@ -25,7 +25,8 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
         navigationController.pushViewController(voteMainViewController, animated: true)
     }
     
-    public func pushVotePetpion() {
+    public func pushVotePetpion(with pare: [PetpionVotePare]) {
+        PresentationDIContainer(navigationController: navigationController).registerVotePetpion(with: pare)
         guard let votePetpionViewController = DIContainer.shared.resolve(VotePetpionViewController.self) else { return }
         votePetpionViewController.coordinator = self
         navigationController.pushViewController(votePetpionViewController, animated: true)

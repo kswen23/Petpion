@@ -47,7 +47,6 @@ public struct PresentationDIContainer: Containable {
     private func registerViewControllers() {
         guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
               let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self),
-              let votePetpionViewModel: VotePetpionViewModelProtocol = container.resolve(VotePetpionViewModelProtocol.self),
               let loginViewModel: LoginViewModelProtocol = container.resolve(LoginViewModelProtocol.self),
               let voteMainViewModel: VoteMainViewModelProtocol = container.resolve(VoteMainViewModelProtocol.self)
         else { return }
@@ -64,10 +63,6 @@ public struct PresentationDIContainer: Containable {
             FeedImagePickerViewController(viewModel: feedUploadViewModel)
         }
         
-        container.register(VotePetpionViewController.self) { _ in
-            VotePetpionViewController(viewModel: votePetpionViewModel)
-        }
-        
         container.register(LoginViewController.self) { _ in
             LoginViewController(viewModel: loginViewModel)
         }
@@ -82,7 +77,6 @@ public struct PresentationDIContainer: Containable {
         guard let fetchFeedUseCase: FetchFeedUseCase = container.resolve(FetchFeedUseCase.self),
               let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self),
-              let votePetpionUseCase: VotePetpionUseCase = container.resolve(VotePetpionUseCase.self),
               let loginUseCase: LoginUseCase = container.resolve(LoginUseCase.self),
               let uploadUserInfoUseCase: UploadUserInfoUseCase = container.resolve(UploadUserInfoUseCase.self),
               let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = container.resolve(CalculateVoteChanceUseCase.self)
@@ -96,21 +90,30 @@ public struct PresentationDIContainer: Containable {
             FeedUploadViewModel(uploadFeedUseCase: uploadFeedUseCase)
         }
         
-        container.register(VotePetpionViewModelProtocol.self) { _ in
-            VotePetpionViewModel(makeVoteListUseCase: makeVoteListUseCase,
-                                 fetchFeedUseCase: fetchFeedUseCase,
-                                 votePetpionUseCase: votePetpionUseCase)
-        }
-        
         container.register(LoginViewModelProtocol.self) { _ in
             LoginViewModel(loginUseCase: loginUseCase,
                            uploadUserInfoUseCase: uploadUserInfoUseCase)
         }
         
         container.register(VoteMainViewModelProtocol.self) { _ in
-            VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase)
+            VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase,
+                              makeVoteListUseCase: makeVoteListUseCase,
+                              fetchFeedUseCase: fetchFeedUseCase)
         }
     }
     
+    func registerVotePetpion(with pare: [PetpionVotePare]) {
+        guard let votePetpionUseCase: VotePetpionUseCase = container.resolve(VotePetpionUseCase.self) else { return }
+        
+        container.register(VotePetpionViewModel.self) { _ in
+            VotePetpionViewModel(fetchedVotePare: pare, votePetpionUseCase: votePetpionUseCase)
+        }
+        
+        guard let votePetpionViewModel: VotePetpionViewModel = container.resolve(VotePetpionViewModel.self) else { return }
+        
+        container.register(VotePetpionViewController.self) { _ in
+            VotePetpionViewController(viewModel: votePetpionViewModel)
+        }
+    }
 }
 

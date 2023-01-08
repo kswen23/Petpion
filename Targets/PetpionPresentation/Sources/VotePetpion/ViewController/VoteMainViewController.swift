@@ -53,7 +53,7 @@ final class VoteMainViewController: UIViewController {
     private let remainingTimeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .black
+        label.textColor = .white
         return label
     }()
     
@@ -72,12 +72,26 @@ final class VoteMainViewController: UIViewController {
     
     private let mainCommentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 30)
+        label.font = UIFont.boldSystemFont(ofSize: 30)
         label.textAlignment = .center
         label.textColor = .black
         label.numberOfLines = 0
         return label
     }()
+    
+    private lazy var startVoteButton: CustomShimmerButton = {
+        guard let petpionOrange: CGColor = UIColor.petpionOrange?.cgColor,
+              let petpionLightOrange: CGColor = UIColor.petpionLightOrange?.cgColor else {
+            return UIButton() as! CustomShimmerButton
+        }
+        let button = CustomShimmerButton(gradientColorOne: petpionOrange, gradientColorTwo: petpionLightOrange)
+        button.addTarget(self, action: #selector(startVoteButtonDidTapped), for: .touchUpInside)
+        return button
+    }()
+    
+    @objc private func startVoteButtonDidTapped() {
+        viewModel.startVoting()
+    }
     
     // MARK: - Initialize
     init(viewModel: VoteMainViewModelProtocol) {
@@ -92,34 +106,26 @@ final class VoteMainViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.topItem?.title = ""
         layout()
+        configure()
         binding()
-        view.backgroundColor = .purple
         
-        view.addSubview(appearCatView)
-        appearCatView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            appearCatView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            appearCatView.topAnchor.constraint(equalTo: catLoadingView.bottomAnchor),
-            appearCatView.widthAnchor.constraint(equalToConstant: 300),
-            appearCatView.heightAnchor.constraint(equalToConstant: 300)
-        ])
-        self.appearCatView.play()
         viewModel.fetchChanceCreationRemainingTime()
     }
     
     // MARK: - Layout
     private func layout() {
-        layoutHeaderView()
+        layoutBottomSheetView()
         layoutUserHeartStackView()
         layoutRemainingTimeLabel()
         layoutHeartChargingImageView()
         layoutMainCommentLabel()
         layoutCatLoadingView()
+        layoutStartVoteButton()
+        layoutAppearCatView()
     }
     
-    private func layoutHeaderView() {
+    private func layoutBottomSheetView() {
         view.addSubview(bottomSheetView)
         bottomSheetView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -135,7 +141,7 @@ final class VoteMainViewController: UIViewController {
         userHeartStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             userHeartStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 80),
-//            userHeartStackView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            //            userHeartStackView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
             userHeartStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ])
     }
@@ -166,21 +172,58 @@ final class VoteMainViewController: UIViewController {
         mainCommentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             mainCommentLabel.topAnchor.constraint(equalTo: bottomSheetView.topAnchor, constant: 20),
-            mainCommentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            mainCommentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            mainCommentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            mainCommentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
     }
     
     private func layoutCatLoadingView() {
-        view.addSubview(catLoadingView)
+        bottomSheetView.addSubview(catLoadingView)
         catLoadingView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             catLoadingView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: 20),
-            catLoadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            catLoadingView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
             catLoadingView.widthAnchor.constraint(equalToConstant: 300),
             catLoadingView.heightAnchor.constraint(equalToConstant: 300)
         ])
-        self.catLoadingView.play()
+        bottomSheetView.bringSubviewToFront(catLoadingView)
+        catLoadingView.isHidden = true
+    }
+    
+    private func layoutStartVoteButton() {
+        bottomSheetView.addSubview(startVoteButton)
+        startVoteButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            startVoteButton.leadingAnchor.constraint(equalTo: bottomSheetView.leadingAnchor, constant: 20),
+            startVoteButton.trailingAnchor.constraint(equalTo: bottomSheetView.trailingAnchor, constant: -20),
+            startVoteButton.bottomAnchor.constraint(equalTo: bottomSheetView.bottomAnchor, constant: -70),
+            startVoteButton.heightAnchor.constraint(equalToConstant: 80)
+        ])
+        bottomSheetView.bringSubviewToFront(startVoteButton)
+        startVoteButton.roundCorners(cornerRadius: 20)
+    }
+    
+    private func layoutAppearCatView() {
+        bottomSheetView.addSubview(appearCatView)
+        appearCatView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            appearCatView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
+            appearCatView.bottomAnchor.constraint(equalTo: startVoteButton.topAnchor),
+            appearCatView.widthAnchor.constraint(equalToConstant: 300),
+            appearCatView.heightAnchor.constraint(equalToConstant: 300)
+        ])
+        appearCatView.isHidden = true
+    }
+    
+    // MARK: - Configure
+    private func configure() {
+        configureBackground()
+    }
+    
+    private func configureBackground() {
+        view.backgroundColor = .petpionIndigo
+        self.navigationController?.navigationBar.topItem?.title = ""
+        self.navigationController?.navigationBar.tintColor = .white
     }
     
     // MARK: - Binding
@@ -213,19 +256,46 @@ final class VoteMainViewController: UIViewController {
     }
     
     private func bindVoteMainStateSubject() {
-        viewModel.voteMainStateSubject.sink { [weak self] state in
+        viewModel.voteMainStateSubject.sink { [weak self] viewState in
             
-            switch state {
+            switch viewState {
             case .preparing:
-                self?.mainCommentLabel.text = "펫들을 부르는 중이에요! 🐱🐶"
+                self?.configurePreparing()
             case .ready:
-                break
+                self?.configureReady()
             case .start:
-                break
+                self?.configureStart()
             case .disable:
-                break
+                self?.configureDisable()
             }
         }.store(in: &cancellables)
+    }
+    
+    private func configurePreparing() {
+        catLoadingView.isHidden = false
+        catLoadingView.play()
+        mainCommentLabel.text = "펫들을 부르는 중이에요!"
+        startVoteButton.backgroundColor = .lightGray
+        startVoteButton.isEnabled = false
+        viewModel.startFetchingVotePareArray()
+    }
+    
+    private func configureReady() {
+        catLoadingView.stop()
+        catLoadingView.isHidden = true
+        mainCommentLabel.text = "투표가 준비됐어요!"
+        startVoteButton.startAnimating()
+        startVoteButton.isEnabled = true
+        appearCatView.isHidden = false
+        appearCatView.play()
+    }
+    
+    private func configureStart() {
+        coordinator?.pushVotePetpion(with: viewModel.fetchedVotePare)
+    }
+    
+    private func configureDisable() {
+        
     }
 }
 
