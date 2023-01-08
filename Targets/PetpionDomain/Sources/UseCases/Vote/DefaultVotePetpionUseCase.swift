@@ -11,7 +11,7 @@ public enum VoteResult {
     case deselected
 }
 
-final public class DefaultVotePetpionUseCase: VotePetpionUseCase {
+public final class DefaultVotePetpionUseCase: VotePetpionUseCase {
     
     public var firestoreRepository: FirestoreRepository
     

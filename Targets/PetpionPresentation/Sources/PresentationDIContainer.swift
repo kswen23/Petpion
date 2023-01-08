@@ -48,7 +48,9 @@ public struct PresentationDIContainer: Containable {
         guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
               let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self),
               let votePetpionViewModel: VotePetpionViewModelProtocol = container.resolve(VotePetpionViewModelProtocol.self),
-              let loginViewModel: LoginViewModelProtocol = container.resolve(LoginViewModelProtocol.self) else { return }
+              let loginViewModel: LoginViewModelProtocol = container.resolve(LoginViewModelProtocol.self),
+              let voteMainViewModel: VoteMainViewModelProtocol = container.resolve(VoteMainViewModelProtocol.self)
+        else { return }
         
         container.register(MainViewController.self) { _ in
             MainViewController(viewModel: mainViewModel)
@@ -69,6 +71,10 @@ public struct PresentationDIContainer: Containable {
         container.register(LoginViewController.self) { _ in
             LoginViewController(viewModel: loginViewModel)
         }
+        
+        container.register(VoteMainViewController.self) { _ in
+            VoteMainViewController(viewModel: voteMainViewModel)
+        }
     }
     
     // MARK: - ViewModel Container
@@ -78,7 +84,9 @@ public struct PresentationDIContainer: Containable {
               let makeVoteListUseCase: MakeVoteListUseCase = container.resolve(MakeVoteListUseCase.self),
               let votePetpionUseCase: VotePetpionUseCase = container.resolve(VotePetpionUseCase.self),
               let loginUseCase: LoginUseCase = container.resolve(LoginUseCase.self),
-              let uploadUserInfoUseCase: UploadUserInfoUseCase = container.resolve(UploadUserInfoUseCase.self) else { return }
+              let uploadUserInfoUseCase: UploadUserInfoUseCase = container.resolve(UploadUserInfoUseCase.self),
+              let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = container.resolve(CalculateVoteChanceUseCase.self)
+        else { return }
         
         container.register(MainViewModelProtocol.self) { _ in
             MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
@@ -97,6 +105,10 @@ public struct PresentationDIContainer: Containable {
         container.register(LoginViewModelProtocol.self) { _ in
             LoginViewModel(loginUseCase: loginUseCase,
                            uploadUserInfoUseCase: uploadUserInfoUseCase)
+        }
+        
+        container.register(VoteMainViewModelProtocol.self) { _ in
+            VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase)
         }
     }
     

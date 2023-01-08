@@ -21,21 +21,12 @@ final class VotePetpionViewController: UIViewController {
     private lazy var votingListCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                              collectionViewLayout: UICollectionViewLayout())
     private lazy var votingListCollectionViewDataSource = viewModel.makeVotingListCollectionViewDataSource(collectionView: votingListCollectionView, cellDelegate: self)
-
-    // 임시
-    var num = 1
-    func nextButtonDidTapped() {
-        votingListCollectionView.isScrollEnabled = true
-        votingListCollectionView.scrollToItem(at: IndexPath(item: num, section: 0), at: [], animated: true)
-
-        num += 1
-        votingListCollectionView.isScrollEnabled = false
-    }
     
     // MARK: - Initialize
     init(viewModel: VotePetpionViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        binding()
     }
     
     required init?(coder: NSCoder) {
@@ -47,7 +38,7 @@ final class VotePetpionViewController: UIViewController {
         super.viewDidLoad()
         layout()
         configure()
-        binding()
+        viewModel.fetchVoteList()
     }
     
     // MARK: - Layout
@@ -88,8 +79,10 @@ final class VotePetpionViewController: UIViewController {
         votingListCollectionView.isScrollEnabled = false
     }
 
+    // MARK: - Binding
     private func binding() {
         bindSnapshotSubject()
+        bindVoteIndexSubject()
     }
     
     private func bindSnapshotSubject() {
@@ -97,18 +90,19 @@ final class VotePetpionViewController: UIViewController {
             self?.votingListCollectionViewDataSource.apply(snapshot)
         }.store(in: &cancellables)
     }
+    
+    private func bindVoteIndexSubject() {
+        viewModel.voteIndexSubject.sink { [weak self] item in
+            self?.votingListCollectionView.isScrollEnabled = true
+            self?.votingListCollectionView.scrollToItem(at: IndexPath(item: item, section: 0), at: [], animated: true)
+            self?.votingListCollectionView.isScrollEnabled = false
+        }.store(in: &cancellables)
+    }
 }
 
 extension VotePetpionViewController: VotingListCollectionViewCellDelegate {
     
     func voteCollectionViewDidTapped(to section: ImageCollectionViewSection) {
-        switch section {
-            // send voting result
-        case .top:
-            print("top")
-        case .bottom:
-            print("bottom")
-        }
-        nextButtonDidTapped()
+        viewModel.petpionFeedSelected(to: section)   
     }
 }
