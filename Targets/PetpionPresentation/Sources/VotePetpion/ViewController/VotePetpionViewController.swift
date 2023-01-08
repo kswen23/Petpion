@@ -38,7 +38,6 @@ final class VotePetpionViewController: UIViewController {
         super.viewDidLoad()
         layout()
         configure()
-        viewModel.fetchVoteList()
     }
     
     // MARK: - Layout
@@ -68,7 +67,10 @@ final class VotePetpionViewController: UIViewController {
     private func configureNavigationBar() {
         let navigationAppearance = UINavigationBarAppearance()
         navigationAppearance.configureWithTransparentBackground()
+        self.navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         self.navigationController?.navigationBar.standardAppearance = navigationAppearance
+        self.navigationController?.navigationBar.topItem?.title = ""
+        self.navigationController?.navigationBar.tintColor = .black
     }
 
     private func configureVotingListCollectionView() {
