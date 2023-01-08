@@ -86,7 +86,11 @@ final class LoginViewModel: LoginViewModelProtocol {
                     UserDefaults.standard.setValue(true, forKey: UserInfoKey.isLogin)
                     UserDefaults.standard.setValue(userUID, forKey: UserInfoKey.firebaseUID)
                     
-                    uploadUserInfoUseCase.uploadNewUser(User.init(id: userUID, nickName: name, profileImage: .init()))
+                    uploadUserInfoUseCase.uploadNewUser(User.init(id: userUID,
+                                                                  nickName: name,
+                                                                  profileImage: .init(),
+                                                                  latestVoteTime: .init(),
+                                                                  voteChanceCount: User.voteMaxCountPolicy))
                     
                     await MainActor.run {
                         canDismissSubject.send(true)

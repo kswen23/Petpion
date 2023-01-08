@@ -123,6 +123,25 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         
         return resultFeed
     }
+    
+    public func fetchUser(with uid: String) async -> Result<User, Error> {
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(uid)
+                .getDocument { snapshot, error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: .failure(error))
+                    }
+                    if let document = snapshot, let collectioin = document.data(), document.exists {
+                        continuation.resume(returning: .success(UserData.toUser(UserData.toUserData(collectioin))))
+                    }
+
+                }
+                
+        }
+    }
         
     // MARK: - Private Read
     private func fetchFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
