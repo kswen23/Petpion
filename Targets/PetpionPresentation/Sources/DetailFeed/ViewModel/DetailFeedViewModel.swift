@@ -34,7 +34,9 @@ protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewMo
 
 final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
-    // MARK: - Initialize
+    let fetchFeedUseCase: FetchFeedUseCase
+    var feed: PetpionFeed
+    
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
     // no data일시 
 //    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
@@ -47,9 +49,8 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
     private var currentPage: Int = 0
-    let fetchFeedUseCase: FetchFeedUseCase
-    var feed: PetpionFeed
     
+    // MARK: - Initialize
     init(feed: PetpionFeed, fetchFeedUseCase: FetchFeedUseCase) {
         self.feed = feed
         self.fetchFeedUseCase = fetchFeedUseCase

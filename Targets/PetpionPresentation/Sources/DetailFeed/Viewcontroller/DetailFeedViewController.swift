@@ -15,6 +15,8 @@ import PetpionCore
 final class DetailFeedViewController: CustomPresentableViewController {
     
     private let dependency: FeedTransitionDependency
+    let viewModel: DetailFeedViewModelProtocol
+    
     private lazy var detailFeedImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                                         collectionViewLayout: UICollectionViewLayout())
     private lazy var datasource = viewModel.makeDetailFeedImageCollectionViewDataSource(parentViewController: self, collectionView: detailFeedImageCollectionView)
@@ -85,7 +87,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
     }
     
     private lazy var battleStackView: UIStackView = {
-        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: 66, countDouble: nil)
+        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: viewModel.feed.battleCount, countDouble: nil)
         let winCountView: UIStackView = makeSymbolCountStackView(symbol: "hand.thumbsup.fill", countInt: viewModel.feed.likeCount, countDouble: nil)
         let winRateCountView: UIStackView = makeSymbolCountStackView(symbol: "flame.fill", countInt: nil, countDouble: viewModel.getWinRate())
         let stackView = UIStackView()
@@ -107,21 +109,6 @@ final class DetailFeedViewController: CustomPresentableViewController {
     private var dismissButtonTrailingAnchor: NSLayoutConstraint?
     
     private var cancellables = Set<AnyCancellable>()
-    let viewModel: DetailFeedViewModelProtocol
-    
-    init(dependency: FeedTransitionDependency,
-         viewModel: DetailFeedViewModelProtocol) {
-        self.dependency = dependency
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-        self.setupPresentation()
-    }
-    
-    private func setupPresentation() {
-        self.modalPresentationStyle = .custom
-        self.transitioningDelegate = self
-        self.modalPresentationCapturesStatusBarAppearance = true
-    }
     
     lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panAction(_ :)))
     
@@ -155,6 +142,20 @@ final class DetailFeedViewController: CustomPresentableViewController {
         } else if currentY > lastPoint + 30 {
             self.dismiss(animated: true)
         }
+    }
+    // MARK: - Initialize
+    init(dependency: FeedTransitionDependency,
+         viewModel: DetailFeedViewModelProtocol) {
+        self.dependency = dependency
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+        self.setupPresentation()
+    }
+    
+    private func setupPresentation() {
+        self.modalPresentationStyle = .custom
+        self.transitioningDelegate = self
+        self.modalPresentationCapturesStatusBarAppearance = true
     }
     
     required init?(coder: NSCoder) {

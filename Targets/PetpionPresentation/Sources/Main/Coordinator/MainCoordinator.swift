@@ -92,5 +92,9 @@ extension MainCoordinator: UINavigationControllerDelegate {
         if let detailFoodViewController = fromViewController as? FeedImagePickerViewController {
             childDidFinish(detailFoodViewController.coordinator)
         }
+        
+        if let voteMainViewController = fromViewController as? VoteMainViewController {
+            childDidFinish(voteMainViewController.coordinator)
+        }
     }
 }
