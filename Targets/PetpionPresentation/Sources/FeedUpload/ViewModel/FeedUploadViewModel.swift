@@ -49,7 +49,6 @@ public enum CellAspectRatio: Int, CaseIterable {
 
 protocol FeedUploadViewModelInput {
     var indexWillChange: Bool { get set }
-    func imagesDidPicked(_ images: [UIImage])
     func imageDidCropped(_ image: UIImage)
     func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
@@ -65,6 +64,7 @@ protocol FeedUploadViewModelOutput {
     }
 
 protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
+    var selectedImages: [UIImage] { get }
     var uploadFeedUseCase: UploadFeedUseCase { get }
     var currentImageIndexSubject: CurrentValueSubject<Int, Never> { get }
     var cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> { get }
@@ -75,7 +75,7 @@ protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewMo
 }
 final class FeedUploadViewModel: FeedUploadViewModelProtocol {
 
-    let imagesSubject: CurrentValueSubject<[UIImage], Never> = .init([])
+    lazy var imagesSubject: CurrentValueSubject<[UIImage], Never> = .init(selectedImages)
     let currentImageIndexSubject: CurrentValueSubject<Int, Never> = .init(0)
     let cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> = .init(.square)
     let loadingSubject: PassthroughSubject<Loading, Never> = .init()
@@ -88,17 +88,16 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
     let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
+    let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
     
-    init(uploadFeedUseCase: UploadFeedUseCase) {
+    init(selectedImages: [UIImage]
+        ,uploadFeedUseCase: UploadFeedUseCase) {
+        self.selectedImages = selectedImages
         self.uploadFeedUseCase = uploadFeedUseCase
     }
     
     // MARK: - Input
-    func imagesDidPicked(_ images: [UIImage]) {
-        imagesSubject.send(images)
-    }
-    
     func imageDidCropped(_ image: UIImage) {
         var currentImages = imagesSubject.value
         currentImages[currentImageIndexSubject.value] = image

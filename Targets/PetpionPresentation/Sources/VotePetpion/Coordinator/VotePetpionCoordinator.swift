@@ -20,14 +20,13 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        guard let voteMainViewController = DIContainer.shared.resolve(VoteMainViewController.self) else { return }
+        let voteMainViewController = getVoteMainViewController()
         voteMainViewController.coordinator = self
         navigationController.pushViewController(voteMainViewController, animated: true)
     }
     
     public func pushVotePetpion(with pare: [PetpionVotePare]) {
-        PresentationDIContainer(navigationController: navigationController).registerVotePetpion(with: pare)
-        guard let votePetpionViewController = DIContainer.shared.resolve(VotePetpionViewController.self) else { return }
+        let votePetpionViewController = getVotePetpionViewController(with: pare)
         votePetpionViewController.coordinator = self
         navigationController.pushViewController(votePetpionViewController, animated: true)
     }
@@ -39,5 +38,26 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
                 break
             }
         }
+    }
+}
+
+private extension VotePetpionCoordinator {
+    
+    private func getVoteMainViewController() -> VoteMainViewController {
+        guard let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
+              let makeVoteListUseCase: MakeVoteListUseCase = DIContainer.shared.resolve(MakeVoteListUseCase.self),
+              let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let uploadUserInfoUseCase: UploadUserInfoUseCase = DIContainer.shared.resolve(UploadUserInfoUseCase.self) else { fatalError("GetVoteMainViewController did occurred error")
+        }
+        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserInfoUseCase: uploadUserInfoUseCase)
+        return VoteMainViewController(viewModel: viewModel)
+    }
+    
+    private func getVotePetpionViewController(with pare: [PetpionVotePare]) -> VotePetpionViewController {
+        guard let votePetpionUseCase: VotePetpionUseCase = DIContainer.shared.resolve(VotePetpionUseCase.self) else {
+            fatalError("GetVotePetpionViewController did occurred error")
+        }
+        let viewModel: VotePetpionViewModelProtocol = VotePetpionViewModel(fetchedVotePare: pare, votePetpionUseCase: votePetpionUseCase)
+        return VotePetpionViewController(viewModel: viewModel)
     }
 }

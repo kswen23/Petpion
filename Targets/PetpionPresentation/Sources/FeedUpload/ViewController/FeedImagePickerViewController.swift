@@ -14,12 +14,9 @@ import YPImagePicker
 public final class FeedImagePickerViewController: YPImagePicker {
     
     weak var coordinator: FeedUploadCoordinator?
-    let viewModel: FeedUploadViewModelProtocol
     
     // MARK: - Initialize
-    required init(configuration: YPImagePickerConfiguration = YPImagePickerConfiguration(),
-                  viewModel: FeedUploadViewModelProtocol) {
-        self.viewModel = viewModel
+    required init(configuration: YPImagePickerConfiguration = YPImagePickerConfiguration()) {
         var config = YPImagePickerConfiguration()
         config.screens = [.library]
         config.showsPhotoFilters = false
@@ -33,10 +30,6 @@ public final class FeedImagePickerViewController: YPImagePicker {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    required init(configuration: YPImagePickerConfiguration) {
-        fatalError("init(configuration:) has not been implemented")
     }
     
     //MARK: - Life Cycle
@@ -59,8 +52,7 @@ public final class FeedImagePickerViewController: YPImagePicker {
                     break
                 }
             }
-            viewModel.imagesDidPicked(images)
-            coordinator?.pushFeedUploadViewController()
+            coordinator?.pushFeedUploadViewController(with: images)
         }
     }
 }
