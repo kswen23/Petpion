@@ -123,8 +123,6 @@ final class VoteMainViewController: UIViewController {
         layout()
         configure()
         binding()
-        print("viewDidLoad")
-//        viewModel.synchronizeWithServer()
     }
     
     // MARK: - Layout

@@ -76,6 +76,7 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     deinit {
         invalidateCurrentTimer()
     }
+    
     // MARK: - Input
     func startVoting() {
         guard let currentHeart = currentHeart else { return }
@@ -133,7 +134,6 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
                     self?.voteMainViewControllerStateSubject.send(.preparing)
                     timer.invalidate()
                 }
-                print(restTimeInterval)
                 self?.remainingTimeSubject.send(restTimeInterval)
             }
         }
