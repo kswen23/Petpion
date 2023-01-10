@@ -1,22 +1,24 @@
 //
-//  DefaultUploadUserInfoUseCase.swift
+//  DefaultFetchUserUseCase.swift
 //  PetpionDomain
 //
-//  Created by 김성원 on 2023/01/04.
+//  Created by 김성원 on 2023/01/09.
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
-public final class DefaultUploadUserInfoUseCase: UploadUserInfoUseCase {
-    
-    public var firestoreRepository: FirestoreRepository
+import Foundation
+
+public final class DefaultFetchUserUseCase: FetchUserUseCase {
     
     // MARK: - Initialize
+    public var firestoreRepository: FirestoreRepository
+    
     init(firestoreRepository: FirestoreRepository) {
         self.firestoreRepository = firestoreRepository
     }
     
     // MARK: - Public
-    public func uploadNewUser(_ user: User) {
-        firestoreRepository.uploadNewUser(user)
+    public func fetchUser() async -> User {
+        await firestoreRepository.fetchUser()
     }
 }
