@@ -25,7 +25,8 @@ public protocol FirestoreRepository {
     
     // MARK: - Update
     func updateFeedCounts(with feed: PetpionFeed, voteResult: VoteResult) async -> Bool
-    func updateUserHeart(_ count: Int)
+    func updateUserHeart(_ count: Int) async -> Bool
+    func plusUserHeart()
     func minusUserHeart()
     func updateUserLatestVoteTime()
 }

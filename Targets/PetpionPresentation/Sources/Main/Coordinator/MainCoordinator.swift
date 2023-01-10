@@ -105,10 +105,12 @@ extension MainCoordinator: UINavigationControllerDelegate {
 private extension MainCoordinator {
     
     private func getMainViewController() -> MainViewController {
-        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else {
+        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self)
+        else {
             fatalError("getMainViewController did occurred error")
         }
-        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
+        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
         return MainViewController(viewModel: viewModel)
     }
     

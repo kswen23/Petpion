@@ -42,7 +42,6 @@ final class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .systemBackground
         layout()
         configure()
         binding()
@@ -73,7 +72,8 @@ final class MainViewController: UIViewController {
     }
     
     private func configureNavigationItem() {
-        
+        self.view.backgroundColor = .white
+        self.navigationController?.navigationBar.tintColor = .black
         navigationItem.leftBarButtonItems = [
             popularBarButton,
             latestBarButton
