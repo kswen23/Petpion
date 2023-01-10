@@ -35,7 +35,7 @@ public extension User {
     static let voteMaxCountPolicy: Int = 5
 }
 
-extension User {
+public extension User {
     
     static let empty: Self = .init(id: "", nickName: "", profileImage: .init(), latestVoteTime: .init(), voteChanceCount: 0)
 }
