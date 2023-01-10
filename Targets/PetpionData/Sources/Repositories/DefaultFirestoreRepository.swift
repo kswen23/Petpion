@@ -17,6 +17,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var latestCursor: DocumentSnapshot?
     
     private let numberOfShards = 10
+    private let firestoreUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID)
     
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
@@ -124,28 +125,41 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         return resultFeed
     }
     
-    public func fetchUser(with uid: String) async -> Result<User, Error> {
+    public func fetchUser() async -> User {
         return await withCheckedContinuation { continuation in
+            guard let uid = firestoreUID else { return }
             db
                 .collection(FirestoreCollection.user.reference)
                 .document(uid)
                 .getDocument { snapshot, error in
                     if let error = error {
                         print(error.localizedDescription)
-                        continuation.resume(returning: .failure(error))
                     }
                     if let document = snapshot, let collectioin = document.data(), document.exists {
-                        continuation.resume(returning: .success(UserData.toUser(UserData.toUserData(collectioin))))
+                        continuation.resume(returning: UserData.toUser(UserData.toUserData(collectioin)))
                     }
-
                 }
-                
+            
         }
     }
-        
+    
+    public func addUserListener(completion: @escaping ((User)-> Void)) {
+        guard let uid = firestoreUID else { return }
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(uid)
+                .addSnapshotListener { querySnapshot, error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                    }
+                    if let document = querySnapshot, let collection = document.data() {
+                        completion(UserData.toUser(UserData.toUserData(collection)))
+                    }
+                }
+    }
+    
     // MARK: - Private Read
     private func fetchFeedCollection(by option: SortingOption) async -> Result<[[String: Any]], Error> {
-        
         return await withCheckedContinuation { [weak self] continuation in
             guard let cursor = getCursor(by: option) else { return }
             let query = getQuery(by: option)
@@ -260,6 +274,42 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func updateUserLatestVoteTime() {
+        guard let uid = firestoreUID else { return }
+        db
+            .collection(FirestoreCollection.user.reference)
+            .document(uid)
+            .updateData(["latestVoteTime": Timestamp.init()]) { error in
+                if let error = error {
+                    print(error.localizedDescription)
+                }
+            }
+    }
+    
+    public func updateUserHeart(_ count: Int) {
+        guard let uid = firestoreUID else { return }
+        db
+            .collection(FirestoreCollection.user.reference)
+            .document(uid)
+            .updateData(["voteChanceCount": count]) { error in
+                if let error = error {
+                    print(error.localizedDescription)
+                }
+            }
+    }
+    
+    public func minusUserHeart() {
+        guard let uid = firestoreUID else { return }
+        db
+            .collection(FirestoreCollection.user.reference)
+            .document(uid)
+            .updateData(["voteChanceCount": FieldValue.increment(Int64(-1))]) { error in
+                if let error = error {
+                    print(error.localizedDescription)
+                }
+            }
+        
+    }
     // MARK: - Private Update
     private func incrementCounts(to reference: DocumentReference) async -> Bool {
         let incrementResult = await FirestoreDistributedCounter.incrementCounter(by: 1, reference: reference, numberOfShards: numberOfShards)

@@ -25,7 +25,7 @@ protocol LoginViewModelOutput {
 
 protocol LoginViewModelProtocol: LoginViewModelInput, LoginViewModelOutput {
     var loginUseCase: LoginUseCase { get }
-    var uploadUserInfoUseCase: UploadUserInfoUseCase { get }
+    var uploadUserUseCase: UploadUserUseCase { get }
     
     var canDismissSubject: CurrentValueSubject<Bool, Never> { get }
 }
@@ -33,14 +33,14 @@ protocol LoginViewModelProtocol: LoginViewModelInput, LoginViewModelOutput {
 final class LoginViewModel: LoginViewModelProtocol {
     
     let loginUseCase: LoginUseCase
-    let uploadUserInfoUseCase: UploadUserInfoUseCase
+    let uploadUserUseCase: UploadUserUseCase
     let canDismissSubject: CurrentValueSubject<Bool, Never> = .init(false)
 
     //MARK: - Initialize
     init(loginUseCase: LoginUseCase,
-         uploadUserInfoUseCase: UploadUserInfoUseCase) {
+         uploadUserUseCase: UploadUserUseCase) {
         self.loginUseCase = loginUseCase
-        self.uploadUserInfoUseCase = uploadUserInfoUseCase
+        self.uploadUserUseCase = uploadUserUseCase
     }
     
     fileprivate var currentNonce: String?
@@ -86,7 +86,7 @@ final class LoginViewModel: LoginViewModelProtocol {
                     UserDefaults.standard.setValue(true, forKey: UserInfoKey.isLogin)
                     UserDefaults.standard.setValue(userUID, forKey: UserInfoKey.firebaseUID)
                     
-                    uploadUserInfoUseCase.uploadNewUser(User.init(id: userUID,
+                    uploadUserUseCase.uploadNewUser(User.init(id: userUID,
                                                                   nickName: name,
                                                                   profileImage: .init(),
                                                                   latestVoteTime: .init(),

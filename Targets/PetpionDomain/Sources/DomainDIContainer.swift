@@ -29,6 +29,10 @@ public struct DomainDIContainer: Containable {
                                            firebaseStorageRepository: firebaseStorageRepository)
         }
         
+        container.register(FetchUserUseCase.self) { _ in
+            DefaultFetchUserUseCase(firestoreRepository: firestoreRepository)
+        }
+        
         container.register(UploadFeedUseCase.self) { _ in
             DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
                                             firebaseStorageRepository: firebaseStorageRepository)
@@ -47,8 +51,8 @@ public struct DomainDIContainer: Containable {
             DefaultLoginUseCase(firebaseAuthRepository: firebaseAuthRepository)
         }
         
-        container.register(UploadUserInfoUseCase.self) { _ in
-            DefaultUploadUserInfoUseCase(firestoreRepository: firestoreRepository)
+        container.register(UploadUserUseCase.self) { _ in
+            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository)
         }
         
         container.register(CalculateVoteChanceUseCase.self) { _ in

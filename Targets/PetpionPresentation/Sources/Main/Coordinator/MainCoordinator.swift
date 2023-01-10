@@ -121,10 +121,10 @@ private extension MainCoordinator {
     
     private func getLoginViewController() -> LoginViewController {
         guard let loginUseCase: LoginUseCase = DIContainer.shared.resolve(LoginUseCase.self),
-              let uploadUserInfoUseCase: UploadUserInfoUseCase = DIContainer.shared.resolve(UploadUserInfoUseCase.self) else {
+              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else {
             fatalError("getLoginViewController did occurred error")
         }
-        let viewModel: LoginViewModelProtocol = LoginViewModel(loginUseCase: loginUseCase, uploadUserInfoUseCase: uploadUserInfoUseCase)
+        let viewModel: LoginViewModelProtocol = LoginViewModel(loginUseCase: loginUseCase, uploadUserUseCase: uploadUserUseCase)
         return LoginViewController(viewModel: viewModel)
     }
 }

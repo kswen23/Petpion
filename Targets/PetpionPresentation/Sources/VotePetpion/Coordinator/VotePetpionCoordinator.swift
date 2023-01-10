@@ -44,12 +44,13 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
 private extension VotePetpionCoordinator {
     
     private func getVoteMainViewController() -> VoteMainViewController {
-        guard let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
+        guard var calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = DIContainer.shared.resolve(MakeVoteListUseCase.self),
               let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
-              let uploadUserInfoUseCase: UploadUserInfoUseCase = DIContainer.shared.resolve(UploadUserInfoUseCase.self) else { fatalError("GetVoteMainViewController did occurred error")
+              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else { fatalError("GetVoteMainViewController did occurred error")
         }
-        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserInfoUseCase: uploadUserInfoUseCase)
+        
+        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserUseCase: uploadUserUseCase)
         return VoteMainViewController(viewModel: viewModel)
     }
     

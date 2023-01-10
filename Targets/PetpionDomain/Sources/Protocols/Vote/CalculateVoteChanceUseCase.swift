@@ -6,10 +6,10 @@
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
+import Foundation
+
 public protocol CalculateVoteChanceUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
-    
-    func getVoteChance() -> Int
-    func getChanceCreationTimeRemaining() -> Double
+    func bindUser(completion: @escaping ((Int, TimeInterval)-> Void))
 }

@@ -10,6 +10,7 @@ import Combine
 import UIKit
 
 import Lottie
+import PetpionDomain
 
 final class VoteMainViewController: UIViewController {
     
@@ -28,7 +29,7 @@ final class VoteMainViewController: UIViewController {
         view.layer.shadowOpacity = 0.3
         return view
     }()
-    private let userHeartStackView: UIStackView = {
+    private lazy var userHeartStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .equalSpacing
@@ -39,6 +40,10 @@ final class VoteMainViewController: UIViewController {
         stackView.roundCorners(cornerRadius: 15)
         stackView.layoutMargins = UIEdgeInsets(top: 0, left: 15, bottom: 10, right: 15)
         stackView.isLayoutMarginsRelativeArrangement = true
+        for i in 0 ..< User.voteMaxCountPolicy {
+            let heartView = makeHeartView()
+            stackView.addArrangedSubview(heartView)
+        }
         return stackView
     }()
     
@@ -53,6 +58,7 @@ final class VoteMainViewController: UIViewController {
     private let remainingTimeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.text = "00:00"
         label.textColor = .white
         return label
     }()
@@ -103,14 +109,17 @@ final class VoteMainViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        print("deinit")
+    }
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
         configure()
         binding()
-        
-        viewModel.fetchChanceCreationRemainingTime()
+        viewModel.synchronizeWithServer1()
     }
     
     // MARK: - Layout
@@ -235,9 +244,10 @@ final class VoteMainViewController: UIViewController {
     
     private func bindHeartSubject() {
         viewModel.heartSubject.sink { [weak self] heartTypeArr in
-            heartTypeArr
-                .map{ $0.makeHeartView() }
-                .forEach { self?.userHeartStackView.addArrangedSubview($0) }
+            guard let heartViews = self?.userHeartStackView.arrangedSubviews as? [UIImageView] else { return }
+            for i in 0 ..< heartViews.count {
+                heartTypeArr[i].configureHeartImage(to: heartViews[i])
+            }
         }.store(in: &cancellables)
     }
     
@@ -299,12 +309,12 @@ final class VoteMainViewController: UIViewController {
     }
 }
 
-extension HeartType {
+extension VoteMainViewController {
     
-    func makeHeartView() -> UIView {
+    func makeHeartView() -> UIImageView {
         let heartAnimatingView: UIImageView = {
             let imageView = UIImageView()
-            imageView.image = .init(systemName: self.rawValue)
+            imageView.image = .init(systemName: "heart")
             let animation = CABasicAnimation(keyPath: "transform.scale")
             animation.toValue = 1.2
             animation.duration = 1
@@ -318,14 +328,21 @@ extension HeartType {
             return imageView
         }()
         
-        switch self {
-        case .fill:
-            heartAnimatingView.tintColor = .red
-        case .empty:
-            heartAnimatingView.tintColor = .lightGray
-        }
-        
         return heartAnimatingView
     }
-    
+
+}
+
+extension HeartType {
+        
+    func configureHeartImage(to view: UIImageView) {
+        switch self {
+        case .fill:
+            view.tintColor = .red
+            view.image = .init(systemName: "heart.fill")
+        case .empty:
+            view.tintColor = .lightGray
+            view.image = .init(systemName: "heart")
+        }
+    }
 }
