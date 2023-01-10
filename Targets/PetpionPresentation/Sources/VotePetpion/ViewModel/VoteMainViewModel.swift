@@ -12,18 +12,21 @@ import Foundation
 import PetpionDomain
 
 protocol VoteMainViewModelInput {
-    func startFetchingVotePareArray()
     func startVoting()
-    func synchronizeWithServer1()
 }
 
 protocol VoteMainViewModelOutput {
+    func synchronizeWithServer()
+    func startFetchingVotePareArray()
     var fetchedVotePare: [PetpionVotePare] { get }
 }
 
 protocol VoteMainViewModelProtocol: VoteMainViewModelInput, VoteMainViewModelOutput {
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
-    var voteMainStateSubject: PassthroughSubject<VoteMainState, Never> { get }
+    var makeVoteListUseCase: MakeVoteListUseCase { get }
+    var fetchFeedUseCase: FetchFeedUseCase { get }
+    var uploadUserUseCase: UploadUserUseCase { get }
+    var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> { get }
     var heartSubject: PassthroughSubject<[HeartType], Never> { get }
     var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> { get }
     var maxTimeInterval: TimeInterval { get }
@@ -35,7 +38,7 @@ enum HeartType: String {
     case empty = "heart"
 }
 
-enum VoteMainState {
+enum VoteMainViewControllerState {
     case disable
     case preparing
     case ready
@@ -49,13 +52,14 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     let fetchFeedUseCase: FetchFeedUseCase
     let uploadUserUseCase: UploadUserUseCase
     
-    lazy var voteMainStateSubject: PassthroughSubject<VoteMainState, Never> = .init()
+    lazy var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> = .init()
     lazy var heartSubject: PassthroughSubject<[HeartType], Never> = .init()
     lazy var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> = .init()
     var currentHeart: Int?
     var maxTimeInterval: TimeInterval = .infinity
     private var isFirstFetching: Bool = true
     lazy var fetchedVotePare: [PetpionVotePare] = .init()
+    private var currentTimer: Timer?
     
     // MARK: - Initialize
     init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
@@ -69,24 +73,23 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
         synchronizeWithServer()
     }
     
-    private func synchronizeWithServer() {
-        calculateVoteChanceUseCase.bindUser { voteChance, remainingTimeInterval in
-            self.currentHeart = voteChance
-            self.sendMainState(voteChance: voteChance)
-            self.sendHeart(voteChance: voteChance)
-            self.sendRemainingTime(voteChance: voteChance, timeInterval: remainingTimeInterval)
+    deinit {
+        invalidateCurrentTimer()
+    }
+    // MARK: - Input
+    func startVoting() {
+        guard let currentHeart = currentHeart else { return }
+        if currentHeart - 1 == User.voteMaxCountPolicy - 1 {
+            uploadUserUseCase.updateLatestVoteTime()
         }
+        uploadUserUseCase.minusUserVoteChance()
+        voteMainViewControllerStateSubject.send(.start)
     }
     
-    // MARK: - Input
-    public func synchronizeWithServer1() {
+    // MARK: - Output
+    public func synchronizeWithServer() {
         calculateVoteChanceUseCase.bindUser { [weak self] voteChance, chanceRemainingTime in
-            guard let strongSelf = self else { return }
-            if strongSelf.isFirstFetching {
-                self?.uploadUserUseCase.updateVoteChanceCount(voteChance)
-                self?.isFirstFetching = false
-            }
-            self?.currentHeart = voteChance
+            self?.currentHeart = voteChance 
             self?.sendMainState(voteChance: voteChance)
             self?.sendHeart(voteChance: voteChance)
             self?.sendRemainingTime(voteChance: voteChance, timeInterval: chanceRemainingTime)
@@ -100,27 +103,15 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
             
             if fetchedVotePare.isEmpty == false {
                 await MainActor.run {
-                    voteMainStateSubject.send(.ready)
+                    voteMainViewControllerStateSubject.send(.ready)
                 }
             }
-            
         }
     }
-    
-    func startVoting() {
-        guard let currentHeart = currentHeart else { return }
-        if currentHeart - 1 == User.voteMaxCountPolicy - 1 {
-            uploadUserUseCase.updateLatestVoteTime()
-        }
-        // 서버에 하트 -1, 시간 재등록 -> 하트 -1 후 push~
-        uploadUserUseCase.minusUserVoteChance()
-        voteMainStateSubject.send(.start)
-    }
-    // MARK: - Output
-    
+
     // MARK: - Private
     private func sendMainState(voteChance: Int) {
-        voteMainStateSubject.send(getCurrentState(with: voteChance))
+        voteMainViewControllerStateSubject.send(getCurrentState(with: voteChance))
     }
     
     private func sendHeart(voteChance: Int) {
@@ -128,15 +119,21 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     }
     
     private func sendRemainingTime(voteChance: Int, timeInterval: TimeInterval) {
+        invalidateCurrentTimer()
+        
         if voteChance == User.voteMaxCountPolicy {
             remainingTimeSubject.send(maxTimeInterval)
         } else {
             var restTimeInterval = timeInterval
-            Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            currentTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
                 restTimeInterval = restTimeInterval - 1
                 if restTimeInterval < 1 {
                     restTimeInterval = 3600
+                    self?.uploadUserUseCase.plusUserVoteChance()
+                    self?.voteMainViewControllerStateSubject.send(.preparing)
+                    timer.invalidate()
                 }
+                print(restTimeInterval)
                 self?.remainingTimeSubject.send(restTimeInterval)
             }
         }
@@ -151,7 +148,7 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
         return resultHeartArr
     }
     
-    private func getCurrentState(with available: Int) -> VoteMainState {
+    private func getCurrentState(with available: Int) -> VoteMainViewControllerState {
         if available == 0 {
             return .disable
         } else {
@@ -165,5 +162,11 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
             resultArr.append(await fetchFeedUseCase.fetchVotePareDetailImages(pare: pare))
         }
         return resultArr
+    }
+    
+    private func invalidateCurrentTimer() {
+        if let currentTimer = currentTimer {
+            currentTimer.invalidate()
+        }
     }
 }

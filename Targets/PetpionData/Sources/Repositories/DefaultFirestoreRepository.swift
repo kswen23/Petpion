@@ -286,16 +286,33 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
     }
     
-    public func updateUserHeart(_ count: Int) {
+    public func updateUserHeart(_ count: Int) async -> Bool {
+        guard let uid = firestoreUID else { return false }
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(uid)
+                .updateData(["voteChanceCount": count]) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
+    public func plusUserHeart() {
         guard let uid = firestoreUID else { return }
         db
             .collection(FirestoreCollection.user.reference)
             .document(uid)
-            .updateData(["voteChanceCount": count]) { error in
+            .updateData(["voteChanceCount": FieldValue.increment(Int64(+1))]) { error in
                 if let error = error {
                     print(error.localizedDescription)
                 }
             }
+        
     }
     
     public func minusUserHeart() {
@@ -310,6 +327,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
         
     }
+    
     // MARK: - Private Update
     private func incrementCounts(to reference: DocumentReference) async -> Bool {
         let incrementResult = await FirestoreDistributedCounter.incrementCounter(by: 1, reference: reference, numberOfShards: numberOfShards)

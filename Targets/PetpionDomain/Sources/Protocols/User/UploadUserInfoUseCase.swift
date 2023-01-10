@@ -11,7 +11,8 @@ public protocol UploadUserUseCase {
     var firestoreRepository: FirestoreRepository { get }
     
     func uploadNewUser(_ user: User)
-    func updateVoteChanceCount(_ count: Int)
+    func updateVoteChanceCount(_ count: Int) async -> Bool
+    func plusUserVoteChance()
     func minusUserVoteChance()
     func updateLatestVoteTime()
 }

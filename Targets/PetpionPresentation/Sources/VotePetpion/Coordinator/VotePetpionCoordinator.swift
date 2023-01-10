@@ -44,7 +44,7 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
 private extension VotePetpionCoordinator {
     
     private func getVoteMainViewController() -> VoteMainViewController {
-        guard var calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
+        guard let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = DIContainer.shared.resolve(MakeVoteListUseCase.self),
               let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else { fatalError("GetVoteMainViewController did occurred error")

@@ -21,10 +21,15 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
     }
     
     // MARK: - Public
+    public func initializeUserVoteChance() async -> Bool {
+        let user = await firestoreRepository.fetchUser()
+        return await firestoreRepository.updateUserHeart(getVoteChance(user: user))
+    }
+    
     public func bindUser(completion: @escaping ((Int, TimeInterval)-> Void)) {
         firestoreRepository.addUserListener { [weak self] user in
             guard let strongSelf = self else { return }
-            completion(strongSelf.getVoteChance(user: user),
+            completion(user.voteChanceCount,
                        strongSelf.getRemainingTimeIntervalToCreateVoteChance(user: user))
         }
     }
@@ -42,7 +47,7 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
         if passedHour >= maxVoteChance {
             return maxVoteChance
         } else {
-            return min(passedHour + user.voteChanceCount, maxVoteChance)
+            return max(min(passedHour + user.voteChanceCount, maxVoteChance), 0)
         }
     }
 }

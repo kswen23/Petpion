@@ -18,4 +18,6 @@ struct LottieJson {
     
     static let appearCatBlack: String = "appearCat_black"
     
+    static let sleepingCat: String = "sleepingCat"
+    
 }

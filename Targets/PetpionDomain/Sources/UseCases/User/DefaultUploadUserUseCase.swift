@@ -20,10 +20,14 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
         firestoreRepository.uploadNewUser(user)
     }
     
-    public func updateVoteChanceCount(_ count: Int) {
-        firestoreRepository.updateUserHeart(count)
+    public func updateVoteChanceCount(_ count: Int) async -> Bool {
+        await firestoreRepository.updateUserHeart(count)
     }
     
+    public func plusUserVoteChance() {
+        firestoreRepository.plusUserHeart()
+    }
+
     public func minusUserVoteChance() {
         firestoreRepository.minusUserHeart()
     }

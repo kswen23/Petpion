@@ -52,12 +52,15 @@ final class CustomShimmerButton: UIButton {
     }
     
     func startAnimating() {
-        
+        gradientLayer.isHidden = false
         let gradientLayer = addGradientLayer()
         let animation = addAnimation()
        
         gradientLayer.add(animation, forKey: animation.keyPath)
     }
 
-    
+    func stopAnimating() {
+        gradientLayer.isHidden = true
+        gradientLayer.removeAllAnimations()
+    }
 }

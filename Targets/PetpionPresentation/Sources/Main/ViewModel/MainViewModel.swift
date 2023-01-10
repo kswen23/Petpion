@@ -28,6 +28,7 @@ protocol MainViewModelOutput {
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -46,10 +47,14 @@ final class MainViewModel: MainViewModelProtocol {
     
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
+    let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     
-    init(fetchFeedUseCase: FetchFeedUseCase) {
+    init(fetchFeedUseCase: FetchFeedUseCase,
+         calculateVoteChanceUseCase: CalculateVoteChanceUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
+        self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         fetchFirstFeedPerSortingOption()
+        initializeUserVoteChance()
     }
     
     private func fetchFirstFeedPerSortingOption() {
@@ -59,6 +64,13 @@ final class MainViewModel: MainViewModelProtocol {
                 popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
                 latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             }
+        }
+    }
+    
+    private func initializeUserVoteChance() {
+        Task {
+            let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance()
+            print(initUserInfoResult)
         }
     }
     

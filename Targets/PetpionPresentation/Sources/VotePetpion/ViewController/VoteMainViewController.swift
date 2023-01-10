@@ -76,9 +76,15 @@ final class VoteMainViewController: UIViewController {
         return animationView
     }()
     
+    private let sleepingCatView: LottieAnimationView = {
+        let animationView = LottieAnimationView.init(name: LottieJson.sleepingCat)
+        animationView.loopMode = .loop
+        return animationView
+    }()
+    
     private let mainCommentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 30)
+        label.font = UIFont.boldSystemFont(ofSize: 25)
         label.textAlignment = .center
         label.textColor = .black
         label.numberOfLines = 0
@@ -91,6 +97,8 @@ final class VoteMainViewController: UIViewController {
             return UIButton() as! CustomShimmerButton
         }
         let button = CustomShimmerButton(gradientColorOne: petpionOrange, gradientColorTwo: petpionLightOrange)
+        button.setTitle("투표 시작", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 30, weight: .bold)
         button.addTarget(self, action: #selector(startVoteButtonDidTapped), for: .touchUpInside)
         return button
     }()
@@ -109,17 +117,14 @@ final class VoteMainViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        print("deinit")
-    }
-    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
         configure()
         binding()
-        viewModel.synchronizeWithServer1()
+        print("viewDidLoad")
+//        viewModel.synchronizeWithServer()
     }
     
     // MARK: - Layout
@@ -130,6 +135,7 @@ final class VoteMainViewController: UIViewController {
         layoutHeartChargingImageView()
         layoutMainCommentLabel()
         layoutCatLoadingView()
+        layoutSleepingCatView()
         layoutStartVoteButton()
         layoutAppearCatView()
     }
@@ -199,6 +205,19 @@ final class VoteMainViewController: UIViewController {
         catLoadingView.isHidden = true
     }
     
+    private func layoutSleepingCatView() {
+        bottomSheetView.addSubview(sleepingCatView)
+        sleepingCatView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            sleepingCatView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: 20),
+            sleepingCatView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
+            sleepingCatView.widthAnchor.constraint(equalToConstant: 300),
+            sleepingCatView.heightAnchor.constraint(equalToConstant: 300)
+        ])
+        bottomSheetView.bringSubviewToFront(sleepingCatView)
+        sleepingCatView.isHidden = true
+    }
+    
     private func layoutStartVoteButton() {
         bottomSheetView.addSubview(startVoteButton)
         startVoteButton.translatesAutoresizingMaskIntoConstraints = false
@@ -266,9 +285,9 @@ final class VoteMainViewController: UIViewController {
     }
     
     private func bindVoteMainStateSubject() {
-        viewModel.voteMainStateSubject.sink { [weak self] viewState in
+        viewModel.voteMainViewControllerStateSubject.sink { [weak self] viewControllerState in
             
-            switch viewState {
+            switch viewControllerState {
             case .preparing:
                 self?.configurePreparing()
             case .ready:
@@ -286,8 +305,13 @@ final class VoteMainViewController: UIViewController {
         catLoadingView.play()
         mainCommentLabel.text = "펫들을 부르는 중이에요!"
         startVoteButton.backgroundColor = .lightGray
+        startVoteButton.stopAnimating()
         startVoteButton.isEnabled = false
         viewModel.startFetchingVotePareArray()
+        appearCatView.stop()
+        appearCatView.isHidden = true
+        sleepingCatView.stop()
+        sleepingCatView.isHidden = true
     }
     
     private func configureReady() {
@@ -301,11 +325,30 @@ final class VoteMainViewController: UIViewController {
     }
     
     private func configureStart() {
+        appearCatView.stop()
+        appearCatView.isHidden = true
         coordinator?.pushVotePetpion(with: viewModel.fetchedVotePare)
+//        catLoadingView.isHidden = false
+//        catLoadingView.play()
+//        mainCommentLabel.text = "펫들을 부르는 중이에요!"
+//        startVoteButton.backgroundColor = .lightGray
+//        startVoteButton.isEnabled = false
     }
     
     private func configureDisable() {
+        mainCommentLabel.text = "가능한 투표를 모두 마쳤어요!\n충전시간을 기다려주세요.."
+        sleepingCatView.isHidden = false
+        sleepingCatView.play()
+        startVoteButton.stopAnimating()
+        startVoteButton.backgroundColor = .lightGray
+        startVoteButton.isEnabled = false
+        catLoadingView.stop()
+        catLoadingView.isHidden = true
+        appearCatView.stop()
+        appearCatView.isHidden = true
         
+//        sleepingCatView.stop()
+//        sleepingCatView.isHidden = true
     }
 }
 
