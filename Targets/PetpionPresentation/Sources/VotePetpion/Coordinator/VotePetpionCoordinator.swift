@@ -31,6 +31,10 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
         navigationController.pushViewController(votePetpionViewController, animated: true)
     }
     
+    public func popVotePetpion() {
+        navigationController.popViewController(animated: true)
+    }
+    
     private func childDidFinish(_ child: Coordinator?) {
         for (index, coordinator) in childCoordinators.enumerated() {
             if coordinator === child {
@@ -47,10 +51,13 @@ private extension VotePetpionCoordinator {
         guard let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = DIContainer.shared.resolve(MakeVoteListUseCase.self),
               let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
-              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else { fatalError("GetVoteMainViewController did occurred error")
+              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self),
+              let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self)
+        else {
+            fatalError("GetVoteMainViewController did occurred error")
         }
         
-        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserUseCase: uploadUserUseCase)
+        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserUseCase: uploadUserUseCase, makeNotificationUseCase: makeNotificationUseCase)
         return VoteMainViewController(viewModel: viewModel)
     }
     

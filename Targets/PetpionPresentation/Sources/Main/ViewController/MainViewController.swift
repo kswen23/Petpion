@@ -36,6 +36,11 @@ final class MainViewController: UIViewController {
     }
     
     // MARK: - Life Cycle
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.tintColor = .black
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()

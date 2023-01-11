@@ -22,6 +22,26 @@ final class VotePetpionViewController: UIViewController {
                                                                              collectionViewLayout: UICollectionViewLayout())
     private lazy var votingListCollectionViewDataSource = viewModel.makeVotingListCollectionViewDataSource(collectionView: votingListCollectionView, cellDelegate: self)
     
+    private lazy var customBackBarButton: UIBarButtonItem = {
+        let backImage = UIImage(systemName: "chevron.backward", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .bold))
+        let backButton = UIBarButtonItem(image: backImage, style: .plain, target: self, action: #selector(backButtonDidTapped))
+        return backButton
+    }()
+    
+    @objc private func backButtonDidTapped() {
+        present(quitAlarmAlertController, animated: true)
+    }
+    
+    private lazy var quitAlarmAlertController: UIAlertController = {
+        let alert = UIAlertController(title: "투표를 나가시겠어요?", message: "지금 나가도 하트가 하나 없어져요.", preferredStyle: .alert)
+        let quitAction: UIAlertAction = .init(title: "나가기", style: .destructive) { [weak self] _ in
+            self?.coordinator?.popVotePetpion()
+        }
+        let cancelAction: UIAlertAction = .init(title: "취소", style: .cancel)
+        [quitAction, cancelAction].forEach { alert.addAction($0) }
+        return alert
+    }()
+    
     // MARK: - Initialize
     init(viewModel: VotePetpionViewModelProtocol) {
         self.viewModel = viewModel
@@ -31,6 +51,10 @@ final class VotePetpionViewController: UIViewController {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    deinit {
+        print("deinit VotePetpionVC")
     }
     
     // MARK: - Life Cycle
@@ -69,7 +93,7 @@ final class VotePetpionViewController: UIViewController {
         navigationAppearance.configureWithTransparentBackground()
         self.navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         self.navigationController?.navigationBar.standardAppearance = navigationAppearance
-        self.navigationController?.navigationBar.topItem?.title = ""
+        navigationItem.leftBarButtonItem = customBackBarButton
         self.navigationController?.navigationBar.tintColor = .black
     }
 
@@ -95,9 +119,13 @@ final class VotePetpionViewController: UIViewController {
     
     private func bindVoteIndexSubject() {
         viewModel.voteIndexSubject.sink { [weak self] item in
-            self?.votingListCollectionView.isScrollEnabled = true
-            self?.votingListCollectionView.scrollToItem(at: IndexPath(item: item, section: 0), at: [], animated: true)
-            self?.votingListCollectionView.isScrollEnabled = false
+            if item == self?.viewModel.needToPopViewController {
+                self?.coordinator?.popVotePetpion()
+            } else {
+                self?.votingListCollectionView.isScrollEnabled = true
+                self?.votingListCollectionView.scrollToItem(at: IndexPath(item: item, section: 0), at: [], animated: true)
+                self?.votingListCollectionView.isScrollEnabled = false
+            }
         }.store(in: &cancellables)
     }
 }
@@ -105,6 +133,6 @@ final class VotePetpionViewController: UIViewController {
 extension VotePetpionViewController: VotingListCollectionViewCellDelegate {
     
     func voteCollectionViewDidTapped(to section: ImageCollectionViewSection) {
-        viewModel.petpionFeedSelected(to: section)   
+        viewModel.petpionFeedDidSelected(to: section)   
     }
 }

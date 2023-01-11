@@ -118,6 +118,11 @@ final class VoteMainViewController: UIViewController {
     }
     
     // MARK: - Life Cycle
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.tintColor = .white
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
@@ -154,7 +159,6 @@ final class VoteMainViewController: UIViewController {
         userHeartStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             userHeartStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 80),
-            //            userHeartStackView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
             userHeartStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ])
     }

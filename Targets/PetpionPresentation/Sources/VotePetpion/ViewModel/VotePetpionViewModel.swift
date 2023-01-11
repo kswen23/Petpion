@@ -12,7 +12,7 @@ import UIKit
 import PetpionDomain
 
 protocol VotePetpionViewModelInput {
-    func petpionFeedSelected(to section: ImageCollectionViewSection)
+    func petpionFeedDidSelected(to section: ImageCollectionViewSection)
 }
 
 protocol VotePetpionViewModelOutput {
@@ -27,6 +27,7 @@ protocol VotePetpionViewModelProtocol: VotePetpionViewModelInput, VotePetpionVie
     var petpionVotePareArraySubject: CurrentValueSubject<[PetpionVotePare], Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>,Publishers.Map<PassthroughSubject<[PetpionVotePare], Never>,NSDiffableDataSourceSnapshot<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>>.Failure> { get }
     var voteIndexSubject: PassthroughSubject<Int, Never> { get }
+    var needToPopViewController: Int { get }
 }
 
 final class VotePetpionViewModel: VotePetpionViewModelProtocol {
@@ -49,6 +50,7 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
     
     var voteIndexSubject: PassthroughSubject<Int, Never> = .init()
     private var currentIndex = 0
+    let needToPopViewController: Int = .max
     
     // MARK: - Initialize
     init(fetchedVotePare: [PetpionVotePare],
@@ -58,32 +60,17 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
     }
     
     // MARK: - Input
-    func petpionFeedSelected(to section: ImageCollectionViewSection) {
+    func petpionFeedDidSelected(to section: ImageCollectionViewSection) {
         let nextIndex = currentIndex + 1
-        guard nextIndex < petpionVotePareArraySubject.value.count else { return }
+        guard nextIndex < petpionVotePareArraySubject.value.count else {
+            return voteIndexSubject.send(needToPopViewController)
+        }
         Task {
-            var selectedFeedDidUpdated: Bool = false
-            var deselectedFeedDidUpdated: Bool = false
-            
-            switch section {
-            case .top:
-                selectedFeedDidUpdated = await votePetpionUseCase.feedSelected(feed: petpionVotePareArraySubject.value[currentIndex].topFeed)
-                deselectedFeedDidUpdated = await votePetpionUseCase.feedDeselected(feed: petpionVotePareArraySubject.value[currentIndex].bottomFeed)
-            case .bottom:
-                deselectedFeedDidUpdated = await votePetpionUseCase.feedDeselected(feed: petpionVotePareArraySubject.value[currentIndex].topFeed)
-                selectedFeedDidUpdated = await votePetpionUseCase.feedSelected(feed: petpionVotePareArraySubject.value[currentIndex].bottomFeed)
-            }
-            
-            if selectedFeedDidUpdated, deselectedFeedDidUpdated == true {
-                print("updated")
-            } else {
-                print("error")
-            }
-            currentIndex = nextIndex
+            await uploadVoteResultOnServer(section: section)
             await MainActor.run {
+                currentIndex = nextIndex
                 voteIndexSubject.send(nextIndex)
             }
-            
         }
     }
     
@@ -121,6 +108,24 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureItem(item: item)
             cell.parentableViewController = cellDelegate
+        }
+    }
+    
+    private func uploadVoteResultOnServer(section: ImageCollectionViewSection) async {
+        var selectedFeedDidUpdated: Bool = false
+        var deselectedFeedDidUpdated: Bool = false
+        
+        switch section {
+        case .top:
+            selectedFeedDidUpdated = await votePetpionUseCase.feedSelected(feed: petpionVotePareArraySubject.value[currentIndex].topFeed)
+            deselectedFeedDidUpdated = await votePetpionUseCase.feedDeselected(feed: petpionVotePareArraySubject.value[currentIndex].bottomFeed)
+        case .bottom:
+            deselectedFeedDidUpdated = await votePetpionUseCase.feedDeselected(feed: petpionVotePareArraySubject.value[currentIndex].topFeed)
+            selectedFeedDidUpdated = await votePetpionUseCase.feedSelected(feed: petpionVotePareArraySubject.value[currentIndex].bottomFeed)
+        }
+        
+        if selectedFeedDidUpdated, deselectedFeedDidUpdated == false {
+            print("VoteResult didn't uploaded!")
         }
     }
 }
