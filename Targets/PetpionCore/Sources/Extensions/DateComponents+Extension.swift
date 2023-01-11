@@ -27,4 +27,10 @@ public extension DateComponents {
         currentDateComponents.day = currentDateComponents.day! - 7
         return currentDateComponents
     }
+    
+    static func afterHourDateComponents(origin date: Date, after hour: Int) -> DateComponents {
+        var afterHourDateComponents = userCalendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        afterHourDateComponents.hour = afterHourDateComponents.hour! + hour
+        return afterHourDateComponents
+    }
 }

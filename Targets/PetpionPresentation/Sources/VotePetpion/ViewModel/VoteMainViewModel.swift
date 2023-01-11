@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 
+import PetpionCore
 import PetpionDomain
 
 protocol VoteMainViewModelInput {
@@ -26,6 +27,7 @@ protocol VoteMainViewModelProtocol: VoteMainViewModelInput, VoteMainViewModelOut
     var makeVoteListUseCase: MakeVoteListUseCase { get }
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var uploadUserUseCase: UploadUserUseCase { get }
+    var makeNotificationUseCase: MakeNotificationUseCase { get }
     var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> { get }
     var heartSubject: PassthroughSubject<[HeartType], Never> { get }
     var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> { get }
@@ -51,25 +53,31 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     let makeVoteListUseCase: MakeVoteListUseCase
     let fetchFeedUseCase: FetchFeedUseCase
     let uploadUserUseCase: UploadUserUseCase
+    let makeNotificationUseCase: MakeNotificationUseCase
     
     lazy var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> = .init()
     lazy var heartSubject: PassthroughSubject<[HeartType], Never> = .init()
     lazy var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> = .init()
-    var currentHeart: Int?
     var maxTimeInterval: TimeInterval = .infinity
     private var isFirstFetching: Bool = true
     lazy var fetchedVotePare: [PetpionVotePare] = .init()
     private var currentTimer: Timer?
+    private var currentHeart: Int?
+    private var latestVoteTime: Date?
+    
     
     // MARK: - Initialize
     init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
          makeVoteListUseCase: MakeVoteListUseCase,
          fetchFeedUseCase: FetchFeedUseCase,
-         uploadUserUseCase: UploadUserUseCase) {
+         uploadUserUseCase: UploadUserUseCase,
+         makeNotificationUseCase: MakeNotificationUseCase) {
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         self.makeVoteListUseCase = makeVoteListUseCase
         self.fetchFeedUseCase = fetchFeedUseCase
         self.uploadUserUseCase = uploadUserUseCase
+        self.makeNotificationUseCase = makeNotificationUseCase
+        requestNotification()
         synchronizeWithServer()
     }
     
@@ -77,11 +85,23 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
         invalidateCurrentTimer()
     }
     
+    private func requestNotification() {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.userNotificationsPermission) == false {
+            makeNotificationUseCase.requestAuthorization()
+        }
+    }
+    
     // MARK: - Input
     func startVoting() {
-        guard let currentHeart = currentHeart else { return }
+        guard let currentHeart = currentHeart,
+              let latestVoteTime = latestVoteTime else { return }
         if currentHeart - 1 == User.voteMaxCountPolicy - 1 {
             uploadUserUseCase.updateLatestVoteTime()
+            makeNotificationUseCase.createPetpionVoteNotification(heart: currentHeart-1,
+                                                                  latestVoteTime: .init())
+        } else {
+            makeNotificationUseCase.createPetpionVoteNotification(heart: currentHeart-1,
+                                                                  latestVoteTime: latestVoteTime)
         }
         uploadUserUseCase.minusUserVoteChance()
         voteMainViewControllerStateSubject.send(.start)
@@ -89,8 +109,10 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     
     // MARK: - Output
     public func synchronizeWithServer() {
-        calculateVoteChanceUseCase.bindUser { [weak self] voteChance, chanceRemainingTime in
-            self?.currentHeart = voteChance 
+        calculateVoteChanceUseCase.bindUser { [weak self] voteChance, latestVoteTime in
+            guard let chanceRemainingTime = self?.calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: latestVoteTime) else { return }
+            self?.currentHeart = voteChance
+            self?.latestVoteTime = latestVoteTime
             self?.sendMainState(voteChance: voteChance)
             self?.sendHeart(voteChance: voteChance)
             self?.sendRemainingTime(voteChance: voteChance, timeInterval: chanceRemainingTime)

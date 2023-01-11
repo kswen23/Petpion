@@ -9,4 +9,5 @@
 public struct UserInfoKey {
     public static let isLogin = "isLogin"
     public static let firebaseUID = "FirebaseUID"
+    public static let userNotificationsPermission = "userNotificationsPermission"
 }

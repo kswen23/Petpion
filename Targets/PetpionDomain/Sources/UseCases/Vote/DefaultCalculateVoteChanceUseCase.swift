@@ -26,20 +26,19 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
         return await firestoreRepository.updateUserHeart(getVoteChance(user: user))
     }
     
-    public func bindUser(completion: @escaping ((Int, TimeInterval)-> Void)) {
-        firestoreRepository.addUserListener { [weak self] user in
-            guard let strongSelf = self else { return }
+    public func bindUser(completion: @escaping ((Int, Date)-> Void)) {
+        firestoreRepository.addUserListener { user in
             completion(user.voteChanceCount,
-                       strongSelf.getRemainingTimeIntervalToCreateVoteChance(user: user))
+                       user.latestVoteTime)
         }
+    }
+    
+    public func getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: Date) -> TimeInterval {
+        let passedTimeInterval: Int = Int(Date.init().timeIntervalSince(latestVoteTime))
+        return 3600 - Double(passedTimeInterval%3600)
     }
    
     // MARK: - Private
-    private func getRemainingTimeIntervalToCreateVoteChance(user: User) -> TimeInterval {
-        let passedTimeInterval: Int = Int(Date.init().timeIntervalSince(user.latestVoteTime))
-        return 3600 - Double(passedTimeInterval%3600)
-    }
-    
     private func getVoteChance(user: User) -> Int {
         let passedTimeInterval: Int = Int(Date.init().timeIntervalSince(user.latestVoteTime))
         guard user.voteChanceCount != maxVoteChance else { return maxVoteChance}
