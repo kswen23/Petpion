@@ -15,7 +15,7 @@ import PetpionDomain
 
 public final class FeedUploadCoordinator: NSObject, Coordinator {
     
-    public weak var parentCoordinator: MainCoordinator?
+    public weak var parentCoordinator: Coordinator?
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     public init(navigationController: UINavigationController = UINavigationController()) {

@@ -41,7 +41,7 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
     // MARK: - Private
     private func makePetpionNotificationContent() -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "펫들이 모두 준비됐어요. 🐶"
+        content.title = "펫들이 모두 준비됐어요 🐶"
         content.body = "다시 오셔서 펫피온을 뽑아주세요! 🧐"
         return content
     }
@@ -53,6 +53,5 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         return trigger
     }
-
 
 }

@@ -19,6 +19,18 @@ public protocol Coordinator: AnyObject {
     func start()
 }
 
+public extension Coordinator {
+    
+    func childDidFinish(_ child: Coordinator?) {
+        for (index, coordinator) in childCoordinators.enumerated() {
+            if coordinator === child {
+                childCoordinators.remove(at: index)
+                break
+            }
+        }
+    }
+}
+
 public final class MainCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
@@ -30,7 +42,6 @@ public final class MainCoordinator: NSObject, Coordinator {
     
     public func start() {
         let viewController = getMainViewController()
-        childCoordinators.append(self)
         viewController.coordinator = self
         navigationController.delegate = self
         navigationController.pushViewController(viewController, animated: true)
@@ -53,12 +64,11 @@ public final class MainCoordinator: NSObject, Coordinator {
         navigationController.present(detailFeedViewController, animated: true)
     }
     
-    public func pushVotePetpion() {
+    public func pushVoteMainViewController() {
         if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
-            guard let votePetpionCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VotePetpionCoordinator") as? VotePetpionCoordinator else { return }
-            childCoordinators.append(votePetpionCoordinator)
-            votePetpionCoordinator.navigationController = navigationController
-            votePetpionCoordinator.start()
+            guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") else { return }
+            childCoordinators.append(voteMainCoordinator)
+            voteMainCoordinator.start()
         } else {
             presentLoginView()
         }
@@ -71,18 +81,10 @@ public final class MainCoordinator: NSObject, Coordinator {
         loginViewController.transitioningDelegate = mainViewController
         mainViewController.present(loginViewController, animated: true)
     }
-    
-    public func childDidFinish(_ child: Coordinator?) {
-        for (index, coordinator) in childCoordinators.enumerated() {
-            if coordinator === child {
-                childCoordinators.remove(at: index)
-                break
-            }
-        }
-    }
 }
 
 extension MainCoordinator: UINavigationControllerDelegate {
+    
     public func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
         guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else {
             return
@@ -92,13 +94,19 @@ extension MainCoordinator: UINavigationControllerDelegate {
             return
         }
         
-        if let detailFoodViewController = fromViewController as? FeedImagePickerViewController {
-            childDidFinish(detailFoodViewController.coordinator)
+        if let feedImagePickerViewController = fromViewController as? FeedImagePickerViewController {
+            childDidFinish(feedImagePickerViewController.coordinator)
         }
         
         if let voteMainViewController = fromViewController as? VoteMainViewController {
             childDidFinish(voteMainViewController.coordinator)
         }
+        
+        if let votePetpionViewController = fromViewController as? VotePetpionViewController {
+            guard let coordinator = (viewController as? VoteMainViewController)?.coordinator else { return }
+            coordinator.childDidFinish(votePetpionViewController.coordinator)
+        }
+        
     }
 }
 

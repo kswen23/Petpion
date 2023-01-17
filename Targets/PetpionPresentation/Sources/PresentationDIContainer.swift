@@ -36,8 +36,12 @@ public struct PresentationDIContainer: Containable {
             FeedUploadCoordinator()
         }
         
+        container.register(Coordinator.self, name: "VoteMainCoordinator") { _ in
+            VoteMainCoordinator(navigationController: navigationController)
+        }
+        
         container.register(Coordinator.self, name: "VotePetpionCoordinator") { _ in
-            VotePetpionCoordinator()
+            VotePetpionCoordinator(navigationController: navigationController)
         }
     }
 }

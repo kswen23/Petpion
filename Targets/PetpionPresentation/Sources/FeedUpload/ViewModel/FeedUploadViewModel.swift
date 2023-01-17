@@ -91,8 +91,8 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
     
-    init(selectedImages: [UIImage]
-        ,uploadFeedUseCase: UploadFeedUseCase) {
+    init(selectedImages: [UIImage],
+         uploadFeedUseCase: UploadFeedUseCase) {
         self.selectedImages = selectedImages
         self.uploadFeedUseCase = uploadFeedUseCase
     }

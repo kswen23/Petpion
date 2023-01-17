@@ -11,13 +11,13 @@ import UIKit
 
 import PetpionCore
 
-public protocol ImagePreviewCollectionViewCellDelegate {
+public protocol ImagePreviewCollectionViewCellDelegate: AnyObject {
     func editButtonDidTapped(cell: UICollectionViewCell)
 }
 
 public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
     
-    var cellDelegation: ImagePreviewCollectionViewCellDelegate?
+    weak var cellDelegation: ImagePreviewCollectionViewCellDelegate?
     private let imagePreview: UIImageView = UIImageView()
     private let editImageButton: CircleButton = {
         let button = CircleButton(diameter: 40)

@@ -155,7 +155,7 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func crownButtonDidTapped() {
-        coordinator?.pushVotePetpion()
+        coordinator?.pushVoteMainViewController()
     }
     
     // MARK: - binding
