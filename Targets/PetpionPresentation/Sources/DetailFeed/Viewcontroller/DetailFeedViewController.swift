@@ -281,8 +281,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         configureCommentLabel()
         configureTimeLogLabel()
         imageSlider.numberOfPages = viewModel.feed.imageCount
-        profileNameLabel.text = "TempUser"
-        
+        configureProfileStackView()
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -312,6 +311,17 @@ final class DetailFeedViewController: CustomPresentableViewController {
         timeLogLabel.numberOfLines = 0
         timeLogLabel.font = UIFont.systemFont(ofSize: 12, weight: .light)
         timeLogLabel.textColor = .gray
+    }
+    
+    private func configureProfileStackView() {
+        profileNameLabel.text = viewModel.feed.uploader.nickname
+        Task {
+            guard let url = viewModel.feed.uploader.imageURL else { return }
+            let profileImage = await ImageCache.shared.loadImage(url: url as NSURL)
+            await MainActor.run {
+                profileImageButton.setImage(profileImage, for: .normal)
+            }
+        }
     }
     
     // MARK: - Binding

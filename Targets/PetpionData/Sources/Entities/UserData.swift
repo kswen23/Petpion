@@ -33,7 +33,7 @@ struct UserData {
         self.voteChanceCount = Double(user.voteChanceCount)
     }
     
-    }
+}
 
 extension UserData {
     
@@ -69,8 +69,8 @@ extension UserData {
     static func toUser(_ data: Self) -> User {
         .init(id: data.userID,
               nickName: data.nickname,
-              profileImage: .init(),
               latestVoteTime: data.latestVoteTimestamp.dateValue(),
-              voteChanceCount: Int(data.voteChanceCount))
+              voteChanceCount: Int(data.voteChanceCount),
+              imageURL: nil)
     }
 }

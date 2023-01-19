@@ -125,9 +125,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         return resultFeed
     }
     
-    public func fetchUser() async -> User {
+    public func fetchUser(uid: String) async -> User {
         return await withCheckedContinuation { continuation in
-            guard let uid = firestoreUID else { return }
             db
                 .collection(FirestoreCollection.user.reference)
                 .document(uid)

@@ -13,20 +13,20 @@ public struct User: Identifiable {
     
     public let id: Identifier
     public let nickname: String
-    public let profileImage: Data
     public let latestVoteTime: Date
     public let voteChanceCount: Int
+    public var imageURL: URL?
     
     public init(id: String,
                 nickName: String,
-                profileImage: Data,
                 latestVoteTime: Date,
-                voteChanceCount: Int) {
+                voteChanceCount: Int,
+                imageURL: URL?) {
         self.id = id
         self.nickname = nickName
-        self.profileImage = profileImage
         self.latestVoteTime = latestVoteTime
         self.voteChanceCount = voteChanceCount
+        self.imageURL = imageURL
     }
 }
 
@@ -37,5 +37,12 @@ public extension User {
 
 public extension User {
     
-    static let empty: Self = .init(id: "", nickName: "", profileImage: .init(), latestVoteTime: .init(), voteChanceCount: 0)
+    static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
+}
+
+extension User: Hashable {
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }

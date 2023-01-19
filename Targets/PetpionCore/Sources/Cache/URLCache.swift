@@ -12,13 +12,22 @@ public final class URLCache {
     
     public static let shared: URLCache = .init()
     
-    let cachedURLs: NSCache<NSString, NSArray> = .init()
+    let cachedURLArray: NSCache<NSString, NSArray> = .init()
+    let cachedURL: NSCache<NSString, NSURL> = .init()
     
-    public func urls(id: NSString) -> [URL]? {
-        cachedURLs.object(forKey: id) as? [URL]
+    public func urls(id: String) -> [URL]? {
+        cachedURLArray.object(forKey: id as NSString) as? [URL]
     }
     
-    public func saveURLCache(urls: NSArray, key: NSString) {
-        self.cachedURLs.setObject(urls, forKey: key)
+    public func singleURL(id: String) -> URL? {
+        cachedURL.object(forKey: id as NSString) as? URL
+    }
+    
+    public func saveURLArrayCache(urls: NSArray, key: String) {
+        self.cachedURLArray.setObject(urls as NSArray, forKey: key as NSString)
+    }
+    
+    public func saveURLCache(url: URL, key: String) {
+        self.cachedURL.setObject(url as NSURL, forKey: key as NSString)
     }
 }

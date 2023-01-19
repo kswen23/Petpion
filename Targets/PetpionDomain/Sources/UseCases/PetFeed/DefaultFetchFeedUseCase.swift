@@ -49,7 +49,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         var sortedResultFeeds: [PetpionFeed] = []
         switch feedDataFromFirestore {
         case .success(let feedWithoutImageURL):
-            let updatedFeed: [PetpionFeed] = await updateCountAndThumbnailImage(feeds: feedWithoutImageURL)
+            let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: feedWithoutImageURL)
             sortedResultFeeds = sortResultFeeds(sortBy: option, with: updatedFeed)
             //            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithoutImageURL)
         case .failure(let failure):
@@ -83,13 +83,16 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     }
     
     // MARK: - Private
-    private func updateCountAndThumbnailImage(feeds: [PetpionFeed]) async -> [PetpionFeed] {
+    private func updateDetailInformation(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
             for feed in feeds {
                 taskGroup.addTask {
                     let countUpdated = await self.firestoreRepository.fetchFeedCounts(feed)
                     let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
+                    var user = await self.firestoreRepository.fetchUser(uid: feed.uploaderID)
+                    user.imageURL = await self.firebaseStorageRepository.fetchUserProfileImageURL(user)
                     var resultFeed = countUpdated
+                    resultFeed.uploader = user
                     resultFeed.imageURLArr = urlArr
                     return resultFeed
                 }

@@ -107,6 +107,7 @@ extension PetpionFeed {
     
     static func toPetpionFeed(data: FeedData) -> PetpionFeed {
         .init(id: data.feedID,
+              uploader: .empty,
               uploaderID: data.uploaderID,
               uploadDate: data.uploadTimestamp.dateValue(),
               battleCount: Int(data.battleCount),

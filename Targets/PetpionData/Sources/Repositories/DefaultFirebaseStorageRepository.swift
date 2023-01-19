@@ -106,15 +106,14 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         switch thumbnailFeedImageURL {
         case .success(let url):
             return [url]
-        case .failure(let failure):
-            print(failure.localizedDescription)
+        case .failure(_):
             return []
         }
     }
     
     public func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL] {
         
-        if let cachedURLs = URLCache.shared.urls(id: feed.id as NSString) {
+        if let cachedURLs = URLCache.shared.urls(id: feed.id) {
             return cachedURLs
         }
         
@@ -140,8 +139,24 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
             .sorted(by: <)
             .map{ URL(string: $0)! }
         
-        URLCache.shared.saveURLCache(urls: sortedURLArr as NSArray, key: feed.id as NSString)
+        URLCache.shared.saveURLArrayCache(urls: sortedURLArr as NSArray, key: feed.id)
         return sortedURLArr
+    }
+    
+    public func fetchUserProfileImageURL(_ user: User) async -> URL? {
+        let profileImageReference = "\(user.id)/profile/profile.png"
+        if let cachedURL = URLCache.shared.singleURL(id: profileImageReference) {
+            return cachedURL
+        }
+        
+        let profileURL = await fetchSingleImageURL(from: profileImageReference)
+        switch profileURL {
+        case .success(let url):
+            URLCache.shared.saveURLCache(url: url, key: profileImageReference)
+            return url
+        case .failure(_):
+            return nil
+        }
     }
     
     // MARK: - Private Read
@@ -177,6 +192,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                     case .success(let url):
                         continuation.resume(returning: .success(url))
                     case .failure(let error):
+                        print(error.localizedDescription)
                         continuation.resume(returning: .failure(error))
                     }
                 }

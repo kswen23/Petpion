@@ -9,6 +9,7 @@
 public protocol FetchUserUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
+    var firebaseStorageRepository: FirebaseStorageRepository { get }
     
-    func fetchUser() async -> User
+    func fetchUser(uid: String) async -> User
 }

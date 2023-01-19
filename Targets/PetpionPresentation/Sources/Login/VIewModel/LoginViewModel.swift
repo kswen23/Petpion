@@ -35,7 +35,7 @@ final class LoginViewModel: LoginViewModelProtocol {
     let loginUseCase: LoginUseCase
     let uploadUserUseCase: UploadUserUseCase
     let canDismissSubject: CurrentValueSubject<Bool, Never> = .init(false)
-
+    
     //MARK: - Initialize
     init(loginUseCase: LoginUseCase,
          uploadUserUseCase: UploadUserUseCase) {
@@ -73,11 +73,11 @@ final class LoginViewModel: LoginViewModelProtocol {
                 print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
                 return
             }
-
+            
             Task {
                 let firebaseAuthResult = await loginUseCase.signInToFirebaseAuth(providerID: "apple.com",
-                                                              idToken: idTokenString,
-                                                              rawNonce: nonce)
+                                                                                 idToken: idTokenString,
+                                                                                 rawNonce: nonce)
                 let loginResult: Bool = firebaseAuthResult.0
                 let userUID: String = firebaseAuthResult.1
                 let name = appleIDCredential.fullName?.description ?? ""
@@ -87,10 +87,10 @@ final class LoginViewModel: LoginViewModelProtocol {
                     UserDefaults.standard.setValue(userUID, forKey: UserInfoKey.firebaseUID)
                     
                     uploadUserUseCase.uploadNewUser(User.init(id: userUID,
-                                                                  nickName: name,
-                                                                  profileImage: .init(),
-                                                                  latestVoteTime: .init(),
-                                                                  voteChanceCount: User.voteMaxCountPolicy))
+                                                              nickName: name,
+                                                              latestVoteTime: .init(),
+                                                              voteChanceCount: User.voteMaxCountPolicy,
+                                                              imageURL: nil))
                     
                     await MainActor.run {
                         canDismissSubject.send(true)
@@ -134,7 +134,7 @@ final class LoginViewModel: LoginViewModelProtocol {
         }
         return result
     }
-
+    
     private func sha256(_ input: String) -> String {
         let inputData = Data(input.utf8)
         let hashedData = SHA256.hash(data: inputData)
@@ -143,5 +143,5 @@ final class LoginViewModel: LoginViewModelProtocol {
         }.joined()
         return hashString
     }
-   
+    
 }

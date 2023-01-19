@@ -28,7 +28,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
         circleImageButton.tintColor = .darkGray
         circleImageButton.backgroundColor = .white
-        circleImageButton.layer.borderWidth = 1
+        circleImageButton.layer.borderWidth = 0.5
         circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
         return circleImageButton
     }()
@@ -176,6 +176,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     func configure(with viewModel: ViewModel) {
         configureCellHeight(viewModel.thumbnailRatio)
         configureThumbnailImageView(viewModel.thumbnailImageURL)
+        configureProfileImage(viewModel.userProfile)
         configureImageCountButtonTitle(with: viewModel.imageCount)
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
@@ -188,11 +189,22 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         
     }
     
-    private func configureThumbnailImageView(_ url: URL) {
+    private func configureThumbnailImageView(_ url: URL?) {
         Task {
+            guard let url = url else { return }
             let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
             await MainActor.run {
                 thumbnailImageView.image = thumbnailImage
+            }
+        }
+    }
+    
+    private func configureProfileImage(_ url: URL?) {
+        Task {
+            guard let url = url else { return }
+            let profileImage = await ImageCache.shared.loadImage(url: url as NSURL)
+            await MainActor.run {
+                profileImageButton.setImage(profileImage, for: .normal)
             }
         }
     }
@@ -210,21 +222,20 @@ extension PetFeedCollectionViewCell {
     
     struct ViewModel {
         
-        let thumbnailImageURL: URL
+        let thumbnailImageURL: URL?
         let thumbnailRatio: Double
         let imageCount: Int
-        let userProfile: UIImage
+        let userProfile: URL?
         let userNickname: String
         let comment: String
         let likeCount: Int
         
         init(petpionFeed: PetpionFeed) {
-            //            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
-            self.thumbnailImageURL = petpionFeed.imageURLArr?[0] ?? URL(string:"https://picsum.photos.jpg")!
+            self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount
-            self.userProfile = UIImage()
-            self.userNickname = "TempUser"
+            self.userProfile = petpionFeed.uploader.imageURL
+            self.userNickname = petpionFeed.uploader.nickname
             self.comment = petpionFeed.message
             self.likeCount = petpionFeed.likeCount
         }

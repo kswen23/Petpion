@@ -30,7 +30,8 @@ public struct DomainDIContainer: Containable {
         }
         
         container.register(FetchUserUseCase.self) { _ in
-            DefaultFetchUserUseCase(firestoreRepository: firestoreRepository)
+            DefaultFetchUserUseCase(firestoreRepository: firestoreRepository,
+                                    firebaseStorageRepository: firebaseStorageRepository)
         }
         
         container.register(UploadFeedUseCase.self) { _ in

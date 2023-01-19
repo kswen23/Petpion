@@ -20,7 +20,7 @@ public protocol FirestoreRepository {
     func fetchFeedArray(by option: SortingOption) async -> Result<[PetpionFeed], Error>
     func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed]
     func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed
-    func fetchUser() async -> User
+    func fetchUser(uid: String) async -> User
     func addUserListener(completion: @escaping ((User)-> Void))
     
     // MARK: - Update

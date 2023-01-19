@@ -13,6 +13,7 @@ public struct PetpionFeed: Identifiable {
     public typealias Identifier = String
     
     public let id: Identifier
+    public var uploader: User = .empty
     public let uploaderID: User.ID
     public let uploadDate: Date
     public var battleCount: Int
@@ -24,6 +25,7 @@ public struct PetpionFeed: Identifiable {
     public var imageRatio: Double
     
     public init(id: Identifier,
+                uploader: User,
                 uploaderID: User.ID,
                 uploadDate: Date,
                 battleCount: Int,
@@ -33,6 +35,7 @@ public struct PetpionFeed: Identifiable {
                 feedSize: CGSize,
                 imageRatio: Double) {
         self.id = id
+        self.uploader = uploader
         self.uploaderID = uploaderID
         self.uploadDate = uploadDate
         self.battleCount = battleCount
@@ -52,7 +55,7 @@ public extension PetpionFeed {
     }
 }
 
-extension PetpionFeed: Hashable {
+extension PetpionFeed: Hashable {    
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
