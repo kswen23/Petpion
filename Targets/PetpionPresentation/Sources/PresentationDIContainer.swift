@@ -43,5 +43,9 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "VotePetpionCoordinator") { _ in
             VotePetpionCoordinator(navigationController: navigationController)
         }
+        
+        container.register(Coordinator.self, name: "MyPageCoordinator") { _ in
+            MyPageCoordinator(navigationController: navigationController)
+        }
     }
 }

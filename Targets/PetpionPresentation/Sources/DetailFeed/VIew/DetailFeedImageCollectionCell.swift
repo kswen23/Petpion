@@ -12,7 +12,7 @@ import UIKit
 import PetpionCore
 
 public final class DetailFeedImageCollection: UICollectionViewCell {
-    private let imageView: UIImageView = UIImageView()
+    private let imageView: CustomShimmerImageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -25,7 +25,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
     
     override public func prepareForReuse() {
         super.prepareForReuse()
-        imageView.backgroundColor = .systemBackground
+        imageView.startShimmerAnimating()
     }
     
     // MARK: - Layout
@@ -38,7 +38,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
-        imageView.backgroundColor = .lightGray
+        imageView.startShimmerAnimating()
         imageView.roundCorners(cornerRadius: 10)
     }
     
@@ -46,6 +46,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
         Task {
             let detailImage = await ImageCache.shared.loadImage(url: url as NSURL)
             await MainActor.run {
+                imageView.stopShimmerAnimating()
                 imageView.image = detailImage
             }
         }

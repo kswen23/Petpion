@@ -74,6 +74,12 @@ public final class MainCoordinator: NSObject, Coordinator {
         }
     }
     
+    public func pushMyPageViewController() {
+        guard let myPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "MyPageCoordinator") else { return }
+        childCoordinators.append(myPageCoordinator)
+        myPageCoordinator.start()
+    }
+    
     public func presentLoginView() {
         guard let mainViewController = navigationController.visibleViewController as? MainViewController else { return }
         let loginViewController = getLoginViewController()

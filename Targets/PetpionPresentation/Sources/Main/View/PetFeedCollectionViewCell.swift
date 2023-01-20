@@ -14,7 +14,7 @@ import PetpionDomain
 public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     let baseView: UIView = UIView()
-    let thumbnailImageView: UIImageView = UIImageView()
+    let thumbnailImageView: CustomShimmerImageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
     
     private let imageCountButton: UIButton = {
         let button = UIButton()
@@ -85,6 +85,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     public override func prepareForReuse() {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
+        thumbnailImageView.image = nil
     }
     
     // MARK: - Initialize
@@ -127,7 +128,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
-        thumbnailImageView.backgroundColor = .lightGray
+        thumbnailImageView.startShimmerAnimating()
     }
     
     private func layoutImageCountButton() {
@@ -194,6 +195,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             guard let url = url else { return }
             let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
             await MainActor.run {
+                thumbnailImageView.stopShimmerAnimating()
                 thumbnailImageView.image = thumbnailImage
             }
         }

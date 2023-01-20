@@ -85,7 +85,6 @@ final class MainViewController: UIViewController {
             UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTapped)),
             UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(crownButtonDidTapped))
         ]
-        navigationController?.navigationBar.tintColor = .black
     }
     
     private func configureBaseCollectionView() {
@@ -151,7 +150,7 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func personButtonDidTapped() {
-        coordinator?.presentLoginView()
+        coordinator?.pushMyPageViewController()
     }
     
     @objc private func crownButtonDidTapped() {
