@@ -53,7 +53,7 @@ protocol FeedUploadViewModelInput {
     func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
     func imageSliderValueChanged(_ index: Int)
-    
+    func removeKeyboardObserver()
 }
 
 protocol FeedUploadViewModelOutput {
@@ -111,13 +111,14 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
         
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
+                                            uploader: User.empty,
                                             uploaderID: uploaderId,
                                             uploadDate: Date.init(),
                                             battleCount: 0,
                                             likeCount: 0,
                                             imageCount: datas.count,
                                             message: message,
-                                            feedSize: self.getFeedSize(imageRatio: cellRatioSubject.value,
+                                            feedSize: getFeedSize(imageRatio: cellRatioSubject.value,
                                                                        message: message),
                                             imageRatio: cellRatioSubject.value.heightRatio)
         
@@ -152,6 +153,11 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     func imageSliderValueChanged(_ index: Int) {
         currentImageIndexSubject.send(index)
     }
+    
+    func removeKeyboardObserver() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
     // MARK: - Output
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
@@ -183,9 +189,9 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     }
     
     private func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let heightRatio = self.cellRatioSubject.value.heightRatio
-            cell.configure(with: item, size: UIScreen.main.bounds.width * heightRatio)
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            let heightRatio = self?.cellRatioSubject.value.heightRatio
+            cell.configure(with: item, size: UIScreen.main.bounds.width * (heightRatio ?? 0))
             cell.cellDelegation = viewController as? ImagePreviewCollectionViewCellDelegate
         }
     }

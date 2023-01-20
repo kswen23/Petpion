@@ -13,7 +13,7 @@ import UIKit
 import Mantis
 
 
-public final class FeedUploadViewController: UIViewController {
+final class FeedUploadViewController: UIViewController {
     
     weak var coordinator: FeedUploadCoordinator?
     private var viewModel: FeedUploadViewModelProtocol
@@ -62,9 +62,12 @@ public final class FeedUploadViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Life Cycle
+    deinit {
+        print("FeedUploadVC Deinit")
+    }
     
-    public override func viewDidLoad() {
+    // MARK: - Life Cycle
+    override func viewDidLoad() {
         super.viewDidLoad()
         layout()
         configure()
@@ -260,9 +263,9 @@ public final class FeedUploadViewController: UIViewController {
             guard let strongSelf = self else { return }
             switch loading {
             case .start:
-                self?.present(strongSelf.loadingAlertController, animated: true, completion: nil)
+                self?.present(strongSelf.loadingAlertController, animated: true)
             case .finish:
-                strongSelf.dismiss(animated: true)
+                self?.viewModel.removeKeyboardObserver()
                 self?.coordinator?.dismissUploadViewController()
             }
         }.store(in: &cancellables)

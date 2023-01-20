@@ -10,13 +10,13 @@ import UIKit
 
 import PetpionCore
 
-public protocol AspectRatioButtonDelegate {
+public protocol AspectRatioButtonDelegate: AnyObject {
     func aspectRatioButtonDidTapped(tag: Int)
 }
 
 public final class AspectRatioSelectButton: UIView {
     
-    var aspectRatioButtonDelegate: AspectRatioButtonDelegate?
+    weak var aspectRatioButtonDelegate: AspectRatioButtonDelegate?
     
     private let buttonDiameter: CGFloat
     

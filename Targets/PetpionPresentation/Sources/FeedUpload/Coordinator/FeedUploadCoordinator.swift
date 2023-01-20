@@ -35,7 +35,7 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
     }
         
     public func dismissUploadViewController() {
-        parentCoordinator?.childDidFinish(self)
+//        parentCoordinator?.childDidFinish(self)
         navigationController.dismiss(animated: true)
     }
     

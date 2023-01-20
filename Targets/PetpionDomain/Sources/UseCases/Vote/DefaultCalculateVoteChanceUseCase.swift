@@ -22,7 +22,8 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
     
     // MARK: - Public
     public func initializeUserVoteChance() async -> Bool {
-        let user = await firestoreRepository.fetchUser()
+        guard let userUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return false }
+        let user = await firestoreRepository.fetchUser(uid: userUID)
         return await firestoreRepository.updateUserHeart(getVoteChance(user: user))
     }
     

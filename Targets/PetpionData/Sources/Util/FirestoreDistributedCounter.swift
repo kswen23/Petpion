@@ -47,8 +47,9 @@ final class FirestoreDistributedCounter {
             ]) { error in
                 if let error = error {
                     continuation.resume(returning: .failure(error))
+                } else {
+                    continuation.resume(returning: .success(true))
                 }
-                continuation.resume(returning: .success(true))
             }
         }
     }

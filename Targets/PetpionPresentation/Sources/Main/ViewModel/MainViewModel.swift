@@ -70,7 +70,7 @@ final class MainViewModel: MainViewModelProtocol {
     private func initializeUserVoteChance() {
         Task {
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance()
-            print(initUserInfoResult)
+            // 불러온 USER 활용하면 voteScene 좀더 매끄럽게?
         }
     }
     

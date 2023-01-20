@@ -12,13 +12,19 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
     
     // MARK: - Initialize
     public var firestoreRepository: FirestoreRepository
+    public var firebaseStorageRepository: FirebaseStorageRepository
     
-    init(firestoreRepository: FirestoreRepository) {
+    init(firestoreRepository: FirestoreRepository,
+         firebaseStorageRepository: FirebaseStorageRepository) {
         self.firestoreRepository = firestoreRepository
+        self.firebaseStorageRepository = firebaseStorageRepository
     }
     
     // MARK: - Public
-    public func fetchUser() async -> User {
-        await firestoreRepository.fetchUser()
+    public func fetchUser(uid: String) async -> User {
+        let fetchedUser = await firestoreRepository.fetchUser(uid: uid)
+//        fetchedUser.imageURL = await firebaseStorageRepository.f
+        return fetchedUser
     }
+    
 }
