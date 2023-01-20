@@ -23,7 +23,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                                            imageDatas: [Data]) -> [DataAndReference] {
         var array: [DataAndReference] = []
         let imageRef: String = PetpionFeed.getImageReference(feed)
-        for i in 0 ..< feed.imagesCount {
+        for i in 0 ..< feed.imageCount {
             array.append((imageDatas[i], imageRef + "/\(i)"))
         }
         return array
@@ -106,22 +106,21 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         switch thumbnailFeedImageURL {
         case .success(let url):
             return [url]
-        case .failure(let failure):
-            print(failure.localizedDescription)
+        case .failure(_):
             return []
         }
     }
     
     public func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL] {
         
-        if let cachedURLs = URLCache.shared.urls(id: feed.id as NSString) {
+        if let cachedURLs = URLCache.shared.urls(id: feed.id) {
             return cachedURLs
         }
         
         let feedImageRef: String = PetpionFeed.getImageReference(feed)
         
         var imageReferences: [String] = []
-        for i in 1 ..< feed.imagesCount {
+        for i in 1 ..< feed.imageCount {
             imageReferences.append(feedImageRef + "/\(i)")
         }
         
@@ -140,8 +139,24 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
             .sorted(by: <)
             .map{ URL(string: $0)! }
         
-        URLCache.shared.saveURLCache(urls: sortedURLArr as NSArray, key: feed.id as NSString)
+        URLCache.shared.saveURLArrayCache(urls: sortedURLArr as NSArray, key: feed.id)
         return sortedURLArr
+    }
+    
+    public func fetchUserProfileImageURL(_ user: User) async -> URL? {
+        let profileImageReference = "\(user.id)/profile/profile.png"
+        if let cachedURL = URLCache.shared.singleURL(id: profileImageReference) {
+            return cachedURL
+        }
+        
+        let profileURL = await fetchSingleImageURL(from: profileImageReference)
+        switch profileURL {
+        case .success(let url):
+            URLCache.shared.saveURLCache(url: url, key: profileImageReference)
+            return url
+        case .failure(_):
+            return nil
+        }
     }
     
     // MARK: - Private Read
@@ -177,6 +192,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                     case .success(let url):
                         continuation.resume(returning: .success(url))
                     case .failure(let error):
+                        print(error.localizedDescription)
                         continuation.resume(returning: .failure(error))
                     }
                 }

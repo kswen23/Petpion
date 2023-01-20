@@ -9,6 +9,7 @@
 import Combine
 import UIKit
 
+import Lottie
 import PetpionCore
 import PetpionDomain
 
@@ -37,11 +38,11 @@ final class MainViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.tintColor = .black
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .systemBackground
         layout()
         configure()
         binding()
@@ -72,16 +73,17 @@ final class MainViewController: UIViewController {
     }
     
     private func configureNavigationItem() {
-        
+        self.view.backgroundColor = .white
+        self.navigationController?.navigationBar.tintColor = .black
         navigationItem.leftBarButtonItems = [
             popularBarButton,
             latestBarButton
         ]
         
         navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTap)),
-            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTap)),
-            UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(cameraButtonDidTap))
+            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTapped)),
+            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTapped)),
+            UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(crownButtonDidTapped))
         ]
         navigationController?.navigationBar.tintColor = .black
     }
@@ -89,8 +91,8 @@ final class MainViewController: UIViewController {
     private func configureBaseCollectionView() {
         baseCollectionView.setCollectionViewLayout(viewModel.configureBaseCollectionViewLayout(), animated: true)
         var snapshot = NSDiffableDataSourceSnapshot<MainViewModel.Section, SortingOption>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(viewModel.baseCollectionViewType)
+        snapshot.appendSections([.base])
+        snapshot.appendItems(SortingOption.allCases)
         baseCollectionViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
@@ -136,24 +138,27 @@ final class MainViewController: UIViewController {
         }
     }
     
-    @objc func popularDidTapped() {
+    @objc private func popularDidTapped() {
         viewModel.sortingOptionWillChange(with: .popular)
     }
     
-    @objc func latestDidTapped() {
+    @objc private func latestDidTapped() {
         viewModel.sortingOptionWillChange(with: .latest)
     }
     
-    @objc func cameraButtonDidTap() {
+    @objc private func cameraButtonDidTapped() {
         coordinator?.presentFeedImagePicker()
     }
     
-    @objc func personButtonDidTap() {
-        viewModel.fetchNextFeed()
+    @objc private func personButtonDidTapped() {
+        coordinator?.presentLoginView()
+    }
+    
+    @objc private func crownButtonDidTapped() {
+        coordinator?.pushVoteMainViewController()
     }
     
     // MARK: - binding
-    
     private func binding() {
         bindSortingOption()
     }
@@ -180,5 +185,12 @@ extension MainViewController: BaseCollectionViewCellDelegation {
         let transitionDependency: FeedTransitionDependency = .init(baseCellIndexPath: baseCellIndexPath,
                                                                    feedCellIndexPath: index)
         coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+    }
+}
+
+extension MainViewController: UIViewControllerTransitioningDelegate {
+    
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+        LoginPresentationController(presentedViewController: presented, presenting: presenting)
     }
 }

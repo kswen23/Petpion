@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionCore
 import PetpionDomain
 
 public enum Loading {
@@ -48,12 +49,11 @@ public enum CellAspectRatio: Int, CaseIterable {
 
 protocol FeedUploadViewModelInput {
     var indexWillChange: Bool { get set }
-    func imagesDidPicked(_ images: [UIImage])
     func imageDidCropped(_ image: UIImage)
     func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
     func imageSliderValueChanged(_ index: Int)
-    
+    func removeKeyboardObserver()
 }
 
 protocol FeedUploadViewModelOutput {
@@ -64,6 +64,7 @@ protocol FeedUploadViewModelOutput {
     }
 
 protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
+    var selectedImages: [UIImage] { get }
     var uploadFeedUseCase: UploadFeedUseCase { get }
     var currentImageIndexSubject: CurrentValueSubject<Int, Never> { get }
     var cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> { get }
@@ -74,7 +75,7 @@ protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewMo
 }
 final class FeedUploadViewModel: FeedUploadViewModelProtocol {
 
-    let imagesSubject: CurrentValueSubject<[UIImage], Never> = .init([])
+    lazy var imagesSubject: CurrentValueSubject<[UIImage], Never> = .init(selectedImages)
     let currentImageIndexSubject: CurrentValueSubject<Int, Never> = .init(0)
     let cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> = .init(.square)
     let loadingSubject: PassthroughSubject<Loading, Never> = .init()
@@ -87,17 +88,16 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
     let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
+    let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
     
-    init(uploadFeedUseCase: UploadFeedUseCase) {
+    init(selectedImages: [UIImage],
+         uploadFeedUseCase: UploadFeedUseCase) {
+        self.selectedImages = selectedImages
         self.uploadFeedUseCase = uploadFeedUseCase
     }
     
     // MARK: - Input
-    func imagesDidPicked(_ images: [UIImage]) {
-        imagesSubject.send(images)
-    }
-    
     func imageDidCropped(_ image: UIImage) {
         var currentImages = imagesSubject.value
         currentImages[currentImageIndexSubject.value] = image
@@ -108,13 +108,17 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     func uploadNewFeed(message: String) {
         loadingSubject.send(.start)
         let datas: [Data] = imagesSubject.value.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
+        guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+        
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
-                                            uploaderID: UUID().uuidString,
+                                            uploader: User.empty,
+                                            uploaderID: uploaderId,
                                             uploadDate: Date.init(),
+                                            battleCount: 0,
                                             likeCount: 0,
                                             imageCount: datas.count,
                                             message: message,
-                                            feedSize: self.getFeedSize(imageRatio: cellRatioSubject.value,
+                                            feedSize: getFeedSize(imageRatio: cellRatioSubject.value,
                                                                        message: message),
                                             imageRatio: cellRatioSubject.value.heightRatio)
         
@@ -149,6 +153,11 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     func imageSliderValueChanged(_ index: Int) {
         currentImageIndexSubject.send(index)
     }
+    
+    func removeKeyboardObserver() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
     // MARK: - Output
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
@@ -180,9 +189,9 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     }
     
     private func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let heightRatio = self.cellRatioSubject.value.heightRatio
-            cell.configure(with: item, size: UIScreen.main.bounds.width * heightRatio)
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            let heightRatio = self?.cellRatioSubject.value.heightRatio
+            cell.configure(with: item, size: UIScreen.main.bounds.width * (heightRatio ?? 0))
             cell.cellDelegation = viewController as? ImagePreviewCollectionViewCellDelegate
         }
     }

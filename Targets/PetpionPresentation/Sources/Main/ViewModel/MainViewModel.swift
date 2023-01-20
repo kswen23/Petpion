@@ -20,15 +20,15 @@ protocol MainViewModelInput {
 }
 
 protocol MainViewModelOutput {
-    var baseCollectionViewType: [SortingOption] { get }
     var baseCollectionViewNeedToScroll: Bool { get }
     func configureBaseCollectionViewLayout() -> UICollectionViewLayout
     func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
                                           collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption>
-    }
+}
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -37,10 +37,9 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
 final class MainViewModel: MainViewModelProtocol {
     
     enum Section {
-        case main
+        case base
     }
     
-    let baseCollectionViewType: [SortingOption] = SortingOption.allCases
     var baseCollectionViewNeedToScroll: Bool = true
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
@@ -48,10 +47,14 @@ final class MainViewModel: MainViewModelProtocol {
     
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
+    let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     
-    init(fetchFeedUseCase: FetchFeedUseCase) {
+    init(fetchFeedUseCase: FetchFeedUseCase,
+         calculateVoteChanceUseCase: CalculateVoteChanceUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
+        self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         fetchFirstFeedPerSortingOption()
+        initializeUserVoteChance()
     }
     
     private func fetchFirstFeedPerSortingOption() {
@@ -61,6 +64,13 @@ final class MainViewModel: MainViewModelProtocol {
                 popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
                 latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             }
+        }
+    }
+    
+    private func initializeUserVoteChance() {
+        Task {
+            let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance()
+            // 불러온 USER 활용하면 voteScene 좀더 매끄럽게?
         }
     }
     
@@ -123,11 +133,12 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     // MARK: - Output
+    
     func configureBaseCollectionViewLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                               heightDimension: .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
+        
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                heightDimension: .fractionalHeight(1.0))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize,
@@ -143,7 +154,7 @@ final class MainViewModel: MainViewModelProtocol {
         
         return layout
     }
-        
+    
     func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
                                           collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption> {
         let registration = makeBaseCollectionViewCellRegistration(parentViewController: parentViewController)
@@ -155,20 +166,21 @@ final class MainViewModel: MainViewModelProtocol {
             )
         }
     }
-        
+    
     private func makeBaseCollectionViewCellRegistration(parentViewController: BaseCollectionViewCellDelegation) -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.parentViewController = parentViewController
-            cell.viewModel = self.makeChildViewModel(index: indexPath)
+            cell.viewModel = self.makeChildViewModel(item: item)
             cell.bindSnapshot()
         }
     }
     
-    func makeChildViewModel(index: IndexPath) -> BaseViewModel {
+    private func makeChildViewModel(item: SortingOption) -> BaseViewModel {
         let baseViewModel = BaseViewModel()
-        if index.row == 0 {
+        switch item {
+        case .popular:
             baseViewModel.petpionFeedSubject = self.popularFeedSubject
-        } else {
+        case .latest:
             baseViewModel.petpionFeedSubject = self.latestFeedSubject
         }
         return baseViewModel

@@ -19,6 +19,18 @@ public protocol Coordinator: AnyObject {
     func start()
 }
 
+public extension Coordinator {
+    
+    func childDidFinish(_ child: Coordinator?) {
+        for (index, coordinator) in childCoordinators.enumerated() {
+            if coordinator === child {
+                childCoordinators.remove(at: index)
+                break
+            }
+        }
+    }
+}
+
 public final class MainCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
@@ -29,40 +41,50 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        guard let viewController = DIContainer.shared.resolve(MainViewController.self) else { return }
-        childCoordinators.append(self)
+        let viewController = getMainViewController()
         viewController.coordinator = self
         navigationController.delegate = self
         navigationController.pushViewController(viewController, animated: true)
     }
     
     public func presentFeedImagePicker() {
-        guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") as? FeedUploadCoordinator else { return }
-        feedUploadCoordinator.parentCoordinator = self
-        childCoordinators.append(feedUploadCoordinator)
-        feedUploadCoordinator.start()
-        navigationController.present(feedUploadCoordinator.navigationController, animated: true)
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+            guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") as? FeedUploadCoordinator else { return }
+            feedUploadCoordinator.parentCoordinator = self
+            childCoordinators.append(feedUploadCoordinator)
+            feedUploadCoordinator.start()
+            navigationController.present(feedUploadCoordinator.navigationController, animated: true)
+        } else {
+            presentLoginView()
+        }
     }
     
     public func presentDetailFeed(transitionDependency: FeedTransitionDependency, feed: PetpionFeed) {
-        guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else { return }
-        let detailFeedViewModel = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase)
-        let detailFeedViewController = DetailFeedViewController(dependency: transitionDependency,
-                                                                viewModel: detailFeedViewModel)
+        let detailFeedViewController: DetailFeedViewController = getDetailFeedViewController(transitionDependency: transitionDependency, feed: feed)
         navigationController.present(detailFeedViewController, animated: true)
     }
     
-    public func childDidFinish(_ child: Coordinator?) {
-        for (index, coordinator) in childCoordinators.enumerated() {
-            if coordinator === child {
-                childCoordinators.remove(at: index)
-                break
-            }
+    public func pushVoteMainViewController() {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+            guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") else { return }
+            childCoordinators.append(voteMainCoordinator)
+            voteMainCoordinator.start()
+        } else {
+            presentLoginView()
         }
+    }
+    
+    public func presentLoginView() {
+        guard let mainViewController = navigationController.visibleViewController as? MainViewController else { return }
+        let loginViewController = getLoginViewController()
+        loginViewController.modalPresentationStyle = .custom
+        loginViewController.transitioningDelegate = mainViewController
+        mainViewController.present(loginViewController, animated: true)
     }
 }
 
 extension MainCoordinator: UINavigationControllerDelegate {
+    
     public func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
         guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else {
             return
@@ -72,8 +94,47 @@ extension MainCoordinator: UINavigationControllerDelegate {
             return
         }
         
-        if let detailFoodViewController = fromViewController as? FeedImagePickerViewController {
-            childDidFinish(detailFoodViewController.coordinator)
+        if let feedImagePickerViewController = fromViewController as? FeedImagePickerViewController {
+            childDidFinish(feedImagePickerViewController.coordinator)
         }
+        
+        if let voteMainViewController = fromViewController as? VoteMainViewController {
+            childDidFinish(voteMainViewController.coordinator)
+        }
+        
+        if let votePetpionViewController = fromViewController as? VotePetpionViewController {
+            guard let coordinator = (viewController as? VoteMainViewController)?.coordinator else { return }
+            coordinator.childDidFinish(votePetpionViewController.coordinator)
+        }
+        
+    }
+}
+
+private extension MainCoordinator {
+    
+    private func getMainViewController() -> MainViewController {
+        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self)
+        else {
+            fatalError("getMainViewController did occurred error")
+        }
+        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
+        return MainViewController(viewModel: viewModel)
+    }
+    
+    private func getDetailFeedViewController(transitionDependency: FeedTransitionDependency,
+                                             feed: PetpionFeed) -> DetailFeedViewController {
+        guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else { fatalError("getDetailFeedViewController did occurred error") }
+        let detailFeedViewModel = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase)
+        return DetailFeedViewController(dependency: transitionDependency, viewModel: detailFeedViewModel)
+    }
+    
+    private func getLoginViewController() -> LoginViewController {
+        guard let loginUseCase: LoginUseCase = DIContainer.shared.resolve(LoginUseCase.self),
+              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else {
+            fatalError("getLoginViewController did occurred error")
+        }
+        let viewModel: LoginViewModelProtocol = LoginViewModel(loginUseCase: loginUseCase, uploadUserUseCase: uploadUserUseCase)
+        return LoginViewController(viewModel: viewModel)
     }
 }

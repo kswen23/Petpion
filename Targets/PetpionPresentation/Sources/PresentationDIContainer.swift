@@ -23,8 +23,6 @@ public struct PresentationDIContainer: Containable {
     }
     
     public func register() {
-        registerViewModels()
-        registerViewControllers()
         registerCoordinators()
     }
     
@@ -37,40 +35,13 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
             FeedUploadCoordinator()
         }
-    }
-    
-    // MARK: - ViewController Container
-    private func registerViewControllers() {
-        guard let mainViewModel: MainViewModelProtocol = container.resolve(MainViewModelProtocol.self),
-              let feedUploadViewModel: FeedUploadViewModelProtocol = container.resolve(FeedUploadViewModelProtocol.self) else { return }
         
-        container.register(MainViewController.self) { _ in
-            MainViewController(viewModel: mainViewModel)
+        container.register(Coordinator.self, name: "VoteMainCoordinator") { _ in
+            VoteMainCoordinator(navigationController: navigationController)
         }
         
-        container.register(FeedUploadViewController.self) { _ in
-            FeedUploadViewController(viewModel: feedUploadViewModel)
-        }
-        
-        container.register(FeedImagePickerViewController.self) { _ in
-            FeedImagePickerViewController(viewModel: feedUploadViewModel)
+        container.register(Coordinator.self, name: "VotePetpionCoordinator") { _ in
+            VotePetpionCoordinator(navigationController: navigationController)
         }
     }
-    
-    // MARK: - ViewModel Container
-    private func registerViewModels() {
-        guard let fetchFeedUseCase: FetchFeedUseCase = container.resolve(FetchFeedUseCase.self),
-              let uploadFeedUseCase: UploadFeedUseCase = container.resolve(UploadFeedUseCase.self) else { return }
-        
-        container.register(MainViewModelProtocol.self) { _ in
-            MainViewModel(fetchFeedUseCase: fetchFeedUseCase)
-        }
-        
-        container.register(FeedUploadViewModelProtocol.self) { _ in
-            FeedUploadViewModel(uploadFeedUseCase: uploadFeedUseCase)
-        }
-    }
-    
-    // Scene 으로 추상화? Main, Vote, Upload scene..
 }
-

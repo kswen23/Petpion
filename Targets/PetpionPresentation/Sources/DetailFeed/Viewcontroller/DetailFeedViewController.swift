@@ -15,6 +15,8 @@ import PetpionCore
 final class DetailFeedViewController: CustomPresentableViewController {
     
     private let dependency: FeedTransitionDependency
+    let viewModel: DetailFeedViewModelProtocol
+    
     private lazy var detailFeedImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                                         collectionViewLayout: UICollectionViewLayout())
     private lazy var datasource = viewModel.makeDetailFeedImageCollectionViewDataSource(parentViewController: self, collectionView: detailFeedImageCollectionView)
@@ -85,7 +87,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
     }
     
     private lazy var battleStackView: UIStackView = {
-        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: 66, countDouble: nil)
+        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: viewModel.feed.battleCount, countDouble: nil)
         let winCountView: UIStackView = makeSymbolCountStackView(symbol: "hand.thumbsup.fill", countInt: viewModel.feed.likeCount, countDouble: nil)
         let winRateCountView: UIStackView = makeSymbolCountStackView(symbol: "flame.fill", countInt: nil, countDouble: viewModel.getWinRate())
         let stackView = UIStackView()
@@ -107,21 +109,6 @@ final class DetailFeedViewController: CustomPresentableViewController {
     private var dismissButtonTrailingAnchor: NSLayoutConstraint?
     
     private var cancellables = Set<AnyCancellable>()
-    let viewModel: DetailFeedViewModelProtocol
-    
-    init(dependency: FeedTransitionDependency,
-         viewModel: DetailFeedViewModelProtocol) {
-        self.dependency = dependency
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-        self.setupPresentation()
-    }
-    
-    private func setupPresentation() {
-        self.modalPresentationStyle = .custom
-        self.transitioningDelegate = self
-        self.modalPresentationCapturesStatusBarAppearance = true
-    }
     
     lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(panAction(_ :)))
     
@@ -156,10 +143,25 @@ final class DetailFeedViewController: CustomPresentableViewController {
             self.dismiss(animated: true)
         }
     }
+    // MARK: - Initialize
+    init(dependency: FeedTransitionDependency,
+         viewModel: DetailFeedViewModelProtocol) {
+        self.dependency = dependency
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+        self.setupPresentation()
+    }
+    
+    private func setupPresentation() {
+        self.modalPresentationStyle = .custom
+        self.transitioningDelegate = self
+        self.modalPresentationCapturesStatusBarAppearance = true
+    }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -278,9 +280,8 @@ final class DetailFeedViewController: CustomPresentableViewController {
         configureDetailFeedImageCollectionView()
         configureCommentLabel()
         configureTimeLogLabel()
-        imageSlider.numberOfPages = viewModel.feed.imagesCount
-        profileNameLabel.text = "TempUser"
-        
+        imageSlider.numberOfPages = viewModel.feed.imageCount
+        configureProfileStackView()
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -310,6 +311,17 @@ final class DetailFeedViewController: CustomPresentableViewController {
         timeLogLabel.numberOfLines = 0
         timeLogLabel.font = UIFont.systemFont(ofSize: 12, weight: .light)
         timeLogLabel.textColor = .gray
+    }
+    
+    private func configureProfileStackView() {
+        profileNameLabel.text = viewModel.feed.uploader.nickname
+        Task {
+            guard let url = viewModel.feed.uploader.imageURL else { return }
+            let profileImage = await ImageCache.shared.loadImage(url: url as NSURL)
+            await MainActor.run {
+                profileImageButton.setImage(profileImage, for: .normal)
+            }
+        }
     }
     
     // MARK: - Binding
@@ -363,8 +375,8 @@ final class DetailFeedViewController: CustomPresentableViewController {
     
     func setupChildViewLayoutByZoomIn(childView: UIView,
                                       backgroundView: UIView) {
-        if viewModel.feed.imagesCount > 1 {
-            imageSlider.numberOfPages = viewModel.feed.imagesCount
+        if viewModel.feed.imageCount > 1 {
+            imageSlider.numberOfPages = viewModel.feed.imageCount
             imageSlider.isHidden = false
         }
         detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)

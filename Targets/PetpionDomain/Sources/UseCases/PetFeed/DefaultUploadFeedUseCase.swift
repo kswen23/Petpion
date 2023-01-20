@@ -25,8 +25,15 @@ public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
         let imageUploadIsCompleted = await firebaseStorageRepository.uploadPetFeedImages(feed: feed,
                                                                                          imageDatas: imageDatas)
         let feedUploadIsCompleted = await firestoreRepository.uploadNewFeed(feed)
+        var firestoreLikeCounterUploadIsCompleted: Bool = false
         
-        if imageUploadIsCompleted, feedUploadIsCompleted {
+        if feedUploadIsCompleted {
+            firestoreLikeCounterUploadIsCompleted = await firestoreRepository.createCounters(feed)
+        } else {
+            return false
+        }
+        
+        if imageUploadIsCompleted, firestoreLikeCounterUploadIsCompleted {
             return true
         } else {
             return false

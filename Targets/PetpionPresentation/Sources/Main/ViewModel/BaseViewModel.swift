@@ -38,8 +38,6 @@ final class BaseViewModel: BaseViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
 
-
-    
     // MARK: - Input
     
     // MARK: - Output

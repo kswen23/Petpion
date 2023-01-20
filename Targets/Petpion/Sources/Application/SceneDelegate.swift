@@ -9,7 +9,7 @@ import PetpionData
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     var window: UIWindow?
-    var coordinator: MainCoordinator?
+    var coordinator: Coordinator?
     var navigationController: UINavigationController?
     func scene(
         _ scene: UIScene,
@@ -27,7 +27,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         register()
         
         guard let mainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "MainCoordinator") else { return }
-        mainCoordinator.start()
+        coordinator = mainCoordinator
+        coordinator?.start()
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {}

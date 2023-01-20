@@ -15,7 +15,7 @@ import PetpionDomain
 
 public final class FeedUploadCoordinator: NSObject, Coordinator {
     
-    public weak var parentCoordinator: MainCoordinator?
+    public weak var parentCoordinator: Coordinator?
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     public init(navigationController: UINavigationController = UINavigationController()) {
@@ -23,30 +23,24 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        guard let imagePickerViewController = DIContainer.shared.resolve(FeedImagePickerViewController.self) else { return }
+        let imagePickerViewController = getFeedImagePickerViewController()
         imagePickerViewController.coordinator = self
         self.navigationController = imagePickerViewController
     }
     
-    public func pushFeedUploadViewController() {
-        guard let viewController = DIContainer.shared.resolve(FeedUploadViewController.self) else { return }
-        viewController.coordinator = self
-        navigationController.pushViewController(viewController, animated: true)
+    public func pushFeedUploadViewController(with images: [UIImage]) {
+        let feedUploadViewController = getFeedUploadViewController(with: images)
+        feedUploadViewController.coordinator = self
+        navigationController.pushViewController(feedUploadViewController, animated: true)
     }
         
     public func dismissUploadViewController() {
-        parentCoordinator?.childDidFinish(self)
+//        parentCoordinator?.childDidFinish(self)
         navigationController.dismiss(animated: true)
     }
     
     public func presentCropViewController(from viewController: CropViewControllerDelegate, with image: UIImage) {
-        let cropViewController = Mantis.cropViewController(image: image)
-        cropViewController.delegate = viewController
-        cropViewController.modalPresentationStyle = .fullScreen
-        cropViewController.config.ratioOptions = [.custom]
-        cropViewController.config.addCustomRatio(byVerticalWidth: 1, andVerticalHeight: 1)
-        cropViewController.config.addCustomRatio(byVerticalWidth: 3, andVerticalHeight: 4)
-        cropViewController.config.addCustomRatio(byVerticalWidth: 4, andVerticalHeight: 3)
+        let cropViewController = getCropViewController(from: viewController, with: image)
         navigationController.present(cropViewController, animated: true)
     }
     
@@ -61,5 +55,32 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
                 break
             }
         }
+    }
+}
+
+private extension FeedUploadCoordinator {
+    
+    private func getFeedImagePickerViewController() -> FeedImagePickerViewController {
+        return FeedImagePickerViewController()
+    }
+    
+    private func getFeedUploadViewController(with images: [UIImage]) -> FeedUploadViewController {
+        guard let uploadFeedUseCase: UploadFeedUseCase = DIContainer.shared.resolve(UploadFeedUseCase.self) else {
+            fatalError("getFeedUploadViewController did ocurred error")
+        }
+        let viewModel: FeedUploadViewModelProtocol = FeedUploadViewModel(selectedImages: images, uploadFeedUseCase: uploadFeedUseCase)
+        return FeedUploadViewController(viewModel: viewModel)
+    }
+    
+    private func getCropViewController(from viewController: CropViewControllerDelegate,
+                                       with image: UIImage) -> CropViewController {
+        let cropViewController = Mantis.cropViewController(image: image)
+        cropViewController.delegate = viewController
+        cropViewController.modalPresentationStyle = .fullScreen
+        cropViewController.config.ratioOptions = [.custom]
+        cropViewController.config.addCustomRatio(byVerticalWidth: 1, andVerticalHeight: 1)
+        cropViewController.config.addCustomRatio(byVerticalWidth: 3, andVerticalHeight: 4)
+        cropViewController.config.addCustomRatio(byVerticalWidth: 4, andVerticalHeight: 3)
+        return cropViewController
     }
 }
