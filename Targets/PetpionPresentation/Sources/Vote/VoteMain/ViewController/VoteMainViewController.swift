@@ -96,11 +96,8 @@ final class VoteMainViewController: UIViewController {
     }()
     
     private lazy var startVoteButton: CustomShimmerButton = {
-        guard let petpionOrange: CGColor = UIColor.petpionOrange?.cgColor,
-              let petpionLightOrange: CGColor = UIColor.petpionLightOrange?.cgColor else {
-            return UIButton() as! CustomShimmerButton
-        }
-        let button = CustomShimmerButton(gradientColorOne: petpionOrange, gradientColorTwo: petpionLightOrange)
+        let button = CustomShimmerButton(gradientColorOne: UIColor.petpionOrange.cgColor,
+                                         gradientColorTwo: UIColor.petpionLightOrange.cgColor)
         button.setTitle("투표 시작", for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 30, weight: .bold)
         button.addTarget(self, action: #selector(startVoteButtonDidTapped), for: .touchUpInside)

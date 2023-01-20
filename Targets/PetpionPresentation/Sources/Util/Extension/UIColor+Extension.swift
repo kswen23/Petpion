@@ -10,13 +10,15 @@ import UIKit
 
 extension UIColor {
     
-    class var petpionRed: UIColor? { return UIColor(named: "petpionRed") }
+    class var petpionRed: UIColor { return UIColor(named: "petpionRed") ?? UIColor.init() }
     
-    class var petpionBlue: UIColor? { return UIColor(named: "petpionBlue") }
+    class var petpionBlue: UIColor { return UIColor(named: "petpionBlue") ?? UIColor.init() }
     
-    class var petpionIndigo: UIColor? { return UIColor(named: "petpionIndigo") }
+    class var petpionIndigo: UIColor { return UIColor(named: "petpionIndigo") ?? UIColor.init() }
     
-    class var petpionOrange: UIColor? { return UIColor(named: "petpionOrange") }
+    class var petpionOrange: UIColor { return UIColor(named: "petpionOrange") ?? UIColor.init() }
     
-    class var petpionLightOrange: UIColor? { return UIColor(named: "petpionLightOrange") }
+    class var petpionLightOrange: UIColor { return UIColor(named: "petpionLightOrange") ?? UIColor.init() }
+    
+    class var petpionLightGray: UIColor { return UIColor(named: "petpionLightGray") ?? UIColor.init() }
 }
