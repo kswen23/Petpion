@@ -12,4 +12,5 @@ public protocol FetchUserUseCase {
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
     func fetchUser(uid: String) async -> User
+    func bindUser(completion: @escaping ((User) -> Void))
 }

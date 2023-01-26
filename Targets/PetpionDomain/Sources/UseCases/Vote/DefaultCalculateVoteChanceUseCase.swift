@@ -21,19 +21,10 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
     }
     
     // MARK: - Public
-    public func initializeUserVoteChance() async -> Bool {
-        guard let userUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return false }
-        let user = await firestoreRepository.fetchUser(uid: userUID)
+    public func initializeUserVoteChance(user: User) async -> Bool {
         return await firestoreRepository.updateUserHeart(getVoteChance(user: user))
     }
-    
-    public func bindUser(completion: @escaping ((Int, Date)-> Void)) {
-        firestoreRepository.addUserListener { user in
-            completion(user.voteChanceCount,
-                       user.latestVoteTime)
-        }
-    }
-    
+        
     public func getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: Date) -> TimeInterval {
         let passedTimeInterval: Int = Int(Date.init().timeIntervalSince(latestVoteTime))
         return 3600 - Double(passedTimeInterval%3600)

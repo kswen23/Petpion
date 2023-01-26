@@ -22,9 +22,15 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
     
     // MARK: - Public
     public func fetchUser(uid: String) async -> User {
-        let fetchedUser = await firestoreRepository.fetchUser(uid: uid)
-//        fetchedUser.imageURL = await firebaseStorageRepository.f
+        var fetchedUser = await firestoreRepository.fetchUser(uid: uid)
+        fetchedUser.imageURL = await firebaseStorageRepository.fetchUserProfileImageURL(fetchedUser)
         return fetchedUser
     }
     
+    public func bindUser(completion: @escaping ((User) -> Void)) {
+        firestoreRepository.addUserListener { user in
+            completion(user)
+        }
+    }
+
 }
