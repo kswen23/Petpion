@@ -31,11 +31,7 @@ public struct User: Identifiable {
 }
 
 public extension User {
-    
     static let voteMaxCountPolicy: Int = 5
-}
-
-public extension User {
     
     static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
 }
