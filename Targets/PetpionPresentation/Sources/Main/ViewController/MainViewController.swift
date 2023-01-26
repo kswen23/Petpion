@@ -150,11 +150,11 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func personButtonDidTapped() {
-        coordinator?.pushMyPageViewController()
+        coordinator?.pushMyPageViewController(user: viewModel.user)
     }
     
     @objc private func crownButtonDidTapped() {
-        coordinator?.pushVoteMainViewController()
+        coordinator?.pushVoteMainViewController(user: viewModel.user)
     }
     
     // MARK: - binding

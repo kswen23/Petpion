@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
@@ -28,7 +29,9 @@ protocol MainViewModelOutput {
 
 protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
+    var user: User { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -44,14 +47,17 @@ final class MainViewModel: MainViewModelProtocol {
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
-    
+    var user: User = .empty
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
+    let fetchUserUseCase: FetchUserUseCase
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase,
+         fetchUserUseCase: FetchUserUseCase,
          calculateVoteChanceUseCase: CalculateVoteChanceUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
+        self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         fetchFirstFeedPerSortingOption()
         initializeUserVoteChance()
@@ -69,8 +75,16 @@ final class MainViewModel: MainViewModelProtocol {
     
     private func initializeUserVoteChance() {
         Task {
-            let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance()
-            // 불러온 USER 활용하면 voteScene 좀더 매끄럽게?
+            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+            let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
+            let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
+            
+            if initUserInfoResult {
+                fetchUserUseCase.bindUser { user in
+                    self.user = user
+                    self.user.imageURL = fetchedUser.imageURL
+                }
+            }
         }
     }
     

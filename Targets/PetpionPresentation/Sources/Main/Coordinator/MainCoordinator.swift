@@ -64,19 +64,21 @@ public final class MainCoordinator: NSObject, Coordinator {
         navigationController.present(detailFeedViewController, animated: true)
     }
     
-    public func pushVoteMainViewController() {
+    public func pushVoteMainViewController(user: User) {
         if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
-            guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") else { return }
+            guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") as? VoteMainCoordinator else { return }
             childCoordinators.append(voteMainCoordinator)
+            voteMainCoordinator.user = user
             voteMainCoordinator.start()
         } else {
             presentLoginView()
         }
     }
     
-    public func pushMyPageViewController() {
-        guard let myPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "MyPageCoordinator") else { return }
+    public func pushMyPageViewController(user: User) {
+        guard let myPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "MyPageCoordinator") as? MyPageCoordinator else { return }
         childCoordinators.append(myPageCoordinator)
+        myPageCoordinator.user = user
         myPageCoordinator.start()
     }
     
@@ -120,11 +122,12 @@ private extension MainCoordinator {
     
     private func getMainViewController() -> MainViewController {
         guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let fetchUserUseCase: FetchUserUseCase = DIContainer.shared.resolve(FetchUserUseCase.self),
               let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self)
         else {
             fatalError("getMainViewController did occurred error")
         }
-        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
+        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
         return MainViewController(viewModel: viewModel)
     }
     
