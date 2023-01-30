@@ -19,7 +19,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
     
     private lazy var detailFeedImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                                         collectionViewLayout: UICollectionViewLayout())
-    private lazy var datasource = viewModel.makeDetailFeedImageCollectionViewDataSource(parentViewController: self, collectionView: detailFeedImageCollectionView)
+    private lazy var datasource = viewModel.makeDetailFeedImageCollectionViewDataSource(collectionView: detailFeedImageCollectionView)
     private lazy var dismissButton: UIButton = {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 30, weight: .medium, scale: .large)
@@ -87,9 +87,9 @@ final class DetailFeedViewController: CustomPresentableViewController {
     }
     
     private lazy var battleStackView: UIStackView = {
-        let battleCountView: UIStackView = makeSymbolCountStackView(symbol: "flag.2.crossed.fill", countInt: viewModel.feed.battleCount, countDouble: nil)
-        let winCountView: UIStackView = makeSymbolCountStackView(symbol: "hand.thumbsup.fill", countInt: viewModel.feed.likeCount, countDouble: nil)
-        let winRateCountView: UIStackView = makeSymbolCountStackView(symbol: "flame.fill", countInt: nil, countDouble: viewModel.getWinRate())
+        let battleCountView: UIStackView = makeSymbolCountStackView(imageName: "fight", countInt: viewModel.feed.battleCount, countDouble: nil)
+        let winCountView: UIStackView = makeSymbolCountStackView(imageName: "win", countInt: viewModel.feed.likeCount, countDouble: nil)
+        let winRateCountView: UIStackView = makeSymbolCountStackView(imageName: "winPercent", countInt: nil, countDouble: viewModel.getWinRate())
         let stackView = UIStackView()
         [battleCountView, winCountView, winRateCountView].forEach {
             stackView.addArrangedSubview($0)
@@ -419,18 +419,24 @@ final class DetailFeedViewController: CustomPresentableViewController {
         detailImageCollectionViewHeightAnchor?.isActive = true
     }
     
-    private func makeSymbolCountStackView(symbol: String, countInt: Int?, countDouble: Double?) -> UIStackView {
+    private func makeSymbolCountStackView(imageName: String, countInt: Int?, countDouble: Double?) -> UIStackView {
         
-        let symbolImageView: UIImageView = {
+        let imageView: UIImageView = {
             let imageView = UIImageView()
-            imageView.image = UIImage(systemName: symbol)
-            imageView.tintColor = .black
+            imageView.image = UIImage(named: imageName)
             return imageView
         }()
+        
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            imageView.heightAnchor.constraint(equalToConstant: 25),
+            imageView.widthAnchor.constraint(equalToConstant: 25)
+        ])
         
         let countLabel: UILabel = {
             let label = UILabel()
             label.font = UIFont.systemFont(ofSize: 15)
+            label.textColor = .darkGray
             if let countInt = countInt {
                 label.text = String(countInt)
             }
@@ -442,11 +448,11 @@ final class DetailFeedViewController: CustomPresentableViewController {
         
         let symbolCountStackView: UIStackView = {
             let stackView = UIStackView()
-            [symbolImageView, countLabel].forEach {
+            [imageView, countLabel].forEach {
                 stackView.addArrangedSubview($0)
             }
-            stackView.spacing = 5
-            stackView.alignment = .bottom
+            stackView.spacing = 7
+            stackView.alignment = .center
             return stackView
         }()
         
