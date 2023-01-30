@@ -27,7 +27,7 @@ final class CustomShimmerImageView: UIImageView {
     }
     
     override func layoutSublayers(of layer: CALayer) {
-            super.layoutSublayers(of: layer)
+        super.layoutSublayers(of: layer)
         gradientLayer.frame = self.bounds
     }
     

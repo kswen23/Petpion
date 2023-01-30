@@ -149,6 +149,6 @@ class UserCardCollectionReusableView: UICollectionReusableView {
     
     private func loadUserProfileImage(user: User) async -> UIImage  {
         guard let profileURL = user.imageURL else { return .init() }
-            return await ImageCache.shared.loadImage(url: profileURL as NSURL)
+        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
     }
 }

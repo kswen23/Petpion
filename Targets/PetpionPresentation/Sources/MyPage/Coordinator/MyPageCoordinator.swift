@@ -16,7 +16,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User!
+    var user: User?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -37,6 +37,12 @@ public final class MyPageCoordinator: NSObject, Coordinator {
         }
     }
     
+    public func pushSettingViewController() {
+        guard let settingCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "SettingCoordinator") else { return }
+        childCoordinators.append(settingCoordinator)
+        settingCoordinator.start()
+    }
+    
     public func presentLoginView() {
         guard let needLoginViewController = navigationController.visibleViewController as? NeedLoginViewController else { return }
         let loginViewController = getLoginViewController()
@@ -50,7 +56,8 @@ public final class MyPageCoordinator: NSObject, Coordinator {
 private extension MyPageCoordinator {
     
     private func getMyPageViewController() -> MyPageViewController {
-        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else {
+        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let user = user else {
             fatalError("getMyPageViewController did occurred error")
         }
         let viewModel: MyPageViewModelProtocol = MyPageViewModel(user: user,

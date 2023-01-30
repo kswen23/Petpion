@@ -27,7 +27,7 @@ final class CustomShimmerButton: UIButton {
     }
     
     override func layoutSublayers(of layer: CALayer) {
-            super.layoutSublayers(of: layer)
+        super.layoutSublayers(of: layer)
         gradientLayer.frame = self.bounds
     }
     
@@ -42,7 +42,7 @@ final class CustomShimmerButton: UIButton {
     }
     
     func addAnimation() -> CABasicAnimation {
-       
+        
         let animation = CABasicAnimation(keyPath: "locations")
         animation.fromValue = [-1.0, -0.5, 0.0]
         animation.toValue = [1.0, 1.5, 2.0]
@@ -55,10 +55,10 @@ final class CustomShimmerButton: UIButton {
         gradientLayer.isHidden = false
         let gradientLayer = addGradientLayer()
         let animation = addAnimation()
-       
+        
         gradientLayer.add(animation, forKey: animation.keyPath)
     }
-
+    
     func stopAnimating() {
         gradientLayer.isHidden = true
         gradientLayer.removeAllAnimations()

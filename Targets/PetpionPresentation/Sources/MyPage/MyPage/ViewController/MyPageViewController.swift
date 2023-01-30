@@ -36,6 +36,7 @@ final class MyPageViewController: UIViewController {
         label.sizeToFit()
         return label
     }()
+    
     // MARK: - Initialize
     init(viewModel: MyPageViewModelProtocol) {
         self.viewModel = viewModel
@@ -47,6 +48,12 @@ final class MyPageViewController: UIViewController {
     }
     
     // MARK: - Life Cycle
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.topItem?.title = ""
+        self.navigationItem.title = "내 정보"
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
@@ -102,13 +109,11 @@ final class MyPageViewController: UIViewController {
     }
     
     private func configureNavigationItem() {
-        self.navigationController?.navigationBar.topItem?.title = ""
-        self.navigationItem.title = "내 정보"
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .done, target: self, action: #selector(settingButtonDidTapped))
     }
     
     @objc private func settingButtonDidTapped() {
-        coordinator?.presentLoginView()
+        coordinator?.pushSettingViewController()
     }
     
     // MARK: - Binding
