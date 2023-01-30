@@ -6,38 +6,36 @@
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
+import Combine
 import Foundation
 import UIKit
 
+import Lottie
+
 final class MyPageViewController: UIViewController {
     
+    private var cancellables = Set<AnyCancellable>()
     weak var coordinator: MyPageCoordinator?
     private let viewModel: MyPageViewModelProtocol
     
-    private let userCardView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .petpionLightGray
-        return view
-    }()
-    let cardViewWidth: CGFloat = UIScreen.main.bounds.size.width - 40
-    let cardViewHeight: CGFloat = (UIScreen.main.bounds.size.width - 40) * 0.56
+    private lazy var userFeedsCollectionView: UICollectionView = .init(frame: .zero, collectionViewLayout: viewModel.configureUserFeedsCollectionViewLayout())
+    private lazy var userFeedsCollectionViewDataSource: UICollectionViewDiffableDataSource<Int, URL> = viewModel.makeUserFeedsCollectionViewDataSource(collectionView: userFeedsCollectionView)
     
-    private let userProfileImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.fill")
-        imageView.tintColor = .lightGray
-        imageView.backgroundColor = .white
-        return imageView
+    private let lazyCatAnimationView: LottieAnimationView = {
+        let animationView = LottieAnimationView(name: LottieJson.lazyCat)
+        animationView.loopMode = .loop
+        return animationView
     }()
     
-    private let userNickNameLabel: UILabel = {
+    private let emptyFeedLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.text = "tempuser"
+        label.text = "게시물이 없습니다."
+        label.font = .systemFont(ofSize: 20, weight: .regular)
+        label.textColor = .darkGray
+        label.textAlignment = .center
         label.sizeToFit()
         return label
     }()
-    
     // MARK: - Initialize
     init(viewModel: MyPageViewModelProtocol) {
         self.viewModel = viewModel
@@ -53,62 +51,54 @@ final class MyPageViewController: UIViewController {
         super.viewDidLoad()
         layout()
         configure()
+        binding()
         view.backgroundColor = .white
     }
     
     // MARK: - Layout
     private func layout() {
-        layoutUserCardView()
-        layoutUserProfileImageView()
-        layoutUserNickNameLabel()
+        layoutUserFeedsCollectionView()
+        layoutEmptyFeedLabel()
+        layoutLazyCatAnimationView()
     }
     
-    private func layoutUserCardView() {
-        view.addSubview(userCardView)
-        userCardView.translatesAutoresizingMaskIntoConstraints = false
+    private func layoutUserFeedsCollectionView() {
+        view.addSubview(userFeedsCollectionView)
+        userFeedsCollectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userCardView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            userCardView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            userCardView.widthAnchor.constraint(equalToConstant: cardViewWidth),
-            userCardView.heightAnchor.constraint(equalToConstant: cardViewHeight)
+            userFeedsCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            userFeedsCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            userFeedsCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            userFeedsCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        userCardView.roundCorners(cornerRadius: 15)
-        userCardView.layer.masksToBounds = false
-        userCardView.layer.shadowOffset = CGSize(width: 5, height: 5)
-        userCardView.layer.shadowOpacity = 0.7
-        userCardView.layer.shadowRadius = 5
-        userCardView.layer.shadowColor = UIColor.lightGray.cgColor
+        userFeedsCollectionView.showsVerticalScrollIndicator = false
     }
     
-    private func layoutUserProfileImageView() {
-        userCardView.addSubview(userProfileImageView)
-        userProfileImageView.translatesAutoresizingMaskIntoConstraints = false
-        let profileImageViewWidth: CGFloat = cardViewHeight * 0.75
+    private func layoutEmptyFeedLabel() {
+        userFeedsCollectionView.addSubview(emptyFeedLabel)
+        emptyFeedLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userProfileImageView.centerYAnchor.constraint(equalTo: userCardView.centerYAnchor),
-            userProfileImageView.leadingAnchor.constraint(equalTo: userCardView.leadingAnchor, constant: 10),
-            userProfileImageView.heightAnchor.constraint(equalToConstant: profileImageViewWidth),
-            userProfileImageView.widthAnchor.constraint(equalToConstant: profileImageViewWidth)
+            emptyFeedLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -200),
+            emptyFeedLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
-        userProfileImageView.roundCorners(cornerRadius: profileImageViewWidth/2)
-        userProfileImageView.backgroundColor = .white
-        userProfileImageView.bringSubviewToFront(userCardView)
+        emptyFeedLabel.isHidden = true
     }
     
-    private func layoutUserNickNameLabel() {
-        userCardView.addSubview(userNickNameLabel)
-        userNickNameLabel.translatesAutoresizingMaskIntoConstraints = false
+    private func layoutLazyCatAnimationView() {
+        userFeedsCollectionView.addSubview(lazyCatAnimationView)
+        lazyCatAnimationView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userNickNameLabel.topAnchor.constraint(equalTo: userCardView.topAnchor, constant: 30),
-            userNickNameLabel.leadingAnchor.constraint(equalTo: userProfileImageView.trailingAnchor, constant: 20)
+            lazyCatAnimationView.bottomAnchor.constraint(equalTo: emptyFeedLabel.topAnchor),
+            lazyCatAnimationView.centerXAnchor.constraint(equalTo: userFeedsCollectionView.centerXAnchor),
+            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: 300),
+            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: 300)
         ])
-        userNickNameLabel.bringSubviewToFront(userCardView)
+        lazyCatAnimationView.isHidden = true
     }
     
     // MARK: - Configure
     private func configure() {
         configureNavigationItem()
-        configureUserInformation()
     }
     
     private func configureNavigationItem() {
@@ -121,11 +111,23 @@ final class MyPageViewController: UIViewController {
         coordinator?.presentLoginView()
     }
     
-    private func configureUserInformation() {
-        Task {
-            userNickNameLabel.text = viewModel.user.nickname
-            userProfileImageView.image = await viewModel.loadUserProfileImage()
-        }
+    // MARK: - Binding
+    private func binding() {
+        bindSnapshotSubject()
     }
     
+    private func bindSnapshotSubject() {
+        viewModel.snapshotSubject.sink { [weak self] snapshot in
+            if snapshot.numberOfItems(inSection: 0) == 0 {
+                self?.emptyFeedLabel.isHidden = false
+                self?.lazyCatAnimationView.isHidden = false
+                self?.lazyCatAnimationView.play()
+            } else {
+                self?.lazyCatAnimationView.stop()
+                self?.emptyFeedLabel.isHidden = true
+                self?.lazyCatAnimationView.isHidden = true
+            }
+            self?.userFeedsCollectionViewDataSource.apply(snapshot)
+        }.store(in: &cancellables)
+    }
 }
