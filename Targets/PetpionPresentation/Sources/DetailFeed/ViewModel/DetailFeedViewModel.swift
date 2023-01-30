@@ -20,7 +20,7 @@ protocol DetailFeedViewModelInput {
 
 protocol DetailFeedViewModelOutput {
     func configureDetailFeedImageCollectionViewLayout() -> UICollectionViewLayout
-    func makeDetailFeedImageCollectionViewDataSource(parentViewController: UIViewController, collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL>
+    func makeDetailFeedImageCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL>
     func getWinRate() -> Double
 }
 
@@ -103,8 +103,8 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         return layout
     }
     
-    func makeDetailFeedImageCollectionViewDataSource(parentViewController: UIViewController, collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL> {
-        let cellRegistration = makeCellRegistration(viewController: parentViewController)
+    func makeDetailFeedImageCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL> {
+        let cellRegistration = makeCellRegistration()
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, itemIdentifier in
             collectionView.dequeueConfiguredReusableCell(using: cellRegistration,
                                                          for: indexPath,
@@ -112,7 +112,7 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         }
     }
     
-    private func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<DetailFeedImageCollection, URL> {
+    private func makeCellRegistration() -> UICollectionView.CellRegistration<DetailFeedImageCollection, URL> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureDetailImageView(item)
         }

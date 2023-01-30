@@ -22,4 +22,5 @@ struct LottieJson {
     
     static let cuteDog: String = "cuteDog"
     
+    static let lazyCat: String = "lazyCat"
 }

@@ -49,6 +49,16 @@ public struct PetpionFeed: Identifiable {
 }
 
 public extension PetpionFeed {
+    static let empty: Self = .init(id: "",
+                                   uploader: User.empty,
+                                   uploaderID: "",
+                                   uploadDate: .init(),
+                                   battleCount: 0,
+                                   likeCount: 0,
+                                   imageCount: 0,
+                                   message: "",
+                                   feedSize: .init(),
+                                   imageRatio: 0)
     
     static func getImageReference(_ feed: Self) -> String {
         "\(feed.uploaderID)/\(feed.id)"

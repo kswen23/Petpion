@@ -56,22 +56,25 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    private let thumbUpImageView: UIImageView = {
+    private let winImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "hand.thumbsup.fill")
-        imageView.tintColor = .black
+        imageView.image = UIImage(named: "win")
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.heightAnchor.constraint(equalToConstant: 25).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: 25).isActive = true
         return imageView
     }()
     
     private let likeCountLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = .darkGray
         return label
     }()
     
     private lazy var likeCountStackView: UIStackView = {
         let stackView = UIStackView()
-        [thumbUpImageView, likeCountLabel].forEach {
+        [winImageView, likeCountLabel].forEach {
             stackView.addArrangedSubview($0)
         }
         stackView.spacing = 3
