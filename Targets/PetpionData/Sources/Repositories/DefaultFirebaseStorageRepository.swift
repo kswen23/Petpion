@@ -66,7 +66,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                         successArr.append(success)
                     }
                 case .failure(let error):
-                    print(error)
+                    print(error.localizedDescription)
                     return Result.failure(error)
                 }
             }
@@ -183,13 +183,16 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     private func fetchSingleImageURL(from reference: String) async -> Result<URL, Error> {
-        
         return await withCheckedContinuation { continuation in
+            if let cachedURL = URLCache.shared.singleURL(id: reference) {
+                return continuation.resume(returning: .success(cachedURL))
+            }
             storage
                 .reference(forURL: defaultURL + reference)
                 .downloadURL { result in
                     switch result {
                     case .success(let url):
+                        URLCache.shared.saveURLCache(url: url, key: reference)
                         continuation.resume(returning: .success(url))
                     case .failure(let error):
                         print(error.localizedDescription)
