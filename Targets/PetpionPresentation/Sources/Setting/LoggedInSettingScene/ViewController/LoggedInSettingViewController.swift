@@ -11,6 +11,7 @@ import UIKit
 
 final class LoggedInSettingViewController: UIViewController {
     
+    weak var coordinator: SettingCoordinator?
     private let viewModel: LoggedInSettingViewModelProtocol
     
     private lazy var navigationBarBorder: CALayer = {
@@ -55,6 +56,7 @@ final class LoggedInSettingViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        configureProfileSettingView()
         layout()
         settingCategoryStackViewArray.forEach { $0.settingCategoryStackViewListener = self }
     }
@@ -91,18 +93,23 @@ final class LoggedInSettingViewController: UIViewController {
             settingStackView.topAnchor.constraint(equalTo: profileSettingView.bottomAnchor, constant: 10)
         ])
     }
+    
+    // MARK: - Configure
+    private func configureProfileSettingView() {
+        profileSettingView.configureSettingProfileView(with: viewModel.user)
+    }
 }
 
 extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, SettingProfileViewDelegate {
     
     // SettingCategoryDelegate
     func settingActionViewDidTapped(action: SettingModel.SettingAction) {
-        print(action)
+        coordinator?.pushSettingActionScene(with: action)
     }
     
     // SettingProfileDelegate
     func profileViewDidTapped() {
-        print("profile")
+        coordinator?.pushSettingActionScene(with: .profile)
     }
 
 }

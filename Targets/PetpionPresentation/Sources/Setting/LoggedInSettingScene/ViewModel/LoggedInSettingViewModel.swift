@@ -17,7 +17,7 @@ protocol LoggedInSettingViewModelInput {
 }
 
 protocol LoggedInSettingViewModelOutput {
-    func getUserProfileImage() async -> UIImage
+    
 }
 
 protocol LoggedInSettingViewModelProtocol: LoggedInSettingViewModelInput, LoggedInSettingViewModelOutput {
@@ -36,9 +36,5 @@ final class LoggedInSettingViewModel: LoggedInSettingViewModelProtocol {
     // MARK: - Input
     
     // MARK: - Output
-    func getUserProfileImage() async -> UIImage  {
-        guard let profileURL = user.imageURL else { return UIImage(systemName: "person.fill")! }
-        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
-    }
 
 }

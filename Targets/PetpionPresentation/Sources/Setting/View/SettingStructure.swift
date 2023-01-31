@@ -15,6 +15,7 @@ struct SettingModel {
     }
     
     enum SettingAction: String {
+        case profile = "프로필 설정"
         // 앱설정
         case alert = "알림설정"
         // 약관 및 정책

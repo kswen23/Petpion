@@ -24,7 +24,12 @@ public final class SettingCoordinator: NSObject, Coordinator {
     
     public func start() {
         let settingViewController = getLoggedInSettingViewController()
+        settingViewController.coordinator = self
         navigationController.pushViewController(settingViewController, animated: true)
+    }
+    
+    func pushSettingActionScene(with action: SettingModel.SettingAction) {
+        print(action)
     }
 }
 

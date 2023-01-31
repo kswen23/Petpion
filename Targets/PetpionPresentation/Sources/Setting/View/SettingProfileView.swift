@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 
+import PetpionCore
 import PetpionDomain
 
 protocol SettingProfileViewDelegate: AnyObject {
@@ -37,19 +38,25 @@ final class SettingProfileView: UIView {
         return imageView
     }()
     
-    private lazy var nameEmailStackView: UIStackView = {
+    private var nameLabel: UILabel = {
         let nameLabel = UILabel()
         nameLabel.text = "김성원"
         nameLabel.font = UIFont.systemFont(ofSize: 14)
         nameLabel.textColor = .black
         nameLabel.sizeToFit()
-        
+        return nameLabel
+    }()
+    
+    private var emailLabel: UILabel = {
         let emailLabel = UILabel()
         emailLabel.text = "ksewn0203@gmail.com" // user.email
         emailLabel.font = UIFont.systemFont(ofSize: 14)
         emailLabel.textColor = .systemGray2
         emailLabel.sizeToFit()
-        
+        return emailLabel
+    }()
+    
+    private lazy var nameEmailStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
@@ -131,6 +138,14 @@ final class SettingProfileView: UIView {
     }
     
     func configureSettingProfileView(with user: User) {
-        
+        Task {
+            nameLabel.text = user.nickname
+            profileImageView.image = await loadUserProfileImage(user: user)
+        }
+    }
+    
+    private func loadUserProfileImage(user: User) async -> UIImage  {
+        guard let profileURL = user.imageURL else { return UIImage(systemName: "person.fill")! }
+        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
     }
 }

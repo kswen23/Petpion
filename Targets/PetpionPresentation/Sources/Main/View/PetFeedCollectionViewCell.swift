@@ -26,7 +26,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     private let profileImageButton: CircleButton = {
         let circleImageButton = CircleButton(diameter: 25)
         circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
-        circleImageButton.tintColor = .darkGray
+        circleImageButton.tintColor = .petpionLightGray
         circleImageButton.backgroundColor = .white
         circleImageButton.layer.borderWidth = 0.5
         circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
