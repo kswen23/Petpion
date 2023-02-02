@@ -29,16 +29,30 @@ final class MainViewController: UIViewController {
     init(viewModel: MainViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        addProfileChangesObserver()
+    }
+    
+    private func addProfileChangesObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(updateProfile), name: Notification.Name("ProfileUpdated"), object: nil)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
+    
+    @objc func updateProfile(_ notification: Notification) {
+        viewModel.fetchUser()
+    }
+    
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
+        configureNavigationItem()
+//        viewModel.fetchFirstFeedPerSortingOption()
+//        baseCollectionView.visibleCells 업데이트 likecount만
     }
     
     override func viewDidLoad() {
@@ -68,7 +82,7 @@ final class MainViewController: UIViewController {
     
     // MARK: - Configure
     private func configure() {
-        configureNavigationItem()
+//        configureNavigationItem()
         configureBaseCollectionView()
     }
     

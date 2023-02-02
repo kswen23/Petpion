@@ -41,10 +41,26 @@ final class MyPageViewController: UIViewController {
     init(viewModel: MyPageViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        addProfileChangesObserver()
+    }
+    
+    private func addProfileChangesObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(updateProfile), name: Notification.Name("ProfileUpdated"), object: nil)
+    }
+    
+    @objc func updateProfile(_ notification: Notification) {
+        print("updateProfile!")
+//        viewModel.fetchUserProfile()
+//        guard let headerView = userFeedsCollectionView.supplementaryView(forElementKind: UserCardCollectionReusableView.identifier, at: <#T##IndexPath#>) as? UserCardCollectionReusableView else { return }
+//        headerView.configureUserCardView(with: <#T##User#>)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ProfileUpdated"), object: nil)
     }
     
     // MARK: - Life Cycle

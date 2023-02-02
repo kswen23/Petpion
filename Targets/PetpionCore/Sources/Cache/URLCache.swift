@@ -30,4 +30,8 @@ public final class URLCache {
     public func saveURLCache(url: URL, key: String) {
         self.cachedURL.setObject(url as NSURL, forKey: key as NSString)
     }
+    
+    public func deleteURLCache(key: String) {
+        self.cachedURL.removeObject(forKey: key as NSString)
+    }
 }

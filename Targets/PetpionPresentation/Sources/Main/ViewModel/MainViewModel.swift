@@ -14,10 +14,12 @@ import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
+    func fetchUser()
     func fetchNextFeed()
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
+    func fetchFirstFeedPerSortingOption()
 }
 
 protocol MainViewModelOutput {
@@ -59,15 +61,23 @@ final class MainViewModel: MainViewModelProtocol {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
-        fetchFirstFeedPerSortingOption()
+        fetchInit()
         initializeUserVoteChance()
     }
-    
-    private func fetchFirstFeedPerSortingOption() {
+    private func fetchInit() {
         Task {
             let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
             await MainActor.run {
                 popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
+                latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
+            }
+        }
+    }
+    public func fetchFirstFeedPerSortingOption() {
+        Task {
+            let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
+            await MainActor.run {
+//                popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
                 latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             }
         }
@@ -78,17 +88,26 @@ final class MainViewModel: MainViewModelProtocol {
             guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
             let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
+            self.user = fetchedUser
             
             if initUserInfoResult {
-                fetchUserUseCase.bindUser { user in
-                    self.user = user
-                    self.user.imageURL = fetchedUser.imageURL
+                fetchUserUseCase.bindUser { [weak self] fetchedUser in
+                    self?.user.voteChanceCount = fetchedUser.voteChanceCount
+                    self?.user.latestVoteTime = fetchedUser.latestVoteTime
                 }
             }
         }
     }
-    
+
     // MARK: - Input
+    func fetchUser() {
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+        Task {
+            let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
+            self.user = fetchedUser
+        }
+    }
+    
     func fetchNextFeed() {
         Task {
             var resultFeed = getCurrentFeed()

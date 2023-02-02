@@ -31,6 +31,7 @@ final class SettingProfileView: UIView {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = UIImage(systemName: "person.fill")
+        imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .petpionLightGray
         imageView.tintColor = .lightGray
         imageView.layer.borderColor = UIColor.systemGray2.cgColor
@@ -138,14 +139,7 @@ final class SettingProfileView: UIView {
     }
     
     func configureSettingProfileView(with user: User) {
-        Task {
-            nameLabel.text = user.nickname
-            profileImageView.image = await loadUserProfileImage(user: user)
-        }
-    }
-    
-    private func loadUserProfileImage(user: User) async -> UIImage  {
-        guard let profileURL = user.imageURL else { return UIImage(systemName: "person.fill")! }
-        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
+        profileImageView.image = user.profileImage
+        nameLabel.text = user.nickname
     }
 }
