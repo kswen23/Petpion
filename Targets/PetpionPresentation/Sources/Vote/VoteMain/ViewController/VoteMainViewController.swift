@@ -12,10 +12,6 @@ import UIKit
 import Lottie
 import PetpionDomain
 
-protocol HasCoordinator: AnyObject {
-    var coordi: Coordinator { get }
-}
-
 final class VoteMainViewController: UIViewController {
     
     private var cancellables = Set<AnyCancellable>()

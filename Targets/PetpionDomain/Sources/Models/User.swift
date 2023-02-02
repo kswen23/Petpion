@@ -7,15 +7,17 @@
 //
 
 import Foundation
+import UIKit
 
 public struct User: Identifiable {
     public typealias Identifier = String
     
     public let id: Identifier
-    public let nickname: String
-    public let latestVoteTime: Date
-    public let voteChanceCount: Int
+    public var nickname: String
+    public var latestVoteTime: Date
+    public var voteChanceCount: Int
     public var imageURL: URL?
+    public var profileImage: UIImage? = UIImage(systemName: "person.fill")
     
     public init(id: String,
                 nickName: String,
@@ -34,6 +36,10 @@ public extension User {
     static let voteMaxCountPolicy: Int = 5
     
     static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
+    
+    static func getProfileImageData(user: Self) -> Data {
+        user.profileImage?.jpegData(compressionQuality: 0.8) ?? Data()
+    }
 }
 
 extension User: Hashable {

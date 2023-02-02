@@ -53,7 +53,8 @@ public struct DomainDIContainer: Containable {
         }
         
         container.register(UploadUserUseCase.self) { _ in
-            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository)
+            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository,
+                                     firebaseStorageRepository: firebaseStorageRepository)
         }
         
         container.register(CalculateVoteChanceUseCase.self) { _ in

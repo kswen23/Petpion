@@ -51,5 +51,12 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "SettingCoordinator") { _ in
             SettingCoordinator(navigationController: navigationController)
         }
+        
+        SettingModel.SettingAction.allCases.forEach {
+            container.register(Coordinator.self, name: $0.coordinatorString) { _ in
+                EditProfileCoordinator(navigationController: navigationController)
+            }
+        }
+        
     }
 }

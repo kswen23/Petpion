@@ -16,7 +16,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User?
+    var user: User = .empty
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -59,8 +59,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
 private extension MyPageCoordinator {
     
     private func getMyPageViewController() -> MyPageViewController {
-        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
-              let user = user else {
+        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else {
             fatalError("getMyPageViewController did occurred error")
         }
         let viewModel: MyPageViewModelProtocol = MyPageViewModel(user: user,

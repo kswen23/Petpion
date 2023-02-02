@@ -55,7 +55,7 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         ])
         imagePreviewHeight = imagePreview.heightAnchor.constraint(equalToConstant: self.frame.width)
         imagePreviewHeight?.isActive = true
-        imagePreview.contentMode = .scaleAspectFit
+        imagePreview.contentMode = .scaleAspectFill
     }
     
     private func layoutEditImageButton() {

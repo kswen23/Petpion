@@ -31,7 +31,7 @@ protocol MyPageViewModelProtocol: MyPageViewModelInput, MyPageViewModelOutput {
 
 final class MyPageViewModel: MyPageViewModelProtocol {
     
-    let user: User
+    var user: User
     let fetchFeedUseCase: FetchFeedUseCase
     lazy var userFeedThumbnailSubject: CurrentValueSubject<[URL], Never> = {
         var tempURLArr = [URL]()
@@ -72,7 +72,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     // MARK: - Output
     func loadUserProfileImage() async -> UIImage  {
         guard let profileURL = user.imageURL else { return .init() }
-            return await ImageCache.shared.loadImage(url: profileURL as NSURL)
+        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
     }
     
     func configureUserFeedsCollectionViewLayout() -> UICollectionViewLayout {

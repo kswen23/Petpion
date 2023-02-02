@@ -26,6 +26,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
         imageView.image = UIImage(systemName: "person.fill")
         imageView.tintColor = .lightGray
         imageView.backgroundColor = .white
+        imageView.contentMode = .scaleAspectFill
         return imageView
     }()
     
@@ -141,14 +142,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
     }
 
     func configureUserCardView(with user: User) {
-        Task {
-            userNickNameLabel.text = user.nickname
-            userProfileImageView.image = await loadUserProfileImage(user: user)
-        }
-    }
-    
-    private func loadUserProfileImage(user: User) async -> UIImage  {
-        guard let profileURL = user.imageURL else { return .init() }
-        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
+        userProfileImageView.image = user.profileImage
+        userNickNameLabel.text = user.nickname
     }
 }

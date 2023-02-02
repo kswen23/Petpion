@@ -13,7 +13,7 @@ protocol SettingCategoryStackViewDelegate: AnyObject {
     func settingActionViewDidTapped(action: SettingModel.SettingAction)
 }
 
-class SettingCategoryStackView: UIStackView {
+final class SettingCategoryStackView: UIStackView {
     
     weak var settingCategoryStackViewListener: SettingCategoryStackViewDelegate?
     private let category: SettingModel.SettingCategory

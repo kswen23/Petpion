@@ -67,7 +67,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
     func bindSnapshot() {
         viewModel?.snapshotSubject.sink { [weak self] snapshot in
             self?.configurePetCollectionView()
-            self?.petFeedDataSource?.apply(snapshot)
+            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: true)
         }.store(in: &cancellables)
     }
 }
