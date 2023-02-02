@@ -48,6 +48,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         }
         
         let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: feedDataFromFirestore)
+        // rankPetpion
         return sortResultFeeds(sortBy: option, with: updatedFeed)
     }
     

@@ -7,6 +7,9 @@
 //
 
 import Foundation
+import UIKit
+
+import PetpionCore
 
 public final class DefaultFetchUserUseCase: FetchUserUseCase {
     
@@ -24,6 +27,7 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
     public func fetchUser(uid: String) async -> User {
         var fetchedUser = await firestoreRepository.fetchUser(uid: uid)
         fetchedUser.imageURL = await firebaseStorageRepository.fetchUserProfileImageURL(fetchedUser)
+        fetchedUser.profileImage = await fetchUserProfileImage(user: fetchedUser)
         return fetchedUser
     }
     
@@ -31,6 +35,13 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
         firestoreRepository.addUserListener { user in
             completion(user)
         }
+    }
+    
+    private func fetchUserProfileImage(user: User) async -> UIImage {
+        guard let profileURL = user.imageURL else {
+            return UIImage(systemName: "person.fill")!
+        }
+        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
     }
 
 }

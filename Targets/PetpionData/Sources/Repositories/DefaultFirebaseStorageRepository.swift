@@ -19,7 +19,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     private typealias DataAndReference = (Data, String)
     
     // MARK: - Private Method
-    private func makeDataAndReferenceArray(feed: PetpionFeed,
+    private func makeFeedDataAndReferenceArray(feed: PetpionFeed,
                                            imageDatas: [Data]) -> [DataAndReference] {
         var array: [DataAndReference] = []
         let imageRef: String = PetpionFeed.getImageReference(feed)
@@ -29,10 +29,14 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         return array
     }
     
+    private func makeUserDataAndReference(user: User) -> DataAndReference {
+        return (User.getProfileImageData(user: user), "\(user.id)/profile/profile")
+    }
+    
     // MARK: - Public Create
     public func uploadPetFeedImages(feed: PetpionFeed,
                                     imageDatas: [Data]) async -> Bool {
-        let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
+        let dataAndRefArray: [DataAndReference] = makeFeedDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
         let isCompleted = await uploadSeveralImages(dataAndRefArray)
         switch isCompleted {
         case .success(let success):
@@ -43,10 +47,17 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         }
     }
     
-    public func uploadProfileImage(_ user: User) {
-        //        Task {
-        //            uploadSingleImage()
-        //        }
+    public func uploadProfileImage(_ user: User) async -> Bool {
+        let dataAndRef = makeUserDataAndReference(user: user)
+        let isCompleted = await uploadSingleImage(dataAndRef)
+        switch isCompleted {
+        case .success(let success):
+            URLCache.shared.deleteURLCache(key: dataAndRef.1)
+            return success
+        case .failure(let failure):
+            print(failure.localizedDescription)
+            return false
+        }
     }
     
     // MARK: - Private Create
@@ -144,7 +155,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     public func fetchUserProfileImageURL(_ user: User) async -> URL? {
-        let profileImageReference = "\(user.id)/profile/profile.png"
+        let profileImageReference = "\(user.id)/profile/profile"
         if let cachedURL = URLCache.shared.singleURL(id: profileImageReference) {
             return cachedURL
         }

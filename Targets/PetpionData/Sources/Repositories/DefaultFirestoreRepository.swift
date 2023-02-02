@@ -76,6 +76,24 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Read
+    public func checkDuplicatedNickname(with nickname: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .whereField("userNickname", isEqualTo: nickname)
+                .getDocuments { (querySnapshot, error) in
+                    if let error = error {
+                        print("Error checking nickname: \(error)")
+                        return continuation.resume(returning: true)
+                    }
+                    if querySnapshot!.count > 0 {
+                        return continuation.resume(returning: true)
+                    }
+                    return continuation.resume(returning: false)
+                }
+        }
+    }
+    
     public func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed] {
         let feedCollection = await fetchFirstFeedCollection(by: option)
         switch feedCollection {
@@ -318,6 +336,24 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func updateUserNickname(_ nickname: String) async -> Bool {
+        guard let uid = firestoreUID else { return false }
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(uid)
+                .updateData(["userNickname": nickname]) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+
+    }
+    
+    
     public func plusUserHeart() {
         guard let uid = firestoreUID else { return }
         db
@@ -328,7 +364,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     print(error.localizedDescription)
                 }
             }
-        
     }
     
     public func minusUserHeart() {
