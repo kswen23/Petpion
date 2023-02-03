@@ -41,7 +41,7 @@ final class SettingProfileView: UIView {
     
     private var nameLabel: UILabel = {
         let nameLabel = UILabel()
-        nameLabel.text = "김성원"
+        nameLabel.text = "이름"
         nameLabel.font = UIFont.systemFont(ofSize: 14)
         nameLabel.textColor = .black
         nameLabel.sizeToFit()
@@ -50,7 +50,7 @@ final class SettingProfileView: UIView {
     
     private var emailLabel: UILabel = {
         let emailLabel = UILabel()
-        emailLabel.text = "ksewn0203@gmail.com" // user.email
+        emailLabel.text = "aaaa1234@gmail.com" // user.email
         emailLabel.font = UIFont.systemFont(ofSize: 14)
         emailLabel.textColor = .systemGray2
         emailLabel.sizeToFit()
@@ -121,7 +121,7 @@ final class SettingProfileView: UIView {
         profileImageView.roundCorners(cornerRadius: profileImageViewRadius/2)
         
         baseViewButton.addTarget(self, action: #selector(settingActionButtonTouchUpInsideAction), for: .touchUpInside)
-        baseViewButton.addTarget(self, action: #selector(settingActionButtonTouchUpOutsideAction), for: .touchUpOutside)
+        baseViewButton.addTarget(self, action: #selector(settingActionButtonTouchUpOutsideAction), for: [.touchUpOutside, .touchCancel])
         baseViewButton.addTarget(self, action: #selector(settingActionButtonTouchDownAction), for: .touchDown)
     }
     

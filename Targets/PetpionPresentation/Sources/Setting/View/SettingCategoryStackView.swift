@@ -81,7 +81,7 @@ final class SettingCategoryStackView: UIStackView {
             button.tag = actionIndex
             button.backgroundColor = .white
             button.addTarget(self, action: #selector(settingActionButtonTouchUpInsideAction), for: .touchUpInside)
-            button.addTarget(self, action: #selector(settingActionButtonTouchUpOutsideAction), for: .touchUpOutside)
+            button.addTarget(self, action: #selector(settingActionButtonTouchUpOutsideAction), for: [.touchUpOutside, .touchCancel])
             button.addTarget(self, action: #selector(settingActionButtonTouchDownAction), for: .touchDown)
             return button
         }()
