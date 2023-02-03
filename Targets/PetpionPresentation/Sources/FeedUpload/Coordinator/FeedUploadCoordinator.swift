@@ -66,7 +66,7 @@ private extension FeedUploadCoordinator {
     
     private func getFeedUploadViewController(with images: [UIImage]) -> FeedUploadViewController {
         guard let uploadFeedUseCase: UploadFeedUseCase = DIContainer.shared.resolve(UploadFeedUseCase.self) else {
-            fatalError("getFeedUploadViewController did ocurred error")
+            fatalError("getFeedUploadViewController did occurred error")
         }
         let viewModel: FeedUploadViewModelProtocol = FeedUploadViewModel(selectedImages: images, uploadFeedUseCase: uploadFeedUseCase)
         return FeedUploadViewController(viewModel: viewModel)
