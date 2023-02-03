@@ -12,4 +12,7 @@ public protocol MakeNotificationUseCase {
     
     func requestAuthorization()
     func createPetpionVoteNotification(heart count: Int, latestVoteTime: Date)
+    func allowPetpionVoteNotification()
+    func preventPetpionVoteNotification()
+    
 }

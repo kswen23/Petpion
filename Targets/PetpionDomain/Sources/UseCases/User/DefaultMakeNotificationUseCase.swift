@@ -22,6 +22,7 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
             
             if didAllow {
                 UserDefaults.standard.set(true, forKey: UserInfoKey.userNotificationsPermission)
+                UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification)
             } else {
                 print("UserNotifications Permission Denied")
             }
@@ -29,13 +30,24 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
     }
     
     public func createPetpionVoteNotification(heart count: Int, latestVoteTime: Date) {
-        let content = makePetpionNotificationContent()
-        let trigger = makeNotificationTrigger(heart: count, latestVoteTime: latestVoteTime)
-        let request = UNNotificationRequest(identifier: petpionVoteIdentifier,
-                                            content: content,
-                                            trigger: trigger)
+        if UserDefaults.standard.bool(forKey: UserInfoKey.voteChanceNotification) == true {
+            let content = makePetpionNotificationContent()
+            let trigger = makeNotificationTrigger(heart: count, latestVoteTime: latestVoteTime)
+            let request = UNNotificationRequest(identifier: petpionVoteIdentifier,
+                                                content: content,
+                                                trigger: trigger)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [petpionVoteIdentifier])
+            UNUserNotificationCenter.current().add(request)
+        }
+    }
+    
+    public func allowPetpionVoteNotification() {
+        UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification)
+    }
+    
+    public func preventPetpionVoteNotification() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [petpionVoteIdentifier])
-        UNUserNotificationCenter.current().add(request)
+        UserDefaults.standard.set(false, forKey: UserInfoKey.voteChanceNotification)
     }
     
     // MARK: - Private

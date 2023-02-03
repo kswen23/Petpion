@@ -32,7 +32,7 @@ struct SettingModel {
             case .profile:
                 return "EditProfileCoordinator"
             case .alert:
-                return "EditProfileCoordinator"
+                return "EditAlertCoordinator"
             case .version:
                 return "EditProfileCoordinator"
             case .termsOfService:
@@ -59,4 +59,21 @@ struct SettingModel {
             return [.manageBlockedUser, .logout, .delete]
         }
     }
+}
+
+extension SettingModel {
+    
+    enum AlertType: String, CaseIterable {
+        
+        case voteChance = "투표기회 충전완료시 알림"
+        
+        var detailDescription: String {
+            switch self {
+            case .voteChance:
+                return "투표기회가 충전완료되면 알림을 통해 알려드려요."
+            }
+        }
+    }
+    
+    
 }
