@@ -14,12 +14,13 @@ import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
-    func fetchUser()
     func fetchNextFeed()
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
     func fetchFirstFeedPerSortingOption()
+    func updateCurrentFeeds()
+    func userDidUpdated(to updatedUser: User)
 }
 
 protocol MainViewModelOutput {
@@ -50,6 +51,7 @@ final class MainViewModel: MainViewModelProtocol {
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
     var user: User = .empty
+    
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
     let fetchUserUseCase: FetchUserUseCase
@@ -64,6 +66,7 @@ final class MainViewModel: MainViewModelProtocol {
         fetchInit()
         initializeUserVoteChance()
     }
+    
     private func fetchInit() {
         Task {
             let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
@@ -73,6 +76,7 @@ final class MainViewModel: MainViewModelProtocol {
             }
         }
     }
+    
     public func fetchFirstFeedPerSortingOption() {
         Task {
             let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
@@ -90,8 +94,10 @@ final class MainViewModel: MainViewModelProtocol {
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
             self.user = fetchedUser
             
+            // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
             if initUserInfoResult {
                 fetchUserUseCase.bindUser { [weak self] fetchedUser in
+                    self?.user.nickname = fetchedUser.nickname
                     self?.user.voteChanceCount = fetchedUser.voteChanceCount
                     self?.user.latestVoteTime = fetchedUser.latestVoteTime
                 }
@@ -100,12 +106,14 @@ final class MainViewModel: MainViewModelProtocol {
     }
 
     // MARK: - Input
-    func fetchUser() {
-        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
-        Task {
-            let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
-            self.user = fetchedUser
+    func updateFeedSubject(origin: [PetpionFeed]) -> [PetpionFeed] {
+        var resultFeedArray = origin
+        for i in 0 ..< resultFeedArray.count {
+            if resultFeedArray[i].uploaderID == user.id {
+                resultFeedArray[i].uploader = user
+            }
         }
+        return resultFeedArray
     }
     
     func fetchNextFeed() {
@@ -164,9 +172,25 @@ final class MainViewModel: MainViewModelProtocol {
         default: break
         }
     }
+     
+    func updateCurrentFeeds() {
+        Task {
+            let popularFeeds = await fetchFeedUseCase.updateFeeds(origin: popularFeedSubject.value)
+            let latestFeeds = await fetchFeedUseCase.updateFeeds(origin: latestFeedSubject.value)
+            
+            await MainActor.run { [popularFeeds, latestFeeds] in
+                popularFeedSubject.send(popularFeeds)
+                latestFeedSubject.send(latestFeeds)
+            }
+        }
+    }
+    
+    func userDidUpdated(to updatedUser: User) {
+        user.nickname = updatedUser.nickname
+        user.profileImage = updatedUser.profileImage
+    }
     
     // MARK: - Output
-    
     func configureBaseCollectionViewLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                               heightDimension: .fractionalHeight(1.0))

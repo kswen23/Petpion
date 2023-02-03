@@ -52,9 +52,27 @@ public struct PresentationDIContainer: Containable {
             SettingCoordinator(navigationController: navigationController)
         }
         
-        SettingModel.SettingAction.allCases.forEach {
-            container.register(Coordinator.self, name: $0.coordinatorString) { _ in
-                EditProfileCoordinator(navigationController: navigationController)
+        SettingModel.SettingAction.allCases.forEach { settingAction in
+            container.register(Coordinator.self, name: settingAction.coordinatorString) { _ in
+                switch settingAction {
+                case .profile:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .alert:
+                    return EditAlertCoordinator(navigationController: navigationController)
+                case .version:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .termsOfService:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .openLicense:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .manageBlockedUser:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .logout:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .delete:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                }
+                
             }
         }
         

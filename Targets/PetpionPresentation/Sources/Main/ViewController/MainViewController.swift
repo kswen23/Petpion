@@ -29,21 +29,15 @@ final class MainViewController: UIViewController {
     init(viewModel: MainViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        addProfileChangesObserver()
+        addObserver()
     }
     
-    private func addProfileChangesObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateProfile), name: Notification.Name("ProfileUpdated"), object: nil)
+    deinit {
+        removeObserver()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    
-    
-    @objc func updateProfile(_ notification: Notification) {
-        viewModel.fetchUser()
     }
     
     // MARK: - Life Cycle
@@ -51,6 +45,7 @@ final class MainViewController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
+//        viewModel.updateCurrentFeeds()
 //        viewModel.fetchFirstFeedPerSortingOption()
 //        baseCollectionView.visibleCells 업데이트 likecount만
     }
@@ -206,4 +201,21 @@ extension MainViewController: UIViewControllerTransitioningDelegate {
     func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
         LoginPresentationController(presentedViewController: presented, presenting: presenting)
     }
+}
+
+extension MainViewController: NotificationObservable {
+    
+    func addObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidChange), name: Notification.Name(NotificationName.profileUpdated), object: nil)
+    }
+    
+    func removeObserver() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.profileUpdated), object: nil)
+    }
+    
+    @objc func handleUserProfileDidChange(notification: Notification) {
+        guard let updatedUserProfile = notification.userInfo?["profile"] as? User else { return }
+        viewModel.userDidUpdated(to: updatedUserProfile)
+    }
+    
 }

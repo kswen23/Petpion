@@ -37,7 +37,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
         }
     }
     
-    public func pushSettingViewController() {
+    public func pushSettingViewController(with user: User) {
         guard let settingCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "SettingCoordinator") as? SettingCoordinator else { return }
         childCoordinators.append(settingCoordinator)
         if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {

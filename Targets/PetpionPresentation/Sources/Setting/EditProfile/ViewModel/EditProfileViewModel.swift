@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionCore
 import PetpionDomain
 
 protocol EditProfileViewModelInput {
@@ -29,36 +30,55 @@ protocol EditProfileViewModelProtocol: EditProfileViewModelInput, EditProfileVie
 }
 
 enum EditProfileViewState {
+    case startLoading
     case duplicatedNickname
-    case done
+    case startUpdating
+    case finishUpdating
+    case error
 }
 
 final class EditProfileViewModel: EditProfileViewModelProtocol {
     
-    var user: User = .empty
+    var user: User
     let uploadUserUseCase: UploadUserUseCase
     let editProfileViewStateSubject: PassthroughSubject<EditProfileViewState, Never> = .init()
     private var profileImageDidChanged: Bool = false
     
     // MARK: - Initialize
-    init(uploadUserUseCase: UploadUserUseCase) {
+    init(uploadUserUseCase: UploadUserUseCase,
+         user: User = .empty) {
         self.uploadUserUseCase = uploadUserUseCase
+        self.user = user
     }
     
     // MARK: - Input
     func uploadUserData(with nickname: String) {
         Task {
+            var nicknameDidUpdated: Bool = false
+            var profileImageDidUpdated: Bool = false
+            
             if nickname != user.nickname {
-//                let profileUploadResult = await uploadUserUseCase.uploadUserProfileImage(user)
-                let updateNicknameResult = await uploadUserUseCase.updateUserNickname(nickname)
-                print("nicknameChange: \(updateNicknameResult)")
+                nicknameDidUpdated = await uploadUserUseCase.updateUserNickname(nickname)
+                user.nickname = nickname
+            } else {
+                nicknameDidUpdated = true
             }
+            
             if profileImageDidChanged {
-                let profileUploadResult = await uploadUserUseCase.uploadUserProfileImage(user)
-                print("profileChange: \(profileUploadResult)")
+                profileImageDidUpdated = await uploadUserUseCase.uploadUserProfileImage(user)
+            } else {
+                profileImageDidUpdated = true
             }
-        
-            postProfileUpdatedNotification()
+            
+            await MainActor.run { [profileImageDidUpdated, nicknameDidUpdated] in
+                if profileImageDidUpdated, nicknameDidUpdated {
+                    postProfileUpdatedNotification()
+                    editProfileViewStateSubject.send(.finishUpdating)
+                } else {
+                    editProfileViewStateSubject.send(.error)
+                }
+            }
+            
         }
         
     }
@@ -69,15 +89,19 @@ final class EditProfileViewModel: EditProfileViewModelProtocol {
     }
     
     private func postProfileUpdatedNotification() {
-        let name = Notification.Name("ProfileUpdated")
-        let notification = Notification(name: name)
+        let userInfo: [AnyHashable: User] = ["profile": user]
+        let notification = Notification(name: Notification.Name(NotificationName.profileUpdated), object: nil, userInfo: userInfo)
         NotificationCenter.default.post(notification)
     }
+    
     // MARK: - Output
     func checkUserNicknameDuplication(with nickname: String) {
+        editProfileViewStateSubject.send(.startLoading)
         Task {
             if nickname == user.nickname {
-                editProfileViewStateSubject.send(.done)
+                await MainActor.run {
+                    editProfileViewStateSubject.send(.startUpdating)
+                }
             } else {
                 let nickNameIsDuplicated = await uploadUserUseCase.checkUserNicknameDuplication(with: nickname)
                 
@@ -85,7 +109,7 @@ final class EditProfileViewModel: EditProfileViewModelProtocol {
                     if nickNameIsDuplicated {
                         editProfileViewStateSubject.send(.duplicatedNickname)
                     } else {
-                        editProfileViewStateSubject.send(.done)
+                        editProfileViewStateSubject.send(.startUpdating)
                     }
                 }
             }

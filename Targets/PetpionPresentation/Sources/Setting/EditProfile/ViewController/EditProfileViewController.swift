@@ -12,7 +12,7 @@ import UIKit
 
 import PetpionDomain
 
-final class EditProfileViewController: UIViewController {
+final class EditProfileViewController: SettingCustomViewController {
     
     weak var coordinator: EditProfileCoordinator?
     private let viewModel: EditProfileViewModelProtocol
@@ -26,9 +26,8 @@ final class EditProfileViewController: UIViewController {
     
     @objc private func editProfileButtonDidTapped() {
         coordinator?.presentProfileImagePickerViewController(parentableViewController: self)
-        
     }
-
+    
     private let emailLabel: UILabel = {
         let emailLabel = UILabel()
         emailLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -87,10 +86,23 @@ final class EditProfileViewController: UIViewController {
         barButton.isEnabled = false
         return barButton
     }()
-
+    
+    private lazy var indicatorBarButton: UIBarButtonItem = {
+        let indicatorView = UIActivityIndicatorView(style: .medium)
+        indicatorView.hidesWhenStopped = true
+        indicatorView.startAnimating()
+        return UIBarButtonItem(customView: indicatorView)
+    }()
+    
     @objc private func doneButtonDidTapped() {
-        guard let nickname = nicknameTextField.text else { return}
+        guard let nickname = nicknameTextField.text else { return }
         viewModel.checkUserNicknameDuplication(with: nickname)
+    }
+    
+    private lazy var tapGesture = UITapGestureRecognizer(target: self, action: #selector(UIInputViewController.dismissKeyboard))
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
     }
     
     let nicknameTextViewWidth: CGFloat = UIScreen.main.bounds.size.width * 0.9
@@ -108,15 +120,16 @@ final class EditProfileViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.topItem?.title = ""
         self.navigationItem.title = "프로필 설정"
         self.navigationController?.navigationBar.tintColor = .black
         navigationItem.rightBarButtonItem = doneRightBarButton
         view.backgroundColor = .white
+        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.addGestureRecognizer(tapGesture)
         layout()
         binding()
         configure()
@@ -162,16 +175,26 @@ final class EditProfileViewController: UIViewController {
     }
     
     private func bindEditProfileViewStateSubject() {
-        viewModel.editProfileViewStateSubject
-            .sink { [weak self] viewState in
-                switch viewState {
-                case .duplicatedNickname:
-                    self?.configureDuplicatedNickName()
-                case .done:
-                    guard let nickname = self?.nicknameTextField.text else { return }
-                    self?.viewModel.uploadUserData(with: nickname)
-                }
-            }.store(in: &cancellables)
+        viewModel.editProfileViewStateSubject.sink { [weak self] viewState in
+            guard let strongSelf = self else { return }
+            switch viewState {
+            case .startLoading:
+                self?.navigationItem.rightBarButtonItem = strongSelf.indicatorBarButton
+            case .duplicatedNickname:
+                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
+                self?.configureDuplicatedNickName()
+            case .startUpdating:
+                guard let nickname = self?.nicknameTextField.text else { return }
+                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
+                self?.viewModel.uploadUserData(with: nickname)
+                self?.viewModel.uploadUserData(with: nickname)
+            case .finishUpdating:
+                self?.coordinator?.popEditProfileViewController()
+            case .error:
+                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
+                self?.configureUpdatingError()
+            }
+        }.store(in: &cancellables)
     }
     
     // MARK: - Configure
@@ -200,6 +223,11 @@ final class EditProfileViewController: UIViewController {
         nicknameResultLabel.text = "중복된 닉네임입니다."
     }
     
+    private func configureUpdatingError() {
+        nicknameResultLabel.textColor = .systemRed
+        nicknameResultLabel.text = "업데이트 에러입니다."
+    }
+    
     private func configureDoneBarButton(isEnabled: Bool) {
         if isEnabled {
             doneRightBarButton.tintColor = .systemBlue
@@ -225,10 +253,6 @@ extension EditProfileViewController: UITextFieldDelegate {
         nicknameTitleLabel.textColor = .systemBlue
     }
     
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        nicknameTitleLabel.textColor = .lightGray
-    }
-    
     func textFieldDidChangeSelection(_ textField: UITextField) {
         guard let text = textField.text else { return }
         configureNicknameResultLabel()
@@ -237,9 +261,11 @@ extension EditProfileViewController: UITextFieldDelegate {
         } else {
             configureDoneBarButton(isEnabled: viewModel.checkProfileNicknameChanges(with: text))
         }
-        
     }
     
+    func textFieldDidEndEditing(_ textField: UITextField, reason: UITextField.DidEndEditingReason) {
+        nicknameTitleLabel.textColor = .lightGray
+    }
 }
 
 extension EditProfileViewController: ProfileImagePickerViewControllerDelegate {

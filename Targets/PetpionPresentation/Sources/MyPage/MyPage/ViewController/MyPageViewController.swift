@@ -10,6 +10,8 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionCore
+import PetpionDomain
 import Lottie
 
 final class MyPageViewController: UIViewController {
@@ -41,26 +43,15 @@ final class MyPageViewController: UIViewController {
     init(viewModel: MyPageViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        addProfileChangesObserver()
+        addObserver()
     }
-    
-    private func addProfileChangesObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(updateProfile), name: Notification.Name("ProfileUpdated"), object: nil)
-    }
-    
-    @objc func updateProfile(_ notification: Notification) {
-        print("updateProfile!")
-//        viewModel.fetchUserProfile()
-//        guard let headerView = userFeedsCollectionView.supplementaryView(forElementKind: UserCardCollectionReusableView.identifier, at: <#T##IndexPath#>) as? UserCardCollectionReusableView else { return }
-//        headerView.configureUserCardView(with: <#T##User#>)
-    }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("ProfileUpdated"), object: nil)
+        removeObserver()
     }
     
     // MARK: - Life Cycle
@@ -68,6 +59,7 @@ final class MyPageViewController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.topItem?.title = ""
         self.navigationItem.title = "내 정보"
+        view.backgroundColor = .white
     }
     
     override func viewDidLoad() {
@@ -75,7 +67,6 @@ final class MyPageViewController: UIViewController {
         layout()
         configure()
         binding()
-        view.backgroundColor = .white
     }
     
     // MARK: - Layout
@@ -129,7 +120,12 @@ final class MyPageViewController: UIViewController {
     }
     
     @objc private func settingButtonDidTapped() {
-        coordinator?.pushSettingViewController()
+        coordinator?.pushSettingViewController(with: viewModel.user)
+    }
+    
+    private func configureUserFeedsCollectionViewHeader(with user: User) {
+        guard let headerView = userFeedsCollectionView.supplementaryView(forElementKind: UserCardCollectionReusableView.identifier, at: IndexPath.init(item: 0, section: 0)) as? UserCardCollectionReusableView else { return }
+        headerView.configureUserCardView(with: user)
     }
     
     // MARK: - Binding
@@ -151,4 +147,22 @@ final class MyPageViewController: UIViewController {
             self?.userFeedsCollectionViewDataSource.apply(snapshot)
         }.store(in: &cancellables)
     }
+}
+
+extension MyPageViewController: NotificationObservable {
+    
+    func addObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidChange), name: Notification.Name(NotificationName.profileUpdated), object: nil)
+    }
+    
+    func removeObserver() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.profileUpdated), object: nil)
+    }
+    
+    @objc func handleUserProfileDidChange(notification: Notification) {
+        guard let updatedUserProfile = notification.userInfo?["profile"] as? User else { return }
+        viewModel.userDidUpdated(to: updatedUserProfile)
+        configureUserFeedsCollectionViewHeader(with: updatedUserProfile)
+    }
+    
 }

@@ -14,7 +14,7 @@ import PetpionCore
 import PetpionDomain
 
 protocol MyPageViewModelInput {
-    
+    func userDidUpdated(to updatedUser: User)
 }
 
 protocol MyPageViewModelOutput {
@@ -33,6 +33,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     
     var user: User
     let fetchFeedUseCase: FetchFeedUseCase
+    
     lazy var userFeedThumbnailSubject: CurrentValueSubject<[URL], Never> = {
         var tempURLArr = [URL]()
         for i in 0 ..< 12 {
@@ -66,15 +67,13 @@ final class MyPageViewModel: MyPageViewModelProtocol {
             }
         }
     }
-    
+
     // MARK: - Input
-    
-    // MARK: - Output
-    func loadUserProfileImage() async -> UIImage  {
-        guard let profileURL = user.imageURL else { return .init() }
-        return await ImageCache.shared.loadImage(url: profileURL as NSURL)
+    func userDidUpdated(to updatedUser: User) {
+        self.user = updatedUser
     }
     
+    // MARK: - Output
     func configureUserFeedsCollectionViewLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1/3),
                                               heightDimension: .fractionalWidth(1/3))
