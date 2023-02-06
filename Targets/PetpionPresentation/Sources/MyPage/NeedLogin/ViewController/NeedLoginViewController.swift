@@ -11,7 +11,7 @@ import UIKit
 
 import Lottie
 
-final class NeedLoginViewController: UIViewController {
+final class NeedLoginViewController: SettingCustomViewController {
     
     weak var coordinator: MyPageCoordinator?
     private let viewModel: NeedLoginViewModelProtocol
@@ -64,19 +64,13 @@ final class NeedLoginViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.layer.addSublayer(navigationBarBorder)
+        configureNavigationItem()
     }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         layout()
         configure()
-    }
-    
-    override func viewDidDisappear(_ animated: Bool) {
-        navigationBarBorder.removeFromSuperlayer()
-        super.viewDidDisappear(animated)
     }
     
     // MARK: - Layout
@@ -120,13 +114,11 @@ final class NeedLoginViewController: UIViewController {
     
     // MARK: - Configure
     private func configure() {
-        configureNavigationItem()
         configureAnimationView()
         configureLoginButton()
     }
     
     private func configureNavigationItem() {
-        self.navigationController?.navigationBar.topItem?.title = ""
         self.navigationItem.title = "내 정보"
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .done, target: self, action: #selector(settingButtonDidTapped))
     }

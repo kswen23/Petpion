@@ -7,12 +7,13 @@
 //
 
 import Foundation
+import UIKit
 
 public struct PetpionFeed: Identifiable {
     
     public typealias Identifier = String
     
-    public let id: Identifier
+    public var id: Identifier
     public var uploader: User = .empty
     public let uploaderID: User.ID
     public let uploadDate: Date
@@ -21,6 +22,7 @@ public struct PetpionFeed: Identifiable {
     public var imageCount: Int
     public var message: String
     public var imageURLArr: [URL]?
+    public var thumbnailImage: UIImage? = nil
     public var feedSize: CGSize
     public var imageRatio: Double
     

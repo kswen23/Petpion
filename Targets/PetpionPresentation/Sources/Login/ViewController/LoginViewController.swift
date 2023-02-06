@@ -16,7 +16,7 @@ final class LoginViewController: UIViewController {
     var viewModel: LoginViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    private let appleLoginButton: ASAuthorizationAppleIDButton = {
+    private lazy var appleLoginButton: ASAuthorizationAppleIDButton = {
         let button = ASAuthorizationAppleIDButton(type: .continue, style: .black)
         button.addTarget(self, action: #selector(handleAuthorizationAppleIDButtonPress), for: .touchUpInside)
         return button

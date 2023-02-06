@@ -62,6 +62,7 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationItem.title = "설정"
+        configureProfileSettingView(with: viewModel.user)
     }
     
     override func viewDidLoad() {

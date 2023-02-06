@@ -185,8 +185,6 @@ final class EditProfileViewController: SettingCustomViewController {
                 self?.configureDuplicatedNickName()
             case .startUpdating:
                 guard let nickname = self?.nicknameTextField.text else { return }
-                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
-                self?.viewModel.uploadUserData(with: nickname)
                 self?.viewModel.uploadUserData(with: nickname)
             case .finishUpdating:
                 self?.coordinator?.popEditProfileViewController()
