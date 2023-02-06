@@ -19,7 +19,7 @@ protocol BaseCollectionViewCellDelegation {
 class BaseCollectionViewCell: UICollectionViewCell {
     
     var parentViewController: BaseCollectionViewCellDelegation?
-    var viewModel: BaseViewModel?
+    var viewModel: BaseViewModelProtocol?
     private var cancellables = Set<AnyCancellable>()
     lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                     collectionViewLayout: UICollectionViewLayout())
@@ -66,8 +66,13 @@ class BaseCollectionViewCell: UICollectionViewCell {
     // MARK: - Binding
     func bindSnapshot() {
         viewModel?.snapshotSubject.sink { [weak self] snapshot in
-            self?.configurePetCollectionView()
-            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: true)
+            guard let isFirstFetching = self?.viewModel?.isFirstFetching else { return }
+            if isFirstFetching {
+                // viewWillAppear시 setCollectioniewLayout 계속 불리는 문제 해결, 하지만 collecionView 더 불릴시 문제있을듯
+                self?.configurePetCollectionView()
+                self?.viewModel?.isFirstFetching = false
+            }
+            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: false)
         }.store(in: &cancellables)
     }
 }

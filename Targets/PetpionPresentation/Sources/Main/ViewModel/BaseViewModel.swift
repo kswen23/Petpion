@@ -19,13 +19,16 @@ protocol BaseViewModelInput {
 }
 
 protocol BaseViewModelOutput {
-    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
-    var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
     func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
     func getSelectedFeed(index: IndexPath) -> PetpionFeed
 }
-protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput { }
+
+protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput {
+    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
+    var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
+    var isFirstFetching: Bool { get set }
+}
 
 final class BaseViewModel: BaseViewModelProtocol {
     
@@ -37,6 +40,8 @@ final class BaseViewModel: BaseViewModelProtocol {
         snapshot.appendItems(items, toSection: 0)
         return snapshot
     }.eraseToAnyPublisher()
+    
+    var isFirstFetching: Bool = true
 
     // MARK: - Input
     
@@ -68,7 +73,7 @@ final class BaseViewModel: BaseViewModelProtocol {
         }
     }
 
-    func makeViewModel(for item:  PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
+    func makeViewModel(for item: PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
         return PetFeedCollectionViewCell.ViewModel(petpionFeed: item)
     }
     

@@ -19,14 +19,14 @@ protocol MyPageViewModelInput {
 
 protocol MyPageViewModelOutput {
     func configureUserFeedsCollectionViewLayout() -> UICollectionViewLayout
-    func makeUserFeedsCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL>
+    func makeUserFeedsCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
 }
 
 protocol MyPageViewModelProtocol: MyPageViewModelInput, MyPageViewModelOutput {
     var user: User { get }
     var fetchFeedUseCase: FetchFeedUseCase { get }
-    var userFeedThumbnailSubject: CurrentValueSubject<[URL], Never> { get }
-    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, URL>,Publishers.Map<PassthroughSubject<[URL], Never>,NSDiffableDataSourceSnapshot<Int, URL>>.Failure> { get }
+    var userFeedThumbnailSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
+    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
 }
 
 final class MyPageViewModel: MyPageViewModelProtocol {
@@ -34,16 +34,18 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     var user: User
     let fetchFeedUseCase: FetchFeedUseCase
     
-    lazy var userFeedThumbnailSubject: CurrentValueSubject<[URL], Never> = {
-        var tempURLArr = [URL]()
+    lazy var userFeedThumbnailSubject: CurrentValueSubject<[PetpionFeed], Never> = {
+        var petpionArr = [PetpionFeed]()
         for i in 0 ..< 12 {
-            tempURLArr.append(URL.init(string: "www" + "\(i)")!)
+            var petpionFeed: PetpionFeed = .empty
+            petpionFeed.id = UUID().uuidString
+            petpionArr.append(petpionFeed)
         }
-        return .init(tempURLArr)
+        return .init(petpionArr)
     }()
     
-    lazy var snapshotSubject = userFeedThumbnailSubject.map { items -> NSDiffableDataSourceSnapshot<Int, URL> in
-        var snapshot = NSDiffableDataSourceSnapshot<Int, URL>()
+    lazy var snapshotSubject = userFeedThumbnailSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
+        var snapshot = NSDiffableDataSourceSnapshot<Int, PetpionFeed>()
         snapshot.appendSections([0])
         snapshot.appendItems(items, toSection: 0)
         return snapshot
@@ -63,7 +65,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
             userFeeds.sort { $0.uploadDate > $1.uploadDate }
             
             await MainActor.run { [userFeeds] in
-                userFeedThumbnailSubject.send(userFeeds.map { $0.imageURLArr![0] })
+                userFeedThumbnailSubject.send(userFeeds)
             }
         }
     }
@@ -101,12 +103,12 @@ final class MyPageViewModel: MyPageViewModelProtocol {
         return layout
     }
     
-    func makeUserFeedsCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, URL> {
-        var dataSource: UICollectionViewDiffableDataSource<Int, URL>! = nil
+    func makeUserFeedsCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
+        var dataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>! = nil
         let cellRegistration = makeCellRegistration()
         let headerRegistration = makeCellHeaderRegistration()
-        dataSource = UICollectionViewDiffableDataSource<Int, URL>(collectionView: collectionView) {
-            (collectionView: UICollectionView, indexPath: IndexPath, identifier: URL) -> UICollectionViewCell? in
+        dataSource = UICollectionViewDiffableDataSource<Int, PetpionFeed>(collectionView: collectionView) {
+            (collectionView: UICollectionView, indexPath: IndexPath, identifier: PetpionFeed) -> UICollectionViewCell? in
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: identifier)
         }
         dataSource.supplementaryViewProvider = { (view, kind, index) in
@@ -116,7 +118,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
         return dataSource
     }
     
-    private func makeCellRegistration() -> UICollectionView.CellRegistration<UserFeedsCollectionViewCell, URL> {
+    private func makeCellRegistration() -> UICollectionView.CellRegistration<UserFeedsCollectionViewCell, PetpionFeed> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureThumbnailImageView(item)
         }

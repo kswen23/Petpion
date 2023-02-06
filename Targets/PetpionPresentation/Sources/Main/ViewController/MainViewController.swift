@@ -45,9 +45,9 @@ final class MainViewController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
-//        viewModel.updateCurrentFeeds()
-//        viewModel.fetchFirstFeedPerSortingOption()
-//        baseCollectionView.visibleCells 업데이트 likecount만
+        if viewModel.isFirstFetching == false {
+            viewModel.updateCurrentFeeds()
+        }
     }
     
     override func viewDidLoad() {

@@ -21,7 +21,7 @@ final class MyPageViewController: UIViewController {
     private let viewModel: MyPageViewModelProtocol
     
     private lazy var userFeedsCollectionView: UICollectionView = .init(frame: .zero, collectionViewLayout: viewModel.configureUserFeedsCollectionViewLayout())
-    private lazy var userFeedsCollectionViewDataSource: UICollectionViewDiffableDataSource<Int, URL> = viewModel.makeUserFeedsCollectionViewDataSource(collectionView: userFeedsCollectionView)
+    private lazy var userFeedsCollectionViewDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed> = viewModel.makeUserFeedsCollectionViewDataSource(collectionView: userFeedsCollectionView)
     
     private let lazyCatAnimationView: LottieAnimationView = {
         let animationView = LottieAnimationView(name: LottieJson.lazyCat)

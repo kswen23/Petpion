@@ -8,6 +8,7 @@
 
 import UIKit
 
+import PetpionDomain
 import PetpionCore
 
 class UserFeedsCollectionViewCell: UICollectionViewCell {
@@ -41,12 +42,7 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
         thumbnailImageView.backgroundColor = .systemGray5
     }
     
-    func configureThumbnailImageView(_ url: URL) {
-        Task {
-            let detailImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                thumbnailImageView.image = detailImage
-            }
-        }
+    func configureThumbnailImageView(_ feed: PetpionFeed) {
+        thumbnailImageView.image = feed.thumbnailImage
     }
 }

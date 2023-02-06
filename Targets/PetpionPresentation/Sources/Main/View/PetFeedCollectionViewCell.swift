@@ -14,7 +14,7 @@ import PetpionDomain
 public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     let baseView: UIView = UIView()
-    let thumbnailImageView: CustomShimmerImageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
+    let thumbnailImageView: UIImageView = UIImageView()
     
     private let imageCountButton: UIButton = {
         let button = UIButton()
@@ -90,6 +90,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
         thumbnailImageView.image = nil
+        profileImageButton.imageView?.image = nil
     }
     
     // MARK: - Initialize
@@ -132,7 +133,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
-        thumbnailImageView.startShimmerAnimating()
+        thumbnailImageView.backgroundColor = .systemGray
     }
     
     private func layoutImageCountButton() {
@@ -180,9 +181,9 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     // MARK: - Configure
     func configure(with viewModel: ViewModel) {
         configureCellHeight(viewModel.thumbnailRatio)
-        configureThumbnailImageView(viewModel.thumbnailImageURL)
-        configureProfileImage(viewModel.userProfile)
         configureImageCountButtonTitle(with: viewModel.imageCount)
+        thumbnailImageView.image = viewModel.thumbnailImage
+        profileImageButton.setImage(viewModel.profileImage, for: .normal)
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
         likeCountLabel.text = String(viewModel.likeCount)
@@ -193,28 +194,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         heightLayoutAnchor?.isActive = true
         
     }
-    
-    private func configureThumbnailImageView(_ url: URL?) {
-        Task {
-            guard let url = url else { return }
-            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                thumbnailImageView.stopShimmerAnimating()
-                thumbnailImageView.image = thumbnailImage
-            }
-        }
-    }
-    
-    private func configureProfileImage(_ url: URL?) {
-        Task {
-            guard let url = url else { return }
-            let profileImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                profileImageButton.setImage(profileImage, for: .normal)
-            }
-        }
-    }
-    
+        
     private func configureImageCountButtonTitle(with imageCount: Int) {
         guard imageCount > 1 else {
             return imageCountButton.isHidden = true
@@ -228,19 +208,19 @@ extension PetFeedCollectionViewCell {
     
     struct ViewModel {
         
-        let thumbnailImageURL: URL?
+        let thumbnailImage: UIImage
+        let profileImage: UIImage
         let thumbnailRatio: Double
         let imageCount: Int
-        let userProfile: URL?
         let userNickname: String
         let comment: String
         let likeCount: Int
         
         init(petpionFeed: PetpionFeed) {
-            self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
+            self.thumbnailImage = petpionFeed.thumbnailImage!
+            self.profileImage = petpionFeed.uploader.profileImage!
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount
-            self.userProfile = petpionFeed.uploader.imageURL
             self.userNickname = petpionFeed.uploader.nickname
             self.comment = petpionFeed.message
             self.likeCount = petpionFeed.likeCount

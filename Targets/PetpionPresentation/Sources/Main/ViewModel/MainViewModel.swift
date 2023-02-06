@@ -18,7 +18,6 @@ protocol MainViewModelInput {
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
-    func fetchFirstFeedPerSortingOption()
     func updateCurrentFeeds()
     func userDidUpdated(to updatedUser: User)
 }
@@ -38,6 +37,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
+    var isFirstFetching: Bool { get }
 }
 
 final class MainViewModel: MainViewModelProtocol {
@@ -50,6 +50,7 @@ final class MainViewModel: MainViewModelProtocol {
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
+    var isFirstFetching: Bool = true
     var user: User = .empty
     
     // MARK: - Initialize
@@ -74,16 +75,7 @@ final class MainViewModel: MainViewModelProtocol {
                 popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
                 latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             }
-        }
-    }
-    
-    public func fetchFirstFeedPerSortingOption() {
-        Task {
-            let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
-            await MainActor.run {
-//                popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
-                latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
-            }
+            isFirstFetching = false
         }
     }
     

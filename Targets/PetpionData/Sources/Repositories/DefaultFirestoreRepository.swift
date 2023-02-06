@@ -180,6 +180,26 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
     }
     
+    public func fetchFeedWithFeedID(with feed: PetpionFeed) async -> PetpionFeed {
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.feed.reference)
+                .whereField("feedID", isEqualTo: feed.id)
+                .getDocuments { [weak self] (snapshot, error) in
+                    guard let strongSelf = self else { return }
+                    if let error = error {
+                        print(error.localizedDescription)
+                    }
+                    if let result = snapshot?.documents {
+                        let feed = strongSelf.convertCollectionToModel(result.map{ $0.data() })
+                        if feed.count == 1 {
+                            continuation.resume(returning: feed[0])
+                        }
+                    }
+                }
+        }
+    }
+    
     public func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed] {
         return await withCheckedContinuation { continuation in
             db
