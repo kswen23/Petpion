@@ -69,8 +69,8 @@ public struct PresentationDIContainer: Containable {
                     return EditProfileCoordinator(navigationController: navigationController)
                 case .logout:
                     return EditProfileCoordinator(navigationController: navigationController)
-                case .delete:
-                    return EditProfileCoordinator(navigationController: navigationController)
+                case .signOut:
+                    return SignOutCoordinator(navigationController: navigationController)
                 }
                 
             }

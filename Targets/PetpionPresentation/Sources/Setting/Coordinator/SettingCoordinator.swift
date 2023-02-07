@@ -16,23 +16,26 @@ public final class SettingCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User?
+//    var user: User?
+    var user: User = .empty
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
     public func start() {
-        if self.user != nil {
+        if self.user != .empty {
             let settingViewController = getLoggedInSettingViewController()
             settingViewController.coordinator = self
             navigationController.pushViewController(settingViewController, animated: true)
         } else {
-//            LoggedOutSetting Scene
+            let settingViewController = getLoggedOutSettingViewController()
+            settingViewController.coordinator = self
+            navigationController.pushViewController(settingViewController, animated: true)
         }
     }
     
-    func pushSettingActionScene(with action: SettingModel.SettingAction, user: User? = nil) {
+    func startSettingActionScene(with action: SettingModel.SettingAction, user: User? = nil) {
         guard let settingActionCoordinator: Coordinator = DIContainer.shared.resolve(Coordinator.self, name: action.coordinatorString) else { return }
         if action == .profile {
             (settingActionCoordinator as! EditProfileCoordinator).user = user!
@@ -45,11 +48,14 @@ public final class SettingCoordinator: NSObject, Coordinator {
 extension SettingCoordinator {
     
     private func getLoggedInSettingViewController() -> LoggedInSettingViewController {
-        guard let user = user else {
-            fatalError("getLoggedInSettingViewController did occurred error")
-        }
+//        guard let user = user else {
+//            fatalError("getLoggedInSettingViewController did occurred error")
+//        }
         let viewModel: LoggedInSettingViewModelProtocol = LoggedInSettingViewModel(user: user)
         return LoggedInSettingViewController(viewModel: viewModel)
     }
     
+    private func getLoggedOutSettingViewController() -> LoggedOutSettingViewController {
+        return LoggedOutSettingViewController()
+    }
 }

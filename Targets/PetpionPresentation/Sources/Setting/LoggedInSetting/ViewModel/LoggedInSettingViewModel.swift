@@ -15,6 +15,7 @@ import PetpionDomain
 
 protocol LoggedInSettingViewModelInput {
     func userDidUpdated(to updatedUser: User)
+    func logoutDidTapped()
 }
 
 protocol LoggedInSettingViewModelOutput {
@@ -39,6 +40,9 @@ final class LoggedInSettingViewModel: LoggedInSettingViewModelProtocol {
         self.user = updatedUser
     }
     
+    func logoutDidTapped() {
+        
+    }
     // MARK: - Output
 
 }

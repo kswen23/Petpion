@@ -19,6 +19,11 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     weak var coordinator: SettingCoordinator?
     private let viewModel: LoggedInSettingViewModelProtocol
     
+    private lazy var logOutAlertController: UIAlertController = {
+        let alert = UIAlertController(title: "정말 로그아웃하시겠습니까?", message: nil, preferredStyle: .alert)
+        return alert
+    }()
+    
     private lazy var baseScrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -69,6 +74,7 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         layout()
+        configureLogoutAlertController()
         settingCategoryStackViewArray.forEach { $0.settingCategoryStackViewListener = self }
     }
     
@@ -125,18 +131,32 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     private func configureProfileSettingView(with user: User) {
         profileSettingView.configureSettingProfileView(with: user)
     }
+    
+    private func configureLogoutAlertController() {
+        let no = UIAlertAction(title: "아니오", style: .cancel)
+        let yes = UIAlertAction(title: "네", style: .default) { [weak self] _ in
+            self?.viewModel.logoutDidTapped()
+//            self?.coordinator?.returnToFirstStart()
+        }
+        logOutAlertController.addAction(yes)
+        logOutAlertController.addAction(no)
+    }
 }
 
 extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, SettingProfileViewDelegate {
     
     // SettingCategoryDelegate
     func settingActionViewDidTapped(action: SettingModel.SettingAction) {
-        coordinator?.pushSettingActionScene(with: action)
+        if action == .logout {
+            self.present(logOutAlertController, animated: true)
+        } else {
+            coordinator?.startSettingActionScene(with: action)
+        }
     }
     
     // SettingProfileDelegate
     func profileViewDidTapped() {
-        coordinator?.pushSettingActionScene(with: .profile, user: viewModel.user)
+        coordinator?.startSettingActionScene(with: .profile, user: viewModel.user)
     }
 
 }

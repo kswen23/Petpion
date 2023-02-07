@@ -25,7 +25,7 @@ struct SettingModel {
         // 계정
         case manageBlockedUser = "차단 사용자 관리"
         case logout = "로그아웃"
-        case delete = "탈퇴하기"
+        case signOut = "탈퇴하기"
         
         var coordinatorString: String {
             switch self {
@@ -42,9 +42,9 @@ struct SettingModel {
             case .manageBlockedUser:
                 return "EditProfileCoordinator"
             case .logout:
-                return "EditProfileCoordinator"
-            case .delete:
-                return "EditProfileCoordinator"
+                return ""
+            case .signOut:
+                return "SignOutCoordinator"
             }
         }
     }
@@ -56,7 +56,7 @@ struct SettingModel {
         case .appPolicy:
             return [.version, .termsOfService, .openLicense]
         case .account:
-            return [.manageBlockedUser, .logout, .delete]
+            return [.manageBlockedUser, .logout, .signOut]
         }
     }
 }
