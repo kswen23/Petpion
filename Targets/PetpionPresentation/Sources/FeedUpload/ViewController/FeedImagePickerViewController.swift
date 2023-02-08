@@ -42,17 +42,18 @@ public final class FeedImagePickerViewController: YPImagePicker {
         self.didFinishPicking { [unowned self] items, cancelled in
             if cancelled {
                 coordinator?.dismissUploadViewController()
-            }
-            var images: [UIImage] = []
-            for item in items {
-                switch item {
-                case .photo(let photo):
-                    images.append(photo.image)
-                case .video:
-                    break
+            } else {
+                var images: [UIImage] = []
+                for item in items {
+                    switch item {
+                    case .photo(let photo):
+                        images.append(photo.image)
+                    case .video:
+                        break
+                    }
                 }
+                coordinator?.pushFeedUploadViewController(with: images)
             }
-            coordinator?.pushFeedUploadViewController(with: images)
         }
     }
 }

@@ -40,6 +40,7 @@ public final class DetailFeedImageCollection: UICollectionViewCell {
         ])
         imageView.startShimmerAnimating()
         imageView.roundCorners(cornerRadius: 10)
+        imageView.contentMode = .scaleAspectFill
     }
     
     func configureDetailImageView(_ url: URL) {

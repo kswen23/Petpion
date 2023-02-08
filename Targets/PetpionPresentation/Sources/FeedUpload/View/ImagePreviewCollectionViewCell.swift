@@ -18,7 +18,13 @@ public protocol ImagePreviewCollectionViewCellDelegate: AnyObject {
 public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
     
     weak var cellDelegation: ImagePreviewCollectionViewCellDelegate?
-    private let imagePreview: UIImageView = UIImageView()
+    
+    private lazy var imagePreview: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+    
     private let editImageButton: CircleButton = {
         let button = CircleButton(diameter: 40)
         button.setImage(UIImage(systemName: "crop.rotate"), for: .normal)
@@ -84,8 +90,8 @@ public final class ImagePreviewCollectionViewCell: UICollectionViewCell {
         imagePreviewHeight?.isActive = false
         imagePreviewHeight = imagePreview.heightAnchor.constraint(equalToConstant: height)
         imagePreviewHeight?.isActive = true
-        UICollectionView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut) {
-            self.layoutIfNeeded()
+        UICollectionView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut) { [weak self] in
+            self?.layoutIfNeeded()
         }
         
     }

@@ -14,7 +14,12 @@ import PetpionDomain
 public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     let baseView: UIView = UIView()
-    let thumbnailImageView: UIImageView = UIImageView()
+    
+    lazy var thumbnailImageView: UIImageView  = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
     
     private let imageCountButton: UIButton = {
         let button = UIButton()

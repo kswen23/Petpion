@@ -21,9 +21,24 @@ class BaseCollectionViewCell: UICollectionViewCell {
     var parentViewController: BaseCollectionViewCellDelegation?
     var viewModel: BaseViewModelProtocol?
     private var cancellables = Set<AnyCancellable>()
-    lazy var petFeedCollectionView: UICollectionView = UICollectionView(frame: .zero,
-                                                                    collectionViewLayout: UICollectionViewLayout())
+    
+    lazy var petFeedCollectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
+        
+        return collectionView
+    }()
+    
     private lazy var petFeedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>? = self.viewModel?.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
+    
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshCollectionView), for: .valueChanged)
+        return refreshControl
+    }()
+    
+    @objc private func refreshCollectionView() {
+        print("refresh")
+    }
     
     // MARK: - Initialize
     override init(frame: CGRect) {
@@ -60,6 +75,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
         petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
         petFeedCollectionView.delegate = self
         petFeedCollectionView.delaysContentTouches = false
+        petFeedCollectionView.refreshControl = refreshControl
     }
 
 
