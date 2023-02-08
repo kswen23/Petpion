@@ -24,6 +24,6 @@ public protocol FetchFeedUseCase {
 
 public enum SortingOption: Int, CaseIterable {
     
-    case popular = 0
-    case latest = 1
+    case latest = 0
+    case popular = 1
 }

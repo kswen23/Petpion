@@ -53,7 +53,6 @@ protocol FeedUploadViewModelInput {
     func uploadNewFeed(message: String)
     func changeRatio(tag: Int)
     func imageSliderValueChanged(_ index: Int)
-    func removeKeyboardObserver()
 }
 
 protocol FeedUploadViewModelOutput {
@@ -91,10 +90,15 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
     
+    // MARK: Initialize
     init(selectedImages: [UIImage],
          uploadFeedUseCase: UploadFeedUseCase) {
         self.selectedImages = selectedImages
         self.uploadFeedUseCase = uploadFeedUseCase
+    }
+    
+    deinit {
+        print("FeedUploadViewModel deinit")
     }
     
     // MARK: - Input
@@ -107,7 +111,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     
     func uploadNewFeed(message: String) {
         loadingSubject.send(.start)
-        let datas: [Data] = imagesSubject.value.map{ $0.jpegData(compressionQuality: 0.8) ?? Data() }
+        let datas = imagesSubject.value.map { convertImageToData(image: $0) }
         guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
         
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
@@ -132,6 +136,19 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         }
     }
     
+    private func convertImageToData(image: UIImage) -> Data {
+        let targetImageRatio = 600/image.size.width
+        let targetHeight = image.size.height*targetImageRatio
+        let targetWidth = image.size.width*targetImageRatio
+        
+        let newSize: CGSize = CGSize(width: targetWidth, height: targetHeight)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: CGPoint.zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return resizedImage?.jpegData(compressionQuality: 1.0) ?? .init()
+    }
+    
     func changeRatio(tag: Int) {
         switch tag {
         case CellAspectRatio.square.rawValue:
@@ -154,10 +171,6 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         currentImageIndexSubject.send(index)
     }
     
-    func removeKeyboardObserver() {
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
     // MARK: - Output
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),

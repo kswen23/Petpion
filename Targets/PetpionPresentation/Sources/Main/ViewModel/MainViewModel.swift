@@ -49,7 +49,7 @@ final class MainViewModel: MainViewModelProtocol {
     var baseCollectionViewNeedToScroll: Bool = true
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
-    let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.popular)
+    let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
     var isFirstFetching: Bool = true
     var user: User = .empty
     
@@ -158,9 +158,9 @@ final class MainViewModel: MainViewModelProtocol {
         guard index != sortingOptionSubject.value.rawValue else { return }
         switch index {
         case 0:
-            sortingOptionSubject.send(.popular)
-        case 1:
             sortingOptionSubject.send(.latest)
+        case 1:
+            sortingOptionSubject.send(.popular)
         default: break
         }
     }

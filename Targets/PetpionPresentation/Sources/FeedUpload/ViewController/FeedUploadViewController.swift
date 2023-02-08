@@ -15,7 +15,7 @@ import Mantis
 
 final class FeedUploadViewController: UIViewController {
     
-    weak var coordinator: FeedUploadCoordinator?
+    weak var coordinator: FeedUploadCoordinator1?
     private var viewModel: FeedUploadViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -26,8 +26,7 @@ final class FeedUploadViewController: UIViewController {
         return scrollView
     }()
     private let containerView: UIView = UIView()
-    private lazy var imagePreviewCollectionView: UICollectionView = UICollectionView(frame: .zero,
-                                                                                     collectionViewLayout: UICollectionViewLayout())
+    private lazy var imagePreviewCollectionView: UICollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private lazy var cropViewController: CropViewController = {
         let cropViewController = Mantis.cropViewController(image: UIImage())
         cropViewController.delegate = self
@@ -50,12 +49,15 @@ final class FeedUploadViewController: UIViewController {
                                                                 preferredStyle: .alert)
     
     private let aspectRatioSelectButton: AspectRatioSelectButton = .init(buttonDiameter: 50)
-    lazy private var datasource = viewModel.makeImagePreviewCollectionViewDataSource(parentViewController: self, collectionView: imagePreviewCollectionView)
+    
+    private lazy var datasource = viewModel.makeImagePreviewCollectionViewDataSource(parentViewController: self, collectionView: imagePreviewCollectionView)
     
     // MARK: - Initialize
     init(viewModel: FeedUploadViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        addKeyboardObserver()
+        print("FeedUploadVC init")
     }
     
     required init?(coder: NSCoder) {
@@ -63,6 +65,7 @@ final class FeedUploadViewController: UIViewController {
     }
     
     deinit {
+        removeKeyboardObserver()
         print("FeedUploadVC Deinit")
     }
     
@@ -215,17 +218,15 @@ final class FeedUploadViewController: UIViewController {
         bindCellRatio()
         bindCurrentImageIndex()
         bindLoading()
-        bindKeyboardObserver()
     }
     
     private func bindSnapshot() {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
-            guard let strongSelf = self,
-                  let ratio = self?.viewModel.cellRatioSubject.value,
+            guard let ratio = self?.viewModel.cellRatioSubject.value,
                   let collectionViewLayout = self?.viewModel.configureCollectionViewLayout(ratio: ratio) else { return }
             self?.imagePreviewCollectionView.setCollectionViewLayout(collectionViewLayout, animated: false, completion: { isFinished in
                 if isFinished {
-                    strongSelf.preventIndexReset()
+                    self?.preventIndexReset()
                 }
             })
             self?.datasource.apply(snapshot)
@@ -234,12 +235,11 @@ final class FeedUploadViewController: UIViewController {
     
     private func bindCellRatio() {
         viewModel.cellRatioSubject.sink { [weak self] ratio in
-            guard let strongSelf = self,
-                  let ratio = self?.viewModel.cellRatioSubject.value,
+            guard let ratio = self?.viewModel.cellRatioSubject.value,
                   let collectionViewLayout = self?.viewModel.configureCollectionViewLayout(ratio: ratio) else { return }
             self?.imagePreviewCollectionView.setCollectionViewLayout(collectionViewLayout, animated: false, completion: { isFinished in
                 if isFinished {
-                    strongSelf.preventIndexReset()
+                    self?.preventIndexReset()
                     self?.animateCollectionView(to: ratio)
                 }
             })
@@ -265,13 +265,12 @@ final class FeedUploadViewController: UIViewController {
             case .start:
                 self?.present(strongSelf.loadingAlertController, animated: true)
             case .finish:
-                self?.viewModel.removeKeyboardObserver()
                 self?.coordinator?.dismissUploadViewController()
             }
         }.store(in: &cancellables)
     }
     
-    private func bindKeyboardObserver() {
+    private func addKeyboardObserver() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow),
@@ -283,6 +282,11 @@ final class FeedUploadViewController: UIViewController {
             selector: #selector(keyboardWillHide),
             name: UIResponder.keyboardWillHideNotification,
             object: nil)
+    }
+    
+    private func removeKeyboardObserver() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     @objc private func keyboardWillShow(_ notification: Notification) {
@@ -318,9 +322,9 @@ final class FeedUploadViewController: UIViewController {
         collectionViewHeightAnchor?.isActive = false
         collectionViewHeightAnchor = imagePreviewCollectionView.heightAnchor.constraint(equalToConstant: cellHeight)
         collectionViewHeightAnchor?.isActive = true
-        UICollectionView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut) {
-            self.view.layoutIfNeeded()
-            self.imagePreviewCollectionView.visibleCells.forEach { cell in
+        UICollectionView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut) { [weak self] in
+            self?.view.layoutIfNeeded()
+            self?.imagePreviewCollectionView.visibleCells.forEach { cell in
                 (cell as? ImagePreviewCollectionViewCell)?.changeImageViewSize(to: cellHeight)
             }
         }

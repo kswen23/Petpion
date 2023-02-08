@@ -77,17 +77,13 @@ final class MainViewController: UIViewController {
     
     // MARK: - Configure
     private func configure() {
-//        configureNavigationItem()
         configureBaseCollectionView()
     }
     
     private func configureNavigationItem() {
         self.view.backgroundColor = .white
         self.navigationController?.navigationBar.tintColor = .black
-        navigationItem.leftBarButtonItems = [
-            popularBarButton,
-            latestBarButton
-        ]
+        navigationItem.leftBarButtonItems = [latestBarButton, popularBarButton]
         
         navigationItem.rightBarButtonItems = [
             UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTapped)),
