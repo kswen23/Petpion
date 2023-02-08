@@ -335,7 +335,8 @@ extension FeedUploadViewController: ImagePreviewCollectionViewCellDelegate {
     public func editButtonDidTapped(cell: UICollectionViewCell) {
         let index = viewModel.currentImageIndexSubject.value
         let image = viewModel.imagesSubject.value[index]
-        coordinator?.presentCropViewController(from: self, with: image)
+        let cellRatio = viewModel.cellRatioSubject.value
+        coordinator?.presentCropViewController(from: self, with: image, ratio: cellRatio)
     }
 }
 

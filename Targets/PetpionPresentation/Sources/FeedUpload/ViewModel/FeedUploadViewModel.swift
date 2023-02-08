@@ -34,6 +34,18 @@ public enum CellAspectRatio: Int, CaseIterable {
         }
     }
     
+    var double: Double {
+        switch self {
+        case .square:
+            return 1.0
+        case .horizontalRectangle:
+            return 4.0/3.0
+        case .verticalRectangle:
+            return 3.0/4.0
+        }
+    }
+    
+    
     var ratioString: String {
         switch self {
         case .square:
@@ -206,6 +218,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
             let heightRatio = self?.cellRatioSubject.value.heightRatio
             cell.configure(with: item, size: UIScreen.main.bounds.width * (heightRatio ?? 0))
             cell.cellDelegation = viewController as? ImagePreviewCollectionViewCellDelegate
+            cell.clipsToBounds = true
         }
     }
     // MARK: - Private

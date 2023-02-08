@@ -113,6 +113,7 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureItem(item: item)
             cell.parentableViewController = cellDelegate
+            cell.clipsToBounds = true
         }
     }
     
