@@ -190,6 +190,10 @@ extension MainViewController: BaseCollectionViewCellDelegation {
                                                                    feedCellIndexPath: index)
         coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
     }
+    
+    func refreshBaseCollectionView() {
+        viewModel.refreshCurrentFeed()
+    }
 }
 
 extension MainViewController: UIViewControllerTransitioningDelegate {

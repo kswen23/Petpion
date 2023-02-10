@@ -32,6 +32,10 @@ public struct PresentationDIContainer: Containable {
             MainCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "FeedImagePickerCoordinator") { _ in
+            FeedImagePickerCoordinator()
+        }
+        
         container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
             FeedUploadCoordinator()
         }

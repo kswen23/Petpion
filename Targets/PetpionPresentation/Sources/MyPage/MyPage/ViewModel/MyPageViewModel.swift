@@ -121,6 +121,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     private func makeCellRegistration() -> UICollectionView.CellRegistration<UserFeedsCollectionViewCell, PetpionFeed> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureThumbnailImageView(item)
+            cell.clipsToBounds = true
         }
     }
     

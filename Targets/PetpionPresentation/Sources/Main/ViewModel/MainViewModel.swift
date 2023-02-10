@@ -15,6 +15,7 @@ import PetpionDomain
 
 protocol MainViewModelInput {
     func fetchNextFeed()
+    func refreshCurrentFeed()
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
@@ -98,6 +99,21 @@ final class MainViewModel: MainViewModelProtocol {
     }
 
     // MARK: - Input
+    func refreshCurrentFeed() {
+        let currentOption = sortingOptionSubject.value
+        Task {
+            let refreshedFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: currentOption)
+            await MainActor.run {
+                switch currentOption {
+                case .latest:
+                    latestFeedSubject.send(refreshedFeed)
+                case .popular:
+                    popularFeedSubject.send(refreshedFeed)
+                }
+            }
+        }
+    }
+    
     func updateFeedSubject(origin: [PetpionFeed]) -> [PetpionFeed] {
         var resultFeedArray = origin
         for i in 0 ..< resultFeedArray.count {

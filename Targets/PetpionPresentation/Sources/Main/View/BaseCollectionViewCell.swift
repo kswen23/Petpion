@@ -14,6 +14,7 @@ import PetpionDomain
 protocol BaseCollectionViewCellDelegation {
     func baseCollectionViewNeedNewFeed()
     func baseCollectionViewCellDidTapped(index: IndexPath, feed: PetpionFeed)
+    func refreshBaseCollectionView()
 }
 
 class BaseCollectionViewCell: UICollectionViewCell {
@@ -24,7 +25,8 @@ class BaseCollectionViewCell: UICollectionViewCell {
     
     lazy var petFeedCollectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
-        
+        collectionView.refreshControl = refreshControl
+        collectionView.refreshControl?.beginRefreshing()
         return collectionView
     }()
     
@@ -37,7 +39,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
     }()
     
     @objc private func refreshCollectionView() {
-        print("refresh")
+        parentViewController?.refreshBaseCollectionView()
     }
     
     // MARK: - Initialize
@@ -75,7 +77,6 @@ class BaseCollectionViewCell: UICollectionViewCell {
         petFeedCollectionView.setCollectionViewLayout(waterfallLayout, animated: true)
         petFeedCollectionView.delegate = self
         petFeedCollectionView.delaysContentTouches = false
-        petFeedCollectionView.refreshControl = refreshControl
     }
 
 
@@ -88,6 +89,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
                 self?.configurePetCollectionView()
                 self?.viewModel?.isFirstFetching = false
             }
+            self?.petFeedCollectionView.refreshControl?.endRefreshing()
             self?.petFeedDataSource?.apply(snapshot, animatingDifferences: false)
         }.store(in: &cancellables)
     }

@@ -40,6 +40,7 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
         thumbnailImageView.backgroundColor = .systemGray5
+        thumbnailImageView.contentMode = .scaleAspectFill
     }
     
     func configureThumbnailImageView(_ feed: PetpionFeed) {

@@ -18,10 +18,11 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     lazy var thumbnailImageView: UIImageView  = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
+        imageView.backgroundColor = .white
         return imageView
     }()
     
-    private let imageCountButton: UIButton = {
+    let imageCountButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .gray
         button.tintColor = .white
@@ -42,7 +43,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     private let profileNameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .darkGray
+        label.textColor = .white
         return label
     }()
     
@@ -138,7 +139,6 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
-        thumbnailImageView.backgroundColor = .systemGray
     }
     
     private func layoutImageCountButton() {
