@@ -49,11 +49,11 @@ public final class MainCoordinator: NSObject, Coordinator {
     
     public func presentFeedImagePicker() {
         if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
-            guard let feedUploadCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedUploadCoordinator") as? FeedUploadCoordinator else { return }
-            feedUploadCoordinator.parentCoordinator = self
-            childCoordinators.append(feedUploadCoordinator)
-            feedUploadCoordinator.start()
-            navigationController.present(feedUploadCoordinator.navigationController, animated: true)
+            guard let feedImagePickerCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedImagePickerCoordinator") as? FeedImagePickerCoordinator else { return }
+            feedImagePickerCoordinator.parentCoordinator = self
+            childCoordinators.append(feedImagePickerCoordinator)
+            feedImagePickerCoordinator.start()
+            navigationController.present(feedImagePickerCoordinator.navigationController, animated: true)
         } else {
             presentLoginView()
         }

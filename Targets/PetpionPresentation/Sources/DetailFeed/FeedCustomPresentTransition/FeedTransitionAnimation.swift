@@ -6,6 +6,7 @@
 //  Copyright © 2022 Petpion. All rights reserved.
 //
 
+import Foundation
 import UIKit
 
 import PetpionDomain
@@ -52,7 +53,8 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
         toViewController.setChildViewLayoutByZoomOut(childView: toViewController.view,
                                                      backgroundView: containerView,
                                                      childViewFrame: cellBaseViewFrame,
-                                                     imageFrame: cellImageViewFrame)
+                                                     imageFrame: cellImageViewFrame,
+                                                     scaleX: 1.0)
         containerView.layoutIfNeeded()
         toViewController.setupChildViewLayoutByZoomIn(childView: toViewController.view,
                                                       backgroundView: containerView)
@@ -70,15 +72,24 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
               let toViewController = (transitionContext.viewController(forKey: .to) as? UINavigationController)?.viewControllers[0] as? MainViewController,
               let baseCollectionViewCell = toViewController.baseCollectionView.cellForItem(at: dependency.baseCellIndexPath) as? BaseCollectionViewCell,
               let selectedFeedCell = baseCollectionViewCell.petFeedCollectionView.cellForItem(at: dependency.feedCellIndexPath) as? PetFeedCollectionViewCell else { return }
+        let originImage = selectedFeedCell.thumbnailImageView.image
+        selectedFeedCell.thumbnailImageView.image = nil
+        selectedFeedCell.imageCountButton.isHidden = true
+        fromViewController.configureCollectionViewShadowOff()
+        selectedFeedCell.layoutIfNeeded()
+        
         let cellImageViewFrame = selectedFeedCell.convert(selectedFeedCell.thumbnailImageView.frame, to: toViewController.view)
         let cellBaseViewFrame = selectedFeedCell.convert(selectedFeedCell.baseView.frame, to: toViewController.view)
         fromViewController.setChildViewLayoutByZoomOut(childView: fromViewController.view,
                                                        backgroundView: containerView,
                                                        childViewFrame: cellBaseViewFrame,
-                                                       imageFrame: cellImageViewFrame)
+                                                       imageFrame: cellImageViewFrame,
+                                                       scaleX: 0.84)
         UIView.animate(withDuration: 0.7, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: [], animations: {
             containerView.layoutIfNeeded()
         }) { (completed) in
+            selectedFeedCell.thumbnailImageView.image = originImage
+            selectedFeedCell.imageCountButton.isHidden = false
             transitionContext.completeTransition(completed)
         }
     }

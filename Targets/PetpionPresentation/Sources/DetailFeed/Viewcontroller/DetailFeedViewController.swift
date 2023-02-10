@@ -131,13 +131,13 @@ final class DetailFeedViewController: CustomPresentableViewController {
         }
     }
     
-    private func animateShrink(currentY: CGFloat,until lastPoint: CGFloat) {
+    private func animateShrink(currentY: CGFloat, until lastPoint: CGFloat) {
         let targetShrinkScale: CGFloat = 0.84
         if currentY < lastPoint {
             let willShrinkScale = (currentY*(1 - targetShrinkScale)) / lastPoint
-            let shrinkedScale: CGFloat = 1 - willShrinkScale
+            let shrinkScale: CGFloat = 1 - willShrinkScale
             UIView.animate(withDuration: 0.2) {
-                self.view?.transform = CGAffineTransform(scaleX: shrinkedScale, y: shrinkedScale)
+                self.view?.transform = CGAffineTransform(scaleX: shrinkScale, y: shrinkScale)
             }
         } else if currentY > lastPoint + 30 {
             self.dismiss(animated: true)
@@ -282,6 +282,7 @@ final class DetailFeedViewController: CustomPresentableViewController {
         configureTimeLogLabel()
         imageSlider.numberOfPages = viewModel.feed.imageCount
         configureProfileStackView()
+        configureCollectionViewShadowOn()
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -291,12 +292,19 @@ final class DetailFeedViewController: CustomPresentableViewController {
         detailFeedImageCollectionView.showsHorizontalScrollIndicator = false
         detailFeedImageCollectionView.setCollectionViewLayout(viewModel.configureDetailFeedImageCollectionViewLayout(), animated: false)
         
-        // make shadow hide when dismiss
         detailFeedImageCollectionView.layer.shadowColor = UIColor.black.cgColor
         detailFeedImageCollectionView.layer.masksToBounds = false
-        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
         detailFeedImageCollectionView.layer.shadowRadius = 5
         detailFeedImageCollectionView.layer.shadowOpacity = 0.3
+    }
+    
+    func configureCollectionViewShadowOn() {
+        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
+    }
+    
+    func configureCollectionViewShadowOff() {
+        detailFeedImageCollectionView.layer.shadowOpacity = 0
+        detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 0)
     }
     
     private func configureCommentLabel() {
@@ -355,8 +363,9 @@ final class DetailFeedViewController: CustomPresentableViewController {
     func setChildViewLayoutByZoomOut(childView: UIView,
                                      backgroundView: UIView,
                                      childViewFrame: CGRect,
-                                     imageFrame: CGRect) {
-        self.view.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+                                     imageFrame: CGRect,
+                                     scaleX: Double) {
+        self.view.transform = CGAffineTransform(scaleX: scaleX, y: scaleX)
         imageSlider.isHidden = true
         settingButton.isHidden = true
         profileStackView.isHidden = true
