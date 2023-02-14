@@ -16,15 +16,14 @@ public final class SettingCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-//    var user: User?
-    var user: User = .empty
+    var user: User?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
     public func start() {
-        if self.user != .empty {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
             let settingViewController = getLoggedInSettingViewController()
             settingViewController.coordinator = self
             navigationController.pushViewController(settingViewController, animated: true)
@@ -48,9 +47,9 @@ public final class SettingCoordinator: NSObject, Coordinator {
 extension SettingCoordinator {
     
     private func getLoggedInSettingViewController() -> LoggedInSettingViewController {
-//        guard let user = user else {
-//            fatalError("getLoggedInSettingViewController did occurred error")
-//        }
+        guard let user = user else {
+            fatalError("getLoggedInSettingViewController did occurred error")
+        }
         let viewModel: LoggedInSettingViewModelProtocol = LoggedInSettingViewModel(user: user)
         return LoggedInSettingViewController(viewModel: viewModel)
     }

@@ -16,7 +16,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User = .empty
+    var user: User?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -27,9 +27,6 @@ public final class MyPageCoordinator: NSObject, Coordinator {
             let myPageViewController = getMyPageViewController()
             myPageViewController.coordinator = self
             navigationController.pushViewController(myPageViewController, animated: true)
-//            let needLoginViewController = getNeedLoginViewController()
-//            needLoginViewController.coordinator = self
-//            navigationController.pushViewController(needLoginViewController, animated: true)
         } else {
             let needLoginViewController = getNeedLoginViewController()
             needLoginViewController.coordinator = self
@@ -37,7 +34,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
         }
     }
     
-    public func pushSettingViewController(with user: User) {
+    public func pushSettingViewController() {
         guard let settingCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "SettingCoordinator") as? SettingCoordinator else { return }
         childCoordinators.append(settingCoordinator)
         if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
@@ -54,12 +51,19 @@ public final class MyPageCoordinator: NSObject, Coordinator {
         needLoginViewController.present(loginViewController, animated: true)
     }
     
+    public func pushDetailFeedViewController(selected feed: PetpionFeed) {
+        guard let detailFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "DetailFeedCoordinator") as? DetailFeedCoordinator else { return }
+        childCoordinators.append(detailFeedCoordinator)
+        detailFeedCoordinator.feed = feed
+        detailFeedCoordinator.start()
+    }
 }
 
 private extension MyPageCoordinator {
     
     private func getMyPageViewController() -> MyPageViewController {
-        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else {
+        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let user = user else {
             fatalError("getMyPageViewController did occurred error")
         }
         let viewModel: MyPageViewModelProtocol = MyPageViewModel(user: user,

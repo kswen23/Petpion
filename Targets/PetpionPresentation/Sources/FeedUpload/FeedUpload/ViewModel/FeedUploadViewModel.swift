@@ -13,9 +13,9 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-public enum Loading {
-    case start
-    case finish
+public enum FeedUploadViewState {
+    case startUploading
+    case finishUploading
 }
 
 public enum CellAspectRatio: Int, CaseIterable {
@@ -70,8 +70,6 @@ protocol FeedUploadViewModelInput {
 protocol FeedUploadViewModelOutput {
     var textViewPlaceHolder: String { get }
     func configureCollectionViewLayout(ratio: CellAspectRatio) -> UICollectionViewLayout
-    func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
-                        collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage>
     }
 
 protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewModelOutput {
@@ -80,7 +78,7 @@ protocol FeedUploadViewModelProtocol: FeedUploadViewModelInput, FeedUploadViewMo
     var currentImageIndexSubject: CurrentValueSubject<Int, Never> { get }
     var cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> { get }
     var imagesSubject: CurrentValueSubject<[UIImage], Never> { get }
-    var loadingSubject: PassthroughSubject<Loading, Never> { get }
+    var loadingSubject: PassthroughSubject<FeedUploadViewState, Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, UIImage>,Publishers.Map<PassthroughSubject<[UIImage], Never>,NSDiffableDataSourceSnapshot<Int, UIImage>>.Failure> { get }
 
 }
@@ -89,7 +87,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     lazy var imagesSubject: CurrentValueSubject<[UIImage], Never> = .init(selectedImages)
     let currentImageIndexSubject: CurrentValueSubject<Int, Never> = .init(0)
     let cellRatioSubject: CurrentValueSubject<CellAspectRatio, Never> = .init(.square)
-    let loadingSubject: PassthroughSubject<Loading, Never> = .init()
+    let loadingSubject: PassthroughSubject<FeedUploadViewState, Never> = .init()
     var indexWillChange: Bool = true
     
     lazy var snapshotSubject = imagesSubject.map { items -> NSDiffableDataSourceSnapshot<Int, UIImage> in
@@ -98,6 +96,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         snapshot.appendItems(items, toSection: 0)
         return snapshot
     }.eraseToAnyPublisher()
+    
     let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
     let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
@@ -122,7 +121,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     }
     
     func uploadNewFeed(message: String) {
-        loadingSubject.send(.start)
+        loadingSubject.send(.startUploading)
         let datas = imagesSubject.value.map { convertImageToData(image: $0) }
         guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
         
@@ -142,7 +141,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
             let uploadingComplete = await uploadFeedUseCase.uploadNewFeed(feed: feed, imageDatas: datas)            
             if uploadingComplete {
                 await MainActor.run {
-                    loadingSubject.send(.finish)
+                    loadingSubject.send(.finishUploading)
                 }
             }
         }
@@ -202,25 +201,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         
         return layout
     }
-
-    func makeImagePreviewCollectionViewDataSource(parentViewController: UIViewController,
-                        collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, UIImage> {
-        let cellRegistration = makeCellRegistration(viewController: parentViewController)
-        return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, itemIdentifier in
-            collectionView.dequeueConfiguredReusableCell(using: cellRegistration,
-                                                         for: indexPath,
-                                                         item: itemIdentifier)
-        }
-    }
     
-    private func makeCellRegistration(viewController: UIViewController) -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
-        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
-            let heightRatio = self?.cellRatioSubject.value.heightRatio
-            cell.configure(with: item, size: UIScreen.main.bounds.width * (heightRatio ?? 0))
-            cell.cellDelegation = viewController as? ImagePreviewCollectionViewCellDelegate
-            cell.clipsToBounds = true
-        }
-    }
     // MARK: - Private
     private func getFeedSize(imageRatio: CellAspectRatio, message: String) -> CGSize {
         var height = imageRatio.heightRatio*12 + 4

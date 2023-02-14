@@ -60,8 +60,10 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func presentDetailFeed(transitionDependency: FeedTransitionDependency, feed: PetpionFeed) {
-        let detailFeedViewController: DetailFeedViewController = getDetailFeedViewController(transitionDependency: transitionDependency, feed: feed)
-        navigationController.present(detailFeedViewController, animated: true)
+        guard let detailFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "DetailFeedCoordinator") as? DetailFeedCoordinator else { return }
+        childCoordinators.append(detailFeedCoordinator)
+        detailFeedCoordinator.feed = feed
+        detailFeedCoordinator.presentDetailFeedView(transitionDependency: transitionDependency)
     }
     
     public func pushVoteMainViewController(user: User) {
@@ -94,27 +96,17 @@ public final class MainCoordinator: NSObject, Coordinator {
 extension MainCoordinator: UINavigationControllerDelegate {
     
     public func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
-        guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else {
-            return
+
+        guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from), !navigationController.viewControllers.contains(fromViewController) else {
+                    return
+                }
+       
+        if let hasCoordinatorViewController = fromViewController as? CoordinatorWrapper {
+            if let parentsCoordinatorWrapper = viewController as? CoordinatorWrapper {
+                parentsCoordinatorWrapper.coordinator?.childDidFinish(hasCoordinatorViewController.coordinator)
+            }
+            
         }
-        
-        if navigationController.viewControllers.contains(fromViewController) {
-            return
-        }
-        
-        if let feedImagePickerViewController = fromViewController as? FeedImagePickerViewController {
-            childDidFinish(feedImagePickerViewController.coordinator)
-        }
-        
-        if let voteMainViewController = fromViewController as? VoteMainViewController {
-            childDidFinish(voteMainViewController.coordinator)
-        }
-        
-        if let votePetpionViewController = fromViewController as? VotePetpionViewController {
-            guard let coordinator = (viewController as? VoteMainViewController)?.coordinator else { return }
-            coordinator.childDidFinish(votePetpionViewController.coordinator)
-        }
-        
     }
 }
 
@@ -131,12 +123,6 @@ private extension MainCoordinator {
         return MainViewController(viewModel: viewModel)
     }
     
-    private func getDetailFeedViewController(transitionDependency: FeedTransitionDependency,
-                                             feed: PetpionFeed) -> DetailFeedViewController {
-        guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self) else { fatalError("getDetailFeedViewController did occurred error") }
-        let detailFeedViewModel = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase)
-        return DetailFeedViewController(dependency: transitionDependency, viewModel: detailFeedViewModel)
-    }
     
     private func getLoginViewController() -> LoginViewController {
         guard let loginUseCase: LoginUseCase = DIContainer.shared.resolve(LoginUseCase.self),
