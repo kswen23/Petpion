@@ -224,11 +224,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             guard let cursor = getCursor(by: option) else { return }
             let query = getQuery(by: option)
             
-            query.addSnapshotListener { (snapshot, error) in
-                guard snapshot != nil else {
-                    print("Error retreving feeds: \(error.debugDescription)")
-                    return
-                }
+//            query.addSnapshotListener { (snapshot, error) in
+//                guard snapshot != nil else {
+//                    print("Error retreving feeds: \(error.debugDescription)")
+//                    return
+//                }
                 
                 query
                     .start(afterDocument: cursor)
@@ -244,7 +244,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                             }
                         }
                     }
-            }
+//            }
         }
     }
     
@@ -370,7 +370,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     continuation.resume(returning: true)
                 }
         }
-
+        
     }
     
     
@@ -409,6 +409,22 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         case .failure(let failure):
             print(failure.localizedDescription)
             return false
+        }
+    }
+    
+    // MARK: - Public Delete
+    public func deleteFeedData(_ feed: PetpionFeed) async -> Bool {
+        await withCheckedContinuation { continuation in
+            db
+                .document(FirestoreCollection.feed.reference + "/\(feed.id)")
+                .delete() { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    
+                    continuation.resume(returning: true)
+                }
         }
     }
     
