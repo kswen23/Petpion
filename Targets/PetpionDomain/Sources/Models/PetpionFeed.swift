@@ -22,7 +22,6 @@ public struct PetpionFeed: Identifiable {
     public var imageCount: Int
     public var message: String
     public var imageURLArr: [URL]?
-    public var thumbnailImage: UIImage? = nil
     public var feedSize: CGSize
     public var imageRatio: Double
     

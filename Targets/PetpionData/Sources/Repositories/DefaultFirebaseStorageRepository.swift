@@ -41,8 +41,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         switch isCompleted {
         case .success(let success):
             return success
-        case .failure(let failure):
-            print(failure.localizedDescription)
+        case .failure(_):
             return false
         }
     }
@@ -149,7 +148,6 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
             .map{ $0.description }
             .sorted(by: <)
             .map{ URL(string: $0)! }
-        
         URLCache.shared.saveURLArrayCache(urls: sortedURLArr as NSArray, key: feed.id)
         return sortedURLArr
     }
@@ -213,4 +211,39 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         }
     }
     
+    // MARK: - Public Delete
+    public func deleteFeedImages(_ feed: PetpionFeed) async -> Bool {
+        return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
+            for i in 0 ..< feed.imageCount {
+                let ref = "\(PetpionFeed.getImageReference(feed))/\(i)"
+                taskGroup.addTask {
+                    await self.deleteImage(ref)
+                }
+            }
+            
+            for await task in taskGroup {
+                if task == false {
+                    return false
+                }
+            }
+            
+            return true
+        }
+    }
+    
+    // MARK: - Private Delete
+    private func deleteImage(_ reference: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            storage
+                .reference()
+                .child(reference)
+                .delete { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
 }

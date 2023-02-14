@@ -78,32 +78,38 @@ class BaseCollectionViewCell: UICollectionViewCell {
         petFeedCollectionView.delegate = self
         petFeedCollectionView.delaysContentTouches = false
     }
-
-
+    
+    
     // MARK: - Binding
     func bindSnapshot() {
         viewModel?.snapshotSubject.sink { [weak self] snapshot in
-            guard let isFirstFetching = self?.viewModel?.isFirstFetching else { return }
+            guard let isFirstFetching = self?.viewModel?.isFirstFetching,
+                  let isRefreshing = self?.petFeedCollectionView.refreshControl?.isRefreshing else { return }
+            
+            if isRefreshing {
+                self?.petFeedCollectionView.refreshControl?.endRefreshing()
+            }
+            
             if isFirstFetching {
                 // viewWillAppear시 setCollectioniewLayout 계속 불리는 문제 해결, 하지만 collecionView 더 불릴시 문제있을듯
                 self?.configurePetCollectionView()
                 self?.viewModel?.isFirstFetching = false
             }
-            self?.petFeedCollectionView.refreshControl?.endRefreshing()
+            
             self?.petFeedDataSource?.apply(snapshot, animatingDifferences: false)
         }.store(in: &cancellables)
     }
 }
 
 extension BaseCollectionViewCell: UICollectionViewDelegate {
-
+    
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
         if scrollViewHeight - scrollView.contentOffset.y <= 0 {
             parentViewController?.baseCollectionViewNeedNewFeed()
         }
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let selectedFeed = viewModel?.getSelectedFeed(index: indexPath) else { return }
         parentViewController?.baseCollectionViewCellDidTapped(index: indexPath, feed: selectedFeed)

@@ -15,10 +15,9 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     let baseView: UIView = UIView()
     
-    lazy var thumbnailImageView: UIImageView  = {
-        let imageView = UIImageView()
+    let thumbnailImageView: CustomShimmerImageView = {
+        let imageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
         imageView.contentMode = .scaleAspectFill
-        imageView.backgroundColor = .white
         return imageView
     }()
     
@@ -43,7 +42,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     private let profileNameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .white
+        label.textColor = .black
         return label
     }()
     
@@ -97,6 +96,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         heightLayoutAnchor?.isActive = false
         thumbnailImageView.image = nil
         profileImageButton.imageView?.image = nil
+        imageCountButton.isHidden = true
     }
     
     // MARK: - Initialize
@@ -139,6 +139,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
+        thumbnailImageView.startShimmerAnimating()
     }
     
     private func layoutImageCountButton() {
@@ -152,6 +153,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         ])
         imageCountButton.roundCorners(cornerRadius: 10)
         imageCountButton.titleLabel?.font = .systemFont(ofSize: 14)
+        imageCountButton.isHidden = true
     }
     
     private func layoutProfileStackView() {
@@ -187,11 +189,27 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     func configure(with viewModel: ViewModel) {
         configureCellHeight(viewModel.thumbnailRatio)
         configureImageCountButtonTitle(with: viewModel.imageCount)
-        thumbnailImageView.image = viewModel.thumbnailImage
+        configureThumbnailImageView(viewModel.thumbnailImageURL)
         profileImageButton.setImage(viewModel.profileImage, for: .normal)
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
         likeCountLabel.text = String(viewModel.likeCount)
+    }
+    
+    private func configureThumbnailImageView(_ url: URL?) {
+        // image cache 후 image 저장
+//        if let image = thumbnailImageView.image {
+//            return thumbnailImageView.image = image
+//        }
+        
+        Task {
+            guard let url = url else { return }
+            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
+            await MainActor.run {
+                thumbnailImageView.stopShimmerAnimating()
+                thumbnailImageView.image = thumbnailImage
+            }
+        }
     }
     
     private func configureCellHeight(_ thumbnailRatio: Double) {
@@ -204,6 +222,7 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         guard imageCount > 1 else {
             return imageCountButton.isHidden = true
         }
+        imageCountButton.isHidden = false
         imageCountButton.setTitle("+\(imageCount)", for: .normal)
     }
     
@@ -213,7 +232,7 @@ extension PetFeedCollectionViewCell {
     
     struct ViewModel {
         
-        let thumbnailImage: UIImage
+        let thumbnailImageURL: URL?
         let profileImage: UIImage
         let thumbnailRatio: Double
         let imageCount: Int
@@ -222,7 +241,7 @@ extension PetFeedCollectionViewCell {
         let likeCount: Int
         
         init(petpionFeed: PetpionFeed) {
-            self.thumbnailImage = petpionFeed.thumbnailImage!
+            self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
             self.profileImage = petpionFeed.uploader.profileImage!
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount

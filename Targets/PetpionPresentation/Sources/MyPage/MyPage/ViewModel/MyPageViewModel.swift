@@ -14,6 +14,7 @@ import PetpionCore
 import PetpionDomain
 
 protocol MyPageViewModelInput {
+    func fetchUserTotalFeeds()
     func userDidUpdated(to updatedUser: User)
 }
 
@@ -25,7 +26,7 @@ protocol MyPageViewModelOutput {
 protocol MyPageViewModelProtocol: MyPageViewModelInput, MyPageViewModelOutput {
     var user: User { get }
     var fetchFeedUseCase: FetchFeedUseCase { get }
-    var userFeedThumbnailSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
+    var userFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
 }
 
@@ -34,7 +35,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     var user: User
     let fetchFeedUseCase: FetchFeedUseCase
     
-    lazy var userFeedThumbnailSubject: CurrentValueSubject<[PetpionFeed], Never> = {
+    lazy var userFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = {
         var petpionArr = [PetpionFeed]()
         for i in 0 ..< 12 {
             var petpionFeed: PetpionFeed = .empty
@@ -44,7 +45,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
         return .init(petpionArr)
     }()
     
-    lazy var snapshotSubject = userFeedThumbnailSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
+    lazy var snapshotSubject = userFeedSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
         var snapshot = NSDiffableDataSourceSnapshot<Int, PetpionFeed>()
         snapshot.appendSections([0])
         snapshot.appendItems(items, toSection: 0)
@@ -59,13 +60,15 @@ final class MyPageViewModel: MyPageViewModelProtocol {
         fetchUserTotalFeeds()
     }
     
-    private func fetchUserTotalFeeds() {
+    func fetchUserTotalFeeds() {
         Task {
+            // 모든 유저피드를 불러온 뒤, 12장씩 썸네일 붙여서 보내주기..
+            
             var userFeeds = await fetchFeedUseCase.fetchUserTotalFeeds(user: user)
             userFeeds.sort { $0.uploadDate > $1.uploadDate }
             
             await MainActor.run { [userFeeds] in
-                userFeedThumbnailSubject.send(userFeeds)
+                userFeedSubject.send(userFeeds)
             }
         }
     }
@@ -120,7 +123,7 @@ final class MyPageViewModel: MyPageViewModelProtocol {
     
     private func makeCellRegistration() -> UICollectionView.CellRegistration<UserFeedsCollectionViewCell, PetpionFeed> {
         UICollectionView.CellRegistration { cell, indexPath, item in
-            cell.configureThumbnailImageView(item)
+            cell.configureCell(with: item)
             cell.clipsToBounds = true
         }
     }

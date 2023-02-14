@@ -83,6 +83,8 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
             for feed in fetchedFeeds {
                 taskGroup.addTask {
+                    var feed = feed
+                    feed.uploader = user
                     return await self.addThumbnailImage(with: feed)
                 }
             }
@@ -103,7 +105,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
                     let profileUpdatedFeed = await self.addUserProfile(with: countUpdatedFeed)
                     
                     var resultFeed = profileUpdatedFeed
-                    resultFeed.thumbnailImage = feed.thumbnailImage
                     resultFeed.imageURLArr = feed.imageURLArr
                     return resultFeed
                 }
@@ -141,11 +142,8 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     }
     
     private func addThumbnailImage(with feed: PetpionFeed) async -> PetpionFeed {
-        var resultFeed = await self.firestoreRepository.fetchFeedCounts(feed)
+        var resultFeed = feed
         resultFeed.imageURLArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
-        if let thumbnailImageURL = resultFeed.imageURLArr?[0] {
-            resultFeed.thumbnailImage = await ImageCache.shared.loadImage(url: thumbnailImageURL as NSURL)
-        }
         return resultFeed
     }
     
@@ -166,7 +164,12 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         var resultFeeds = feeds
         switch option {
         case .popular:
-            resultFeeds.sort { $0.likeCount > $1.likeCount }
+            resultFeeds.sort { feed1, feed2 in
+                if feed1.likeCount == feed2.likeCount {
+                    return feed1.uploadDate < feed2.uploadDate
+                }
+                return feed1.likeCount > feed2.likeCount
+            }
         case .latest:
             resultFeeds.sort { $0.uploadDate > $1.uploadDate }
         }
