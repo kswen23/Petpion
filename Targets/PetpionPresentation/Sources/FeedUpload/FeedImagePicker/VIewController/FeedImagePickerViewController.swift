@@ -11,9 +11,13 @@ import UIKit
 
 import YPImagePicker
 
-public final class FeedImagePickerViewController: YPImagePicker {
+public final class FeedImagePickerViewController: YPImagePicker, CoordinatorWrapper {
     
-    weak var coordinator: FeedImagePickerCoordinator?
+    weak var coordinator: Coordinator?
+    
+    lazy var feedImagePickerCoordinator: FeedImagePickerCoordinator? = {
+        self.coordinator as? FeedImagePickerCoordinator
+    }()
     
     // MARK: - Initialize
     required init(configuration: YPImagePickerConfiguration = YPImagePickerConfiguration()) {
@@ -41,7 +45,7 @@ public final class FeedImagePickerViewController: YPImagePicker {
     private func configureImagePicker() {
         self.didFinishPicking { [unowned self] items, cancelled in
             if cancelled {
-                coordinator?.dismissUploadViewController()
+                feedImagePickerCoordinator?.dismissUploadViewController()
             } else {
                 var images: [UIImage] = []
                 for item in items {
@@ -52,7 +56,7 @@ public final class FeedImagePickerViewController: YPImagePicker {
                         break
                     }
                 }
-                coordinator?.pushFeedUploadViewController(with: images)
+                feedImagePickerCoordinator?.pushFeedUploadViewController(with: images)
             }
         }
     }

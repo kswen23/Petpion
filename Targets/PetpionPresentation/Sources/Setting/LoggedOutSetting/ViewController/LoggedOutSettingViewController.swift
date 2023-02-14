@@ -11,16 +11,9 @@ import UIKit
 
 final class LoggedOutSettingViewController: SettingCustomViewController {
     
-    weak var coordinator: SettingCoordinator?
-    
-    // MARK: - Initialize
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    lazy var loggedOutSettingCoordinator: SettingCoordinator? = {
+        return coordinator as? SettingCoordinator
+    }()
     
     private lazy var baseScrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -36,6 +29,15 @@ final class LoggedOutSettingViewController: SettingCustomViewController {
     
     private lazy var appPolicyStackView: SettingCategoryStackView = SettingCategoryStackView(category: .appPolicy)
     
+    // MARK: - Initialize
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -88,6 +90,6 @@ final class LoggedOutSettingViewController: SettingCustomViewController {
 extension LoggedOutSettingViewController: SettingCategoryStackViewDelegate {
     
     func settingActionViewDidTapped(action: SettingModel.SettingAction) {
-        coordinator?.startSettingActionScene(with: action)
+        loggedOutSettingCoordinator?.startSettingActionScene(with: action)
     }
 }

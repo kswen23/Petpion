@@ -17,8 +17,6 @@ protocol VotePetpionViewModelInput {
 
 protocol VotePetpionViewModelOutput {
     func configureVotingListCollectionViewLayout() -> UICollectionViewLayout
-    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView,
-                                                cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>
 }
 
 protocol VotePetpionViewModelProtocol: VotePetpionViewModelInput, VotePetpionViewModelOutput {
@@ -59,10 +57,6 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         self.votePetpionUseCase = votePetpionUseCase
     }
     
-    deinit {
-        print("deinit VotePetpionViewModel")
-    }
-    
     // MARK: - Input
     func petpionFeedDidSelected(to section: ImageCollectionViewSection) {
         let nextIndex = currentIndex + 1
@@ -95,26 +89,6 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
         
         return layout
         
-    }
-    
-    func makeVotingListCollectionViewDataSource(collectionView: UICollectionView,
-                                                cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare> {
-        let registration = makeVotingListCollectionViewCellRegistration(cellDelegate: cellDelegate)
-        return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            collectionView.dequeueConfiguredReusableCell(
-                using: registration,
-                for: indexPath,
-                item: item
-            )
-        }
-    }
-    
-    private func makeVotingListCollectionViewCellRegistration(cellDelegate: VotingListCollectionViewCellDelegate) -> UICollectionView.CellRegistration<VotingListCollectionViewCell, PetpionVotePare> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            cell.configureItem(item: item)
-            cell.parentableViewController = cellDelegate
-            cell.clipsToBounds = true
-        }
     }
     
     private func uploadVoteResultOnServer(section: ImageCollectionViewSection) async {

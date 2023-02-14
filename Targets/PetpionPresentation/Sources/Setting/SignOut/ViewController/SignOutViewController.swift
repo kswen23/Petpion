@@ -11,7 +11,10 @@ import UIKit
 
 final class SignOutViewController: SettingCustomViewController {
     
-    weak var coordinator: SignOutCoordinator?
+    lazy var signOutCoordinator: SignOutCoordinator? = {
+        return coordinator as? SignOutCoordinator
+    }()
+    
     private let viewModel: SignOutViewModelProtocol
     
     private let signOutImageView: UIImageView = {
@@ -65,7 +68,7 @@ final class SignOutViewController: SettingCustomViewController {
     }()
     
     @objc private func cancelButtonDidTapped() {
-        coordinator?.popViewController()
+        signOutCoordinator?.popViewController()
     }
     
     private lazy var signOutButton: UIButton = {

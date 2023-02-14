@@ -14,7 +14,10 @@ import PetpionDomain
 
 final class EditProfileViewController: SettingCustomViewController {
     
-    weak var coordinator: EditProfileCoordinator?
+    lazy var editProfileCoordinator: EditProfileCoordinator? = {
+        return coordinator as? EditProfileCoordinator
+    }()
+    
     private let viewModel: EditProfileViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -25,7 +28,7 @@ final class EditProfileViewController: SettingCustomViewController {
     }()
     
     @objc private func editProfileButtonDidTapped() {
-        coordinator?.presentProfileImagePickerViewController(parentableViewController: self)
+        editProfileCoordinator?.presentProfileImagePickerViewController(parentableViewController: self)
     }
     
     private let emailLabel: UILabel = {
@@ -187,7 +190,7 @@ final class EditProfileViewController: SettingCustomViewController {
                 guard let nickname = self?.nicknameTextField.text else { return }
                 self?.viewModel.uploadUserData(with: nickname)
             case .finishUpdating:
-                self?.coordinator?.popEditProfileViewController()
+                self?.editProfileCoordinator?.popEditProfileViewController()
             case .error:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
                 self?.configureUpdatingError()

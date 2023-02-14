@@ -33,11 +33,11 @@ public struct PresentationDIContainer: Containable {
         }
         
         container.register(Coordinator.self, name: "FeedImagePickerCoordinator") { _ in
-            FeedImagePickerCoordinator()
+            FeedImagePickerCoordinator(navigationController: FeedImagePickerViewController())
         }
         
         container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
-            FeedUploadCoordinator()
+            FeedUploadCoordinator(navigationController: navigationController)
         }
         
         container.register(Coordinator.self, name: "VoteMainCoordinator") { _ in
@@ -54,6 +54,10 @@ public struct PresentationDIContainer: Containable {
         
         container.register(Coordinator.self, name: "SettingCoordinator") { _ in
             SettingCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "DetailFeedCoordinator") { _ in
+            DetailFeedCoordinator(navigationController: navigationController)
         }
         
         SettingModel.SettingAction.allCases.forEach { settingAction in

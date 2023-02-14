@@ -13,16 +13,11 @@ import Lottie
 
 final class NeedLoginViewController: SettingCustomViewController {
     
-    weak var coordinator: MyPageCoordinator?
-    private let viewModel: NeedLoginViewModelProtocol
-    
-    private lazy var navigationBarBorder: CALayer = {
-        let border = CALayer()
-        border.borderColor = UIColor.lightGray.cgColor
-        border.borderWidth = 0.2
-        border.frame = CGRectMake(0, self.navigationController?.navigationBar.frame.size.height ?? 0, self.navigationController?.navigationBar.frame.size.width ?? 0, 0.2)
-        return border
+    lazy var needLoginCoordinator: MyPageCoordinator? = {
+        return coordinator as? MyPageCoordinator
     }()
+    
+    private let viewModel: NeedLoginViewModelProtocol
     
     private let needLoginLabel: UILabel = {
         let label = UILabel()
@@ -56,11 +51,7 @@ final class NeedLoginViewController: SettingCustomViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    deinit {
-        print("needLoginVC deinit!")
-    }
-    
+
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -124,7 +115,7 @@ final class NeedLoginViewController: SettingCustomViewController {
     }
     
     @objc private func settingButtonDidTapped() {
-        coordinator?.presentLoginView()
+        needLoginCoordinator?.pushSettingViewController()
     }
     
     private func configureAnimationView() {
@@ -138,7 +129,7 @@ final class NeedLoginViewController: SettingCustomViewController {
     }
     
     @objc private func loginButtonDidTapped() {
-        coordinator?.presentLoginView()
+        needLoginCoordinator?.presentLoginView()
     }
 }
 

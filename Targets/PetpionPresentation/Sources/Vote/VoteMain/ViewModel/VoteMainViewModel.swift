@@ -89,7 +89,6 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     }
     
     deinit {
-        print("deinit VoteMainViewModel")
         invalidateCurrentTimer()
     }
     

@@ -22,9 +22,8 @@ public final class FeedImagePickerCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        let imagePickerViewController = getFeedImagePickerViewController()
-        imagePickerViewController.coordinator = self
-        self.navigationController = imagePickerViewController
+        navigationController.delegate = self
+        (self.navigationController as? FeedImagePickerViewController)?.coordinator = self
     }
     
     public func pushFeedUploadViewController(with images: [UIImage]) {
@@ -50,6 +49,24 @@ public final class FeedImagePickerCoordinator: NSObject, Coordinator {
         }
     }
 }
+
+extension FeedImagePickerCoordinator: UINavigationControllerDelegate {
+    
+    public func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
+
+        guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from), !navigationController.viewControllers.contains(fromViewController) else {
+                    return
+                }
+       
+        if let hasCoordinatorViewController = fromViewController as? CoordinatorWrapper {
+            if let parentsCoordinatorWrapper = navigationController as? CoordinatorWrapper {
+                parentsCoordinatorWrapper.coordinator?.childDidFinish(hasCoordinatorViewController.coordinator)
+            }
+            
+        }
+    }
+}
+
 
 private extension FeedImagePickerCoordinator {
     

@@ -9,7 +9,9 @@
 import Foundation
 import UIKit
 
-class SettingCustomViewController: UIViewController {
+class SettingCustomViewController: UIViewController, CoordinatorWrapper {
+    
+    weak var coordinator: Coordinator?
     
     private lazy var navigationBarBorder: CALayer = {
         let border = CALayer()
@@ -33,3 +35,4 @@ class SettingCustomViewController: UIViewController {
         super.viewWillDisappear(animated)
     }
 }
+

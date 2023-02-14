@@ -14,14 +14,32 @@ import PetpionCore
 import PetpionDomain
 import Lottie
 
-final class MyPageViewController: UIViewController {
+final class MyPageViewController: HasCoordinatorViewController {
     
     private var cancellables = Set<AnyCancellable>()
-    weak var coordinator: MyPageCoordinator?
+
+    lazy var myPageCoordinator: MyPageCoordinator? = {
+        return coordinator as? MyPageCoordinator
+    }()
     private let viewModel: MyPageViewModelProtocol
     
-    private lazy var userFeedsCollectionView: UICollectionView = .init(frame: .zero, collectionViewLayout: viewModel.configureUserFeedsCollectionViewLayout())
+    private lazy var userFeedsCollectionView: UICollectionView = {
+        let collectionView: UICollectionView = .init(frame: .zero, collectionViewLayout: viewModel.configureUserFeedsCollectionViewLayout())
+        collectionView.delegate = self
+        collectionView.refreshControl = refreshControl
+        return collectionView
+    }()
     private lazy var userFeedsCollectionViewDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed> = viewModel.makeUserFeedsCollectionViewDataSource(collectionView: userFeedsCollectionView)
+    
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshCollectionView), for: .valueChanged)
+        return refreshControl
+    }()
+    
+    @objc private func refreshCollectionView() {
+        viewModel.fetchUserTotalFeeds()
+    }
     
     private let lazyCatAnimationView: LottieAnimationView = {
         let animationView = LottieAnimationView(name: LottieJson.lazyCat)
@@ -120,7 +138,7 @@ final class MyPageViewController: UIViewController {
     }
     
     @objc private func settingButtonDidTapped() {
-        coordinator?.pushSettingViewController(with: viewModel.user)
+        myPageCoordinator?.pushSettingViewController()
     }
     
     private func configureUserFeedsCollectionViewHeader(with user: User) {
@@ -135,6 +153,11 @@ final class MyPageViewController: UIViewController {
     
     private func bindSnapshotSubject() {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
+            guard let isRefreshing = self?.userFeedsCollectionView.refreshControl?.isRefreshing else { return }
+            if isRefreshing {
+                self?.userFeedsCollectionView.refreshControl?.endRefreshing()
+            }
+            
             if snapshot.numberOfItems(inSection: 0) == 0 {
                 self?.emptyFeedLabel.isHidden = false
                 self?.lazyCatAnimationView.isHidden = false
@@ -144,6 +167,7 @@ final class MyPageViewController: UIViewController {
                 self?.emptyFeedLabel.isHidden = true
                 self?.lazyCatAnimationView.isHidden = true
             }
+            
             self?.userFeedsCollectionViewDataSource.apply(snapshot)
         }.store(in: &cancellables)
     }
@@ -165,4 +189,11 @@ extension MyPageViewController: NotificationObservable {
         configureUserFeedsCollectionViewHeader(with: updatedUserProfile)
     }
     
+}
+
+extension MyPageViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let selectedFeed = viewModel.userFeedSubject.value[indexPath.item]
+        myPageCoordinator?.pushDetailFeedViewController(selected: selectedFeed)
+    }
 }

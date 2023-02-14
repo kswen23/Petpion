@@ -11,7 +11,10 @@ import UIKit
 
 final class EditAlertViewController: SettingCustomViewController {
     
-    weak var coordinator: EditAlertCoordinator?
+    lazy var editAlertCoordinator: EditAlertCoordinator? = {
+        return coordinator as? EditAlertCoordinator
+    }()
+    
     private let viewModel: EditAlertViewModelProtocol
     
     private lazy var baseScrollView: UIScrollView = {

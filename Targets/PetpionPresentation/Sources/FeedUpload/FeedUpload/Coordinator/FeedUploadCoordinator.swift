@@ -18,12 +18,11 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
     public weak var parentCoordinator: Coordinator?
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
+    var images: [UIImage]?
     
-    public init(navigationController: UINavigationController = UINavigationController()) {
+    public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
-    
-    var images: [UIImage]?
     
     public func start() {
         guard let images = images else { return }
@@ -37,17 +36,8 @@ public final class FeedUploadCoordinator: NSObject, Coordinator {
         navigationController.present(cropViewController, animated: true)
     }
     
-    public func dismissCropViewController() {
+    public func dismissViewController() {
         navigationController.dismiss(animated: true)
-    }
-    
-    public func dismissUploadViewController() {
-        parentCoordinator?.childDidFinish(self)
-        navigationController.dismiss(animated: true)
-    }
-    
-    public func childDidFinish() {
-        parentCoordinator?.childDidFinish(self)
     }
 
 }

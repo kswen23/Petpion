@@ -13,9 +13,11 @@ import UIKit
 import Mantis
 
 
-final class FeedUploadViewController: UIViewController {
+final class FeedUploadViewController: HasCoordinatorViewController {
     
-    weak var coordinator: FeedUploadCoordinator?
+    lazy var feedUploadCoordinator: FeedUploadCoordinator? = {
+        self.coordinator as? FeedUploadCoordinator
+    }()
     private var viewModel: FeedUploadViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -50,14 +52,12 @@ final class FeedUploadViewController: UIViewController {
     
     private let aspectRatioSelectButton: AspectRatioSelectButton = .init(buttonDiameter: 50)
     
-    private lazy var datasource = viewModel.makeImagePreviewCollectionViewDataSource(parentViewController: self, collectionView: imagePreviewCollectionView)
-    
+    private var dataSource: UICollectionViewDiffableDataSource<Int, UIImage>?
     // MARK: - Initialize
     init(viewModel: FeedUploadViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
         addKeyboardObserver()
-        print("FeedUploadVC init")
     }
     
     required init?(coder: NSCoder) {
@@ -66,7 +66,6 @@ final class FeedUploadViewController: UIViewController {
     
     deinit {
         removeKeyboardObserver()
-        print("FeedUploadVC Deinit")
     }
     
     // MARK: - Life Cycle
@@ -229,9 +228,29 @@ final class FeedUploadViewController: UIViewController {
                     self?.preventIndexReset()
                 }
             })
-            self?.datasource.apply(snapshot)
+            self?.dataSource = self?.makeImagePreviewCollectionViewDataSource()
+            self?.dataSource?.apply(snapshot)
         }.store(in: &cancellables)
     }
+    
+    func makeImagePreviewCollectionViewDataSource() -> UICollectionViewDiffableDataSource<Int, UIImage> {
+        let cellRegistration = makeCellRegistration()
+        return UICollectionViewDiffableDataSource(collectionView: imagePreviewCollectionView) { collectionView, indexPath, itemIdentifier in
+            collectionView.dequeueConfiguredReusableCell(using: cellRegistration,
+                                                         for: indexPath,
+                                                         item: itemIdentifier)
+        }
+    }
+    
+    private func makeCellRegistration() -> UICollectionView.CellRegistration<ImagePreviewCollectionViewCell, UIImage> {
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            let heightRatio = self?.viewModel.cellRatioSubject.value.heightRatio
+            cell.configure(with: item, size: UIScreen.main.bounds.width * (heightRatio ?? 0))
+            cell.cellDelegation = self
+            cell.clipsToBounds = true
+        }
+    }
+
     
     private func bindCellRatio() {
         viewModel.cellRatioSubject.sink { [weak self] ratio in
@@ -262,10 +281,11 @@ final class FeedUploadViewController: UIViewController {
         viewModel.loadingSubject.sink { [weak self] loading in
             guard let strongSelf = self else { return }
             switch loading {
-            case .start:
+            case .startUploading:
                 self?.present(strongSelf.loadingAlertController, animated: true)
-            case .finish:
-                self?.coordinator?.dismissUploadViewController()
+            case .finishUploading:
+                self?.dismiss(animated: true)
+                self?.feedUploadCoordinator?.dismissViewController()
             }
         }.store(in: &cancellables)
     }
@@ -323,10 +343,10 @@ final class FeedUploadViewController: UIViewController {
         collectionViewHeightAnchor = imagePreviewCollectionView.heightAnchor.constraint(equalToConstant: cellHeight)
         collectionViewHeightAnchor?.isActive = true
         UICollectionView.animate(withDuration: 0.5, delay: 0, options: .curveEaseOut) { [weak self] in
-            self?.view.layoutIfNeeded()
             self?.imagePreviewCollectionView.visibleCells.forEach { cell in
                 (cell as? ImagePreviewCollectionViewCell)?.changeImageViewSize(to: cellHeight)
             }
+            self?.view.layoutIfNeeded()
         }
     }
 }
@@ -336,7 +356,7 @@ extension FeedUploadViewController: ImagePreviewCollectionViewCellDelegate {
         let index = viewModel.currentImageIndexSubject.value
         let image = viewModel.imagesSubject.value[index]
         let cellRatio = viewModel.cellRatioSubject.value
-        coordinator?.presentCropViewController(from: self, with: image, ratio: cellRatio)
+        feedUploadCoordinator?.presentCropViewController(from: self, with: image, ratio: cellRatio)
     }
 }
 
@@ -344,7 +364,7 @@ extension FeedUploadViewController: CropViewControllerDelegate {
     public func cropViewControllerDidCrop(_ cropViewController: Mantis.CropViewController, cropped: UIImage, transformation: Mantis.Transformation, cropInfo: Mantis.CropInfo) {
         viewModel.indexWillChange = false
         viewModel.imageDidCropped(cropped)
-        coordinator?.dismissCropViewController()
+        feedUploadCoordinator?.dismissViewController()
     }
     
     public func cropViewControllerDidFailToCrop(_ cropViewController: Mantis.CropViewController, original: UIImage) {
@@ -352,7 +372,7 @@ extension FeedUploadViewController: CropViewControllerDelegate {
     }
     
     public func cropViewControllerDidCancel(_ cropViewController: Mantis.CropViewController, original: UIImage) {
-        coordinator?.dismissCropViewController()
+        feedUploadCoordinator?.dismissViewController()
     }
     
     public func cropViewControllerDidBeginResize(_ cropViewController: Mantis.CropViewController) {

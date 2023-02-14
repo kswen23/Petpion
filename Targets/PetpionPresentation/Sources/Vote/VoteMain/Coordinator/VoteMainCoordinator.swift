@@ -21,10 +21,6 @@ public final class VoteMainCoordinator: NSObject, Coordinator {
         self.navigationController = navigationController
     }
     
-    deinit {
-        print("deinit VoteMainCoordinator")
-    }
-    
     public func start() {
         let voteMainViewController = getVoteMainViewController()
         voteMainViewController.coordinator = self

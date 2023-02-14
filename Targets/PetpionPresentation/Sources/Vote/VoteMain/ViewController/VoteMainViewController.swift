@@ -12,11 +12,14 @@ import UIKit
 import Lottie
 import PetpionDomain
 
-final class VoteMainViewController: UIViewController {
+final class VoteMainViewController: HasCoordinatorViewController {
+    
+    lazy var voteMainCoordinator: VoteMainCoordinator? = {
+        return coordinator as? VoteMainCoordinator
+    }()
     
     private var cancellables = Set<AnyCancellable>()
     private let viewModel: VoteMainViewModelProtocol
-    weak var coordinator: VoteMainCoordinator?
     
     private let bottomSheetView: UIView = {
         let view = UIView()
@@ -120,10 +123,6 @@ final class VoteMainViewController: UIViewController {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    deinit {
-        print("deinit VoteMainVC")
     }
     
     // MARK: - Life Cycle
@@ -351,7 +350,7 @@ final class VoteMainViewController: UIViewController {
     }
     
     private func configureStart() {
-        coordinator?.pushVotePetpionViewController(with: viewModel.fetchedVotePare)
+        voteMainCoordinator?.pushVotePetpionViewController(with: viewModel.fetchedVotePare)
     }
     
     private func configureDisable() {

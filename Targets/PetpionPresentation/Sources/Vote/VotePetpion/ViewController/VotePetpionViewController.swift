@@ -12,15 +12,18 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-final class VotePetpionViewController: UIViewController {
+final class VotePetpionViewController: HasCoordinatorViewController {
     
+    lazy var votePetpionCoordinator: VotePetpionCoordinator? = {
+        return coordinator as? VotePetpionCoordinator
+    }()
     private var cancellables = Set<AnyCancellable>()
-    weak var coordinator: VotePetpionCoordinator?
+    
     private let viewModel: VotePetpionViewModelProtocol
     
     private lazy var votingListCollectionView: UICollectionView = UICollectionView(frame: .zero,
                                                                              collectionViewLayout: UICollectionViewLayout())
-    private lazy var votingListCollectionViewDataSource = viewModel.makeVotingListCollectionViewDataSource(collectionView: votingListCollectionView, cellDelegate: self)
+    private var votingListCollectionViewDataSource: UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare>?
     
     private lazy var customBackBarButton: UIBarButtonItem = {
         let backImage = UIImage(systemName: "chevron.backward", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .bold))
@@ -35,7 +38,7 @@ final class VotePetpionViewController: UIViewController {
     private lazy var quitAlarmAlertController: UIAlertController = {
         let alert = UIAlertController(title: "투표를 나가시겠어요?", message: "지금 나가도 하트가 하나 없어져요.", preferredStyle: .alert)
         let quitAction: UIAlertAction = .init(title: "나가기", style: .destructive) { [weak self] _ in
-            self?.coordinator?.popVotePetpionViewController()
+            self?.votePetpionCoordinator?.popVotePetpionViewController()
         }
         let cancelAction: UIAlertAction = .init(title: "취소", style: .cancel)
         [quitAction, cancelAction].forEach { alert.addAction($0) }
@@ -51,17 +54,12 @@ final class VotePetpionViewController: UIViewController {
     
     // MARK: - Initialize
     init(viewModel: VotePetpionViewModelProtocol) {
-        print("init VotePetpionVC")
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    deinit {
-        print("deinit VotePetpionVC")
     }
     
     // MARK: - Life Cycle
@@ -122,14 +120,15 @@ final class VotePetpionViewController: UIViewController {
     
     private func bindSnapshotSubject() {
         viewModel.snapshotSubject.sink { [weak self] snapshot in
-            self?.votingListCollectionViewDataSource.apply(snapshot)
+            self?.votingListCollectionViewDataSource = self?.makeVotingListCollectionViewDataSource()
+            self?.votingListCollectionViewDataSource?.apply(snapshot)
         }.store(in: &cancellables)
     }
     
     private func bindVoteIndexSubject() {
         viewModel.voteIndexSubject.sink { [weak self] item in
             if item == self?.viewModel.needToPopViewController {
-                self?.coordinator?.popVotePetpionViewController()
+                self?.votePetpionCoordinator?.popVotePetpionViewController()
             } else {
                 self?.votingListCollectionView.isScrollEnabled = true
                 self?.votingListCollectionView.scrollToItem(at: IndexPath(item: item, section: 0), at: [], animated: true)
@@ -137,6 +136,25 @@ final class VotePetpionViewController: UIViewController {
                 self?.votingListCollectionView.isScrollEnabled = false
             }
         }.store(in: &cancellables)
+    }
+    
+    func makeVotingListCollectionViewDataSource() -> UICollectionViewDiffableDataSource<VotePetpionViewModel.VoteCollectionViewSection, PetpionVotePare> {
+        let registration = makeVotingListCollectionViewCellRegistration()
+        return UICollectionViewDiffableDataSource(collectionView: votingListCollectionView) { collectionView, indexPath, item in
+            collectionView.dequeueConfiguredReusableCell(
+                using: registration,
+                for: indexPath,
+                item: item
+            )
+        }
+    }
+    
+    private func makeVotingListCollectionViewCellRegistration() -> UICollectionView.CellRegistration<VotingListCollectionViewCell, PetpionVotePare> {
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            cell.configureItem(item: item)
+            cell.parentableViewController = self
+            cell.clipsToBounds = true
+        }
     }
     
     private func changeTitle(_ item: Int) {

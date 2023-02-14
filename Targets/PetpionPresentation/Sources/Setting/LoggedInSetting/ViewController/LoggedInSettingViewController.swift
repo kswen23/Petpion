@@ -15,8 +15,10 @@ import PetpionDomain
 
 final class LoggedInSettingViewController: SettingCustomViewController {
     
+    lazy var loggedInSettingCoordinator: SettingCoordinator? = {
+        return coordinator as? SettingCoordinator
+    }()
     private var cancellables = Set<AnyCancellable>()
-    weak var coordinator: SettingCoordinator?
     private let viewModel: LoggedInSettingViewModelProtocol
     
     private lazy var logOutAlertController: UIAlertController = {
@@ -150,13 +152,13 @@ extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, Setti
         if action == .logout {
             self.present(logOutAlertController, animated: true)
         } else {
-            coordinator?.startSettingActionScene(with: action)
+            loggedInSettingCoordinator?.startSettingActionScene(with: action)
         }
     }
     
     // SettingProfileDelegate
     func profileViewDidTapped() {
-        coordinator?.startSettingActionScene(with: .profile, user: viewModel.user)
+        loggedInSettingCoordinator?.startSettingActionScene(with: .profile, user: viewModel.user)
     }
 
 }

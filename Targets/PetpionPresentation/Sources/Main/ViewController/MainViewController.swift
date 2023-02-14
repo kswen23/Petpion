@@ -13,9 +13,11 @@ import Lottie
 import PetpionCore
 import PetpionDomain
 
-final class MainViewController: UIViewController {
+final class MainViewController: HasCoordinatorViewController {
         
-    weak var coordinator: MainCoordinator?
+    lazy var mainCoordinator: MainCoordinator? = {
+        return coordinator as? MainCoordinator
+    }()
     private let viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -151,15 +153,15 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func cameraButtonDidTapped() {
-        coordinator?.presentFeedImagePicker()
+        mainCoordinator?.presentFeedImagePicker()
     }
     
     @objc private func personButtonDidTapped() {
-        coordinator?.pushMyPageViewController(user: viewModel.user)
+        mainCoordinator?.pushMyPageViewController(user: viewModel.user)
     }
     
     @objc private func crownButtonDidTapped() {
-        coordinator?.pushVoteMainViewController(user: viewModel.user)
+        mainCoordinator?.pushVoteMainViewController(user: viewModel.user)
     }
     
     // MARK: - binding
@@ -188,7 +190,7 @@ extension MainViewController: BaseCollectionViewCellDelegation {
         let baseCellIndexPath: IndexPath = .init(row: viewModel.sortingOptionSubject.value.rawValue, section: 0)
         let transitionDependency: FeedTransitionDependency = .init(baseCellIndexPath: baseCellIndexPath,
                                                                    feedCellIndexPath: index)
-        coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+        mainCoordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
     }
     
     func refreshBaseCollectionView() {
