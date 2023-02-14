@@ -33,4 +33,7 @@ public protocol FirestoreRepository {
     func plusUserHeart()
     func minusUserHeart()
     func updateUserLatestVoteTime()
+    
+    // MARK: - Delete
+    func deleteFeedData(_ feed: PetpionFeed) async -> Bool
 }

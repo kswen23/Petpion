@@ -16,6 +16,7 @@ protocol DetailFeedViewModelInput {
     var currentPageChangedByPageControl: Bool { get }
     func pageControlValueChanged(_ count: Int)
     func collectionViewDidScrolled()
+    func deleteFeed() async -> Bool
 }
 
 protocol DetailFeedViewModelOutput {
@@ -35,6 +36,7 @@ protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewMo
 final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
     let fetchFeedUseCase: FetchFeedUseCase
+    let deleteFeedUseCase: DeleteFeedUseCase
     var feed: PetpionFeed
     
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
@@ -51,9 +53,12 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     private var currentPage: Int = 0
     
     // MARK: - Initialize
-    init(feed: PetpionFeed, fetchFeedUseCase: FetchFeedUseCase) {
+    init(feed: PetpionFeed,
+         fetchFeedUseCase: FetchFeedUseCase,
+         deleteFeedUseCase: DeleteFeedUseCase) {
         self.feed = feed
         self.fetchFeedUseCase = fetchFeedUseCase
+        self.deleteFeedUseCase = deleteFeedUseCase
         fetchFeedImages()
     }
     
@@ -77,6 +82,11 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     func collectionViewDidScrolled() {
         currentPageChangedByPageControl = false
     }
+    
+    func deleteFeed() async -> Bool {
+        await deleteFeedUseCase.deleteFeed(feed)
+    }
+    
     // MARK: - Output
     func configureDetailFeedImageCollectionViewLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),

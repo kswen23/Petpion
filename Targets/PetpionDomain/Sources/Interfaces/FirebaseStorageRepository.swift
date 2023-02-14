@@ -20,4 +20,6 @@ public protocol FirebaseStorageRepository {
     func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL]
     func fetchUserProfileImageURL(_ user: User) async -> URL?
     
+    // MARK: - Delete
+    func deleteFeedImages(_ feed: PetpionFeed) async -> Bool
 }

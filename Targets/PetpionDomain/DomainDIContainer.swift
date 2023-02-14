@@ -34,6 +34,11 @@ public struct DomainDIContainer: Containable {
                                     firebaseStorageRepository: firebaseStorageRepository)
         }
         
+        container.register(DeleteFeedUseCase.self) { _ in
+            DefaultDeleteFeedUseCase(firestoreRepository: firestoreRepository,
+                                     firebaseStorageRepository: firebaseStorageRepository)
+        }
+        
         container.register(UploadFeedUseCase.self) { _ in
             DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
                                             firebaseStorageRepository: firebaseStorageRepository)
