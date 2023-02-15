@@ -60,6 +60,10 @@ public struct PresentationDIContainer: Containable {
             DetailFeedCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "EditFeedCoordinator") { _ in
+            EditFeedCoordinator(navigationController: navigationController)
+        }
+        
         SettingModel.SettingAction.allCases.forEach { settingAction in
             container.register(Coordinator.self, name: settingAction.coordinatorString) { _ in
                 switch settingAction {

@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionDomain
 import PetpionCore
 
 final class PushableDetailFeedViewController: HasCoordinatorViewController {
@@ -75,11 +76,18 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }()
     
     @objc func settingButtonDidTapped() {
-        Task {
-            await viewModel.deleteFeed()
-        }
-        print("setting123")
+        present(settingAlertController, animated: true)
     }
+    
+    private lazy var settingAlertController: UIAlertController = {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        return alert
+    }()
+    
+    private lazy var deleteAlertController: UIAlertController = {
+        let alert = UIAlertController(title: "정말 피드를 삭제하시겠어요?", message: "삭제한 정보들은 되돌릴수 없습니다.", preferredStyle: .alert)
+        return alert
+    }()
     
     private lazy var battleStackView: UIStackView = {
         let battleCountView: UIStackView = makeSymbolCountStackView(imageName: "fight", countInt: viewModel.feed.battleCount, countDouble: nil)
@@ -95,6 +103,13 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }()
     private lazy var commentLabel: UILabel = UILabel()
     private lazy var timeLogLabel: UILabel = UILabel()
+    
+    private lazy var indicatorBarButton: UIBarButtonItem = {
+        let indicatorView = UIActivityIndicatorView(style: .medium)
+        indicatorView.hidesWhenStopped = true
+        indicatorView.startAnimating()
+        return UIBarButtonItem(customView: indicatorView)
+    }()
     
     // MARK: - Initialize
     init(viewModel: DetailFeedViewModelProtocol) {
@@ -205,13 +220,13 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     // MARK: - Configure
     private func configure() {
-        view.backgroundColor = .white
         configureDetailFeedImageCollectionView()
         configureCommentLabel()
         configureTimeLogLabel()
         imageSlider.numberOfPages = viewModel.feed.imageCount
         configureProfileStackView()
         configureCollectionViewShadowOn()
+        configureAlertController()
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -250,10 +265,31 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         profileImageButton.setImage(viewModel.feed.uploader.profileImage, for: .normal)
     }
     
+    private func configureAlertController() {
+        let editAction = UIAlertAction(title: "수정하기", style: .default, handler: { [weak self] _ in
+            self?.viewModel.editFeed()
+        })
+        let deleteAction = UIAlertAction(title: "삭제하기", style: .destructive, handler: { [weak self] _ in
+            guard let strongSelf = self else { return }
+            self?.present(strongSelf.deleteAlertController, animated: true)
+        })
+        let cancel = UIAlertAction(title: "취소", style: .cancel)
+        
+        [editAction, deleteAction, cancel].forEach { settingAlertController.addAction($0) }
+        
+        let willDelete = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.viewModel.deleteFeed()
+        }
+        let willNotDelete = UIAlertAction(title: "취소", style: .default)
+
+        [willDelete, willNotDelete].forEach { deleteAlertController.addAction($0) }
+    }
+    
     // MARK: - Binding
     private func binding() {
         bindSnapshot()
         bindCurrentImageIndex()
+        bindDetailFeedViewState()
     }
     
     private func bindSnapshot() {
@@ -270,6 +306,21 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
                 self?.imageSlider.currentPage = current
             }
             
+        }.store(in: &cancellables)
+    }
+    
+    private func bindDetailFeedViewState() {
+        viewModel.viewStateSubject.sink { [weak self] state in
+            guard let strongSelf = self else { return }
+            switch state {
+            case .delete:
+                self?.navigationItem.rightBarButtonItem = strongSelf.indicatorBarButton
+            case .edit:
+                self?.detailFeedCoordinator?.pushEditFeedView(listener: strongSelf, snapshot: strongSelf.datasource.snapshot())
+            case .finish:
+                self?.navigationItem.rightBarButtonItem = nil
+                self?.detailFeedCoordinator?.popDetailFeedView()
+            }
         }.store(in: &cancellables)
     }
     
@@ -313,4 +364,11 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return symbolCountStackView
     }
 
+}
+
+extension PushableDetailFeedViewController: EditFeedViewControllerListener {
+    
+    func feedDidEdited(to feed: PetpionFeed) {
+        commentLabel.text = feed.message
+    }
 }

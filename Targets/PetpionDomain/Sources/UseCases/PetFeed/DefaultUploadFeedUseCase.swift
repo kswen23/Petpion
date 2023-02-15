@@ -39,4 +39,8 @@ public final class DefaultUploadFeedUseCase: UploadFeedUseCase {
             return false
         }
     }
+    
+    public func updateFeed(feed: PetpionFeed) async -> Bool {
+        await firestoreRepository.updateFeed(with: feed)
+    }
 }

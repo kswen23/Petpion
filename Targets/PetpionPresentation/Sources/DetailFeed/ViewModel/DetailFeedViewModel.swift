@@ -12,11 +12,18 @@ import UIKit
 
 import PetpionDomain
 
+enum DetailFeedViewState {
+    case delete
+    case edit
+    case finish
+}
+
 protocol DetailFeedViewModelInput {
     var currentPageChangedByPageControl: Bool { get }
     func pageControlValueChanged(_ count: Int)
     func collectionViewDidScrolled()
-    func deleteFeed() async -> Bool
+    func editFeed()
+    func deleteFeed()
 }
 
 protocol DetailFeedViewModelOutput {
@@ -28,6 +35,7 @@ protocol DetailFeedViewModelOutput {
 protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var feed: PetpionFeed { get }
+    var viewStateSubject: PassthroughSubject<DetailFeedViewState, Never> { get }
     var urlSubject: CurrentValueSubject<[URL], Never> { get }
     var currentPageSubject: CurrentValueSubject<Int, Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, URL>,Publishers.Map<PassthroughSubject<[URL], Never>,NSDiffableDataSourceSnapshot<Int, URL>>.Failure> { get }
@@ -39,6 +47,7 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     let deleteFeedUseCase: DeleteFeedUseCase
     var feed: PetpionFeed
     
+    let viewStateSubject: PassthroughSubject<DetailFeedViewState, Never> = .init()
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
     // no data일시 
 //    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
@@ -83,8 +92,20 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         currentPageChangedByPageControl = false
     }
     
-    func deleteFeed() async -> Bool {
-        await deleteFeedUseCase.deleteFeed(feed)
+    func editFeed() {
+        viewStateSubject.send(.edit)
+    }
+    
+    func deleteFeed() {
+        viewStateSubject.send(.delete)
+        Task {
+            let feedDeleted = await deleteFeedUseCase.deleteFeed(feed)
+            if feedDeleted {
+                await MainActor.run {
+                    viewStateSubject.send(.finish)
+                }
+            }
+        }
     }
     
     // MARK: - Output

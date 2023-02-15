@@ -50,9 +50,24 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         mainViewController.present(loginViewController, animated: true)
     }
     
+    public func popDetailFeedView() {
+        navigationController.popViewController(animated: true)
+    }
+    
     public func dismissDetailFeedView() {
         navigationController.dismiss(animated: true)
     }
+    
+    public func pushEditFeedView(listener: EditFeedViewControllerListener?,
+                                 snapshot: NSDiffableDataSourceSnapshot<Int, URL>) {
+        guard let editFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "EditFeedCoordinator") as? EditFeedCoordinator else { return }
+        childCoordinators.append(editFeedCoordinator)
+        editFeedCoordinator.feed = feed
+        editFeedCoordinator.snapshot = snapshot
+        editFeedCoordinator.listener = listener
+        editFeedCoordinator.start()
+    }
+    
 }
 
 private extension DetailFeedCoordinator {
