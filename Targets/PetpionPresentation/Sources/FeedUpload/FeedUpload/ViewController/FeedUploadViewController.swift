@@ -23,7 +23,7 @@ final class FeedUploadViewController: HasCoordinatorViewController {
     
     private lazy var baseScrollView: UIScrollView = {
         let scrollView = UIScrollView()
-        scrollView.backgroundColor = .systemBackground
+        scrollView.backgroundColor = .white
         scrollView.delegate = self
         return scrollView
     }()
@@ -43,6 +43,7 @@ final class FeedUploadViewController: HasCoordinatorViewController {
         pageControl.pageIndicatorTintColor = .systemGray3
         return pageControl
     }()
+    private let backgroundTextView: UIView = UIView()
     private let textView: UITextView = UITextView()
     private var collectionViewHeightAnchor: NSLayoutConstraint?
     
@@ -148,13 +149,22 @@ final class FeedUploadViewController: HasCoordinatorViewController {
     }
     
     private func layoutTextView() {
-        containerView.addSubview(textView)
+        containerView.addSubview(backgroundTextView)
+        backgroundTextView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            backgroundTextView.topAnchor.constraint(equalTo: aspectRatioSelectButton.bottomAnchor, constant: 30),
+            backgroundTextView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 15),
+            backgroundTextView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -15),
+            backgroundTextView.heightAnchor.constraint(equalToConstant: 100)
+        ])
+        
+        backgroundTextView.addSubview(textView)
         textView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: aspectRatioSelectButton.bottomAnchor, constant: 30),
-            textView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 15),
-            textView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -15),
-            textView.heightAnchor.constraint(equalToConstant: 100)
+            textView.topAnchor.constraint(equalTo: backgroundTextView.topAnchor, constant: 5),
+            textView.leadingAnchor.constraint(equalTo: backgroundTextView.leadingAnchor, constant: 5),
+            textView.trailingAnchor.constraint(equalTo: backgroundTextView.trailingAnchor, constant: -5),
+            textView.bottomAnchor.constraint(equalTo: backgroundTextView.bottomAnchor, constant: -5)
         ])
     }
     
@@ -201,10 +211,10 @@ final class FeedUploadViewController: HasCoordinatorViewController {
     }
     
     private func configureTextView() {
-        textView.backgroundColor = .systemBackground
-        textView.layer.borderWidth = 0.3
-        textView.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.7).cgColor
-        textView.roundCorners(cornerRadius: 15)
+        backgroundTextView.backgroundColor = .white
+        backgroundTextView.layer.borderWidth = 0.3
+        backgroundTextView.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.7).cgColor
+        backgroundTextView.roundCorners(cornerRadius: 15)
         textView.font = .systemFont(ofSize: 15)
         textView.text = viewModel.textViewPlaceHolder
         textView.textColor = .lightGray

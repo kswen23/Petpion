@@ -78,6 +78,7 @@ final class MyPageViewController: HasCoordinatorViewController {
         self.navigationController?.navigationBar.topItem?.title = ""
         self.navigationItem.title = "내 정보"
         view.backgroundColor = .white
+        viewModel.fetchUserTotalFeeds()
     }
     
     override func viewDidLoad() {

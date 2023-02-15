@@ -116,7 +116,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed] {
-        let result = await withTaskGroup(of: [PetpionFeed].self) { taskGroup -> [PetpionFeed] in
+        return await withTaskGroup(of: [PetpionFeed].self) { taskGroup -> [PetpionFeed] in
             for _ in 0 ..< count {
                 taskGroup.addTask {
                     let singleCollection = await self.fetchSingleRandomFeedCollection()
@@ -131,8 +131,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
             return resultArr
         }
-        return result
-        
     }
     
     public func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed {
@@ -224,27 +222,27 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             guard let cursor = getCursor(by: option) else { return }
             let query = getQuery(by: option)
             
-//            query.addSnapshotListener { (snapshot, error) in
-//                guard snapshot != nil else {
-//                    print("Error retreving feeds: \(error.debugDescription)")
-//                    return
-//                }
-                
-                query
-                    .start(afterDocument: cursor)
-                    .getDocuments { (snapshot, error) in
-                        if let error = error {
+            //            query.addSnapshotListener { (snapshot, error) in
+            //                guard snapshot != nil else {
+            //                    print("Error retreving feeds: \(error.debugDescription)")
+            //                    return
+            //                }
+            
+            query
+                .start(afterDocument: cursor)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        continuation
+                            .resume(returning: .failure(error))
+                    } else {
+                        if let result = snapshot?.documents {
+                            self?.setCursor(option: option, snapshot: result)
                             continuation
-                                .resume(returning: .failure(error))
-                        } else {
-                            if let result = snapshot?.documents {
-                                self?.setCursor(option: option, snapshot: result)
-                                continuation
-                                    .resume(returning: .success(result.map { $0.data() }))
-                            }
+                                .resume(returning: .success(result.map { $0.data() }))
                         }
                     }
-//            }
+                }
+            //            }
         }
     }
     
@@ -307,6 +305,22 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Update
+    public func updateFeed(with feed: PetpionFeed) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            let collectionPath: String = getFeedReference(feed)
+            db
+                .collection(collectionPath)
+                .document(feed.id)
+                .updateData(["message": feed.message]) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
     public func updateFeedCounts(with feed: PetpionFeed, voteResult: VoteResult) async -> Bool {
         let feedReference = db.collection(FirestoreCollection.feed.reference).document(feed.id)
         
@@ -373,7 +387,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         
     }
     
-    
     public func plusUserHeart() {
         guard let uid = firestoreUID else { return }
         db
@@ -412,8 +425,27 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    private func getFeedReference(_ feed: PetpionFeed) -> String {
+        let uploadDateComponents: DateComponents = .dateToDateComponents(feed.uploadDate)
+        return "feeds/\(uploadDateComponents.year!)/\(uploadDateComponents.month!)"
+    }
+    
     // MARK: - Public Delete
     public func deleteFeedData(_ feed: PetpionFeed) async -> Bool {
+        let feedRef = db.document(FirestoreCollection.feed.reference + "/\(feed.id)")
+        let countDocuments = FeedCountsType.allCases
+            .map { getFeedCountsReference(reference: feedRef, type: $0) }
+        
+        let shardsDeleteResult = await deleteMultipleSubcollection(documentReferences: countDocuments, collectionPath: "shards")
+
+        let countsDeleteResult = await deleteSingleSubcollection(documentRef: feedRef, collectionPath: "counts")
+        let feedDeleteResult = await deleteFeedDocument(feed)
+        
+        return shardsDeleteResult && countsDeleteResult && feedDeleteResult
+    }
+    
+    // MARK: - Private Delete
+    private func deleteFeedDocument(_ feed: PetpionFeed) async -> Bool {
         await withCheckedContinuation { continuation in
             db
                 .document(FirestoreCollection.feed.reference + "/\(feed.id)")
@@ -422,13 +454,46 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         print(error.localizedDescription)
                         continuation.resume(returning: false)
                     }
-                    
                     continuation.resume(returning: true)
                 }
         }
     }
     
+    private func deleteMultipleSubcollection(documentReferences: [DocumentReference], collectionPath: String) async -> Bool {
+        return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
+            for documentReference in documentReferences {
+                taskGroup.addTask {
+                    await self.deleteSingleSubcollection(documentRef: documentReference, collectionPath: collectionPath)
+                }
+            }
+            
+            for await taskCompleted in taskGroup {
+                if taskCompleted == false {
+                    return false
+                }
+            }
+            return true
+        }
+    }
+    
+    private func deleteSingleSubcollection(documentRef: DocumentReference, collectionPath: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            documentRef.collection(collectionPath)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    } else {
+                        for document in snapshot!.documents {
+                            document.reference.delete()
+                        }
+                        continuation.resume(returning: true)
+                    }
+                }
+        }
+    }
 }
+
 
 extension DefaultFirestoreRepository {
     
@@ -449,7 +514,7 @@ extension DefaultFirestoreRepository {
         }
     }
     
-    enum FeedCountsType {
+    enum FeedCountsType: CaseIterable {
         case like
         case battle
     }

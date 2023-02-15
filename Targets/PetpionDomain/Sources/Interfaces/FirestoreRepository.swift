@@ -27,6 +27,7 @@ public protocol FirestoreRepository {
     func checkDuplicatedNickname(with nickname: String) async -> Bool
     
     // MARK: - Update
+    func updateFeed(with feed: PetpionFeed) async -> Bool
     func updateFeedCounts(with feed: PetpionFeed, voteResult: VoteResult) async -> Bool
     func updateUserHeart(_ count: Int) async -> Bool
     func updateUserNickname(_ nickname: String) async -> Bool

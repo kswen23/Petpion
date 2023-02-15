@@ -67,8 +67,8 @@ final class BaseViewModel: BaseViewModelProtocol {
     }
 
     func makePetFeedCollectionViewCellRegistration() -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let viewModel = self.makeViewModel(for: item)
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            guard let viewModel = self?.makeViewModel(for: item) else { return }
             cell.configure(with: viewModel)
         }
     }

@@ -49,6 +49,8 @@ final class MainViewController: HasCoordinatorViewController {
         configureNavigationItem()
         if viewModel.isFirstFetching == false {
             viewModel.updateCurrentFeeds()
+        } else {
+            viewModel.fetchInit()
         }
     }
     

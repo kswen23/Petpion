@@ -57,7 +57,6 @@ final class MyPageViewModel: MyPageViewModelProtocol {
          fetchFeedUseCase: FetchFeedUseCase) {
         self.user = user
         self.fetchFeedUseCase = fetchFeedUseCase
-        fetchUserTotalFeeds()
     }
     
     func fetchUserTotalFeeds() {

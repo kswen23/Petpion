@@ -14,6 +14,7 @@ import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
+    func fetchInit()
     func fetchNextFeed()
     func refreshCurrentFeed()
     func sortingOptionWillChange(with option: SortingOption)
@@ -65,18 +66,17 @@ final class MainViewModel: MainViewModelProtocol {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
-        fetchInit()
         initializeUserVoteChance()
     }
     
-    private func fetchInit() {
+    func fetchInit() {
         Task {
             let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
             await MainActor.run {
-                popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
                 latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
+                popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
+                isFirstFetching = false
             }
-            isFirstFetching = false
         }
     }
     
@@ -233,9 +233,9 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     private func makeBaseCollectionViewCellRegistration(parentViewController: BaseCollectionViewCellDelegation) -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
             cell.parentViewController = parentViewController
-            cell.viewModel = self.makeChildViewModel(item: item)
+            cell.viewModel = self?.makeChildViewModel(item: item)
             cell.bindSnapshot()
         }
     }

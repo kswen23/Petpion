@@ -135,13 +135,12 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     }
     
     private func configureLogoutAlertController() {
-        let no = UIAlertAction(title: "아니오", style: .cancel)
         let yes = UIAlertAction(title: "네", style: .default) { [weak self] _ in
             self?.viewModel.logoutDidTapped()
 //            self?.coordinator?.returnToFirstStart()
         }
-        logOutAlertController.addAction(yes)
-        logOutAlertController.addAction(no)
+        let no = UIAlertAction(title: "아니오", style: .default)
+        [yes, no].forEach { logOutAlertController.addAction($0) }
     }
 }
 
