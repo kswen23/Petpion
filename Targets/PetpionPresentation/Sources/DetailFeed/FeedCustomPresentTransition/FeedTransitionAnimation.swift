@@ -57,8 +57,7 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
         toViewController.setChildViewLayoutByZoomOut(childView: toViewController.view,
                                                      backgroundView: containerView,
                                                      childViewFrame: cellBaseViewFrame,
-                                                     imageFrame: cellImageViewFrame,
-                                                     scaleX: 1.0)
+                                                     imageFrame: cellImageViewFrame)
         containerView.layoutIfNeeded()
         toViewController.setupChildViewLayoutByZoomIn(childView: toViewController.view,
                                                       backgroundView: containerView)
@@ -80,6 +79,7 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
               let baseCollectionViewCell = toViewController.baseCollectionView.cellForItem(at: dependency.baseCellIndexPath) as? BaseCollectionViewCell,
               let selectedFeedCell = baseCollectionViewCell.petFeedCollectionView.cellForItem(at: dependency.feedCellIndexPath) as? PetFeedCollectionViewCell else { return }
         let originImage = selectedFeedCell.thumbnailImageView.image
+        let imageCountButtonIsHiddenValue: Bool = selectedFeedCell.imageCountButton.isHidden
         selectedFeedCell.thumbnailImageView.image = nil
         selectedFeedCell.imageCountButton.isHidden = true
         fromViewController.configureCollectionViewShadowOff()
@@ -90,13 +90,13 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
         fromViewController.setChildViewLayoutByZoomOut(childView: fromViewController.view,
                                                        backgroundView: containerView,
                                                        childViewFrame: cellBaseViewFrame,
-                                                       imageFrame: cellImageViewFrame,
-                                                       scaleX: 0.84)
+                                                       imageFrame: cellImageViewFrame)
         UIView.animate(withDuration: 0.7, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: [], animations: {
+//            containerView.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
             containerView.layoutIfNeeded()
         }) { (completed) in
             selectedFeedCell.thumbnailImageView.image = originImage
-            selectedFeedCell.imageCountButton.isHidden = false
+            selectedFeedCell.imageCountButton.isHidden = imageCountButtonIsHiddenValue
             transitionContext.completeTransition(completed)
         }
     }

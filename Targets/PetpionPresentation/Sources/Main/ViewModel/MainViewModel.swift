@@ -49,8 +49,8 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     var baseCollectionViewNeedToScroll: Bool = true
-    let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
-    let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
+    let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
+    let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
     var isFirstFetching: Bool = true
     var user: User = .empty
@@ -82,7 +82,7 @@ final class MainViewModel: MainViewModelProtocol {
     
     private func initializeUserVoteChance() {
         Task {
-            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
             let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
             self.user = fetchedUser

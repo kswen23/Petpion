@@ -9,7 +9,9 @@
 import Combine
 import UIKit
 
+import Lottie
 import PetpionDomain
+import PetpionCore
 
 protocol BaseCollectionViewCellDelegation {
     func baseCollectionViewNeedNewFeed()
@@ -42,6 +44,25 @@ class BaseCollectionViewCell: UICollectionViewCell {
         parentViewController?.refreshBaseCollectionView()
     }
     
+    private let lazyCatAnimationView: LottieAnimationView = {
+        let animationView = LottieAnimationView(name: LottieJson.lazyCat)
+        animationView.loopMode = .loop
+        animationView.translatesAutoresizingMaskIntoConstraints = false
+        animationView.isHidden = true
+        return animationView
+    }()
+    
+    private let emptyFeedLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 20, weight: .regular)
+        label.textColor = .darkGray
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+    
     // MARK: - Initialize
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -55,6 +76,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
     // MARK: - Layout
     private func layout() {
         layoutPetCollectionView()
+        layoutEmptyView()
     }
     
     private func layoutPetCollectionView() {
@@ -66,8 +88,20 @@ class BaseCollectionViewCell: UICollectionViewCell {
             petFeedCollectionView.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor),
             petFeedCollectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
-        petFeedCollectionView.backgroundColor = .systemBackground
+        petFeedCollectionView.backgroundColor = .white
         petFeedCollectionView.showsVerticalScrollIndicator = false
+    }
+    
+    private func layoutEmptyView() {
+        [lazyCatAnimationView ,emptyFeedLabel].forEach { petFeedCollectionView.addSubview($0) }
+        NSLayoutConstraint.activate([
+            lazyCatAnimationView.centerYAnchor.constraint(equalTo: petFeedCollectionView.centerYAnchor, constant: -100),
+            lazyCatAnimationView.centerXAnchor.constraint(equalTo: petFeedCollectionView.centerXAnchor),
+            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: 300),
+            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: 300),
+            emptyFeedLabel.bottomAnchor.constraint(equalTo: lazyCatAnimationView.bottomAnchor, constant: 20),
+            emptyFeedLabel.centerXAnchor.constraint(equalTo: petFeedCollectionView.centerXAnchor)
+        ])
     }
     
     // MARK: - Configure
@@ -84,7 +118,9 @@ class BaseCollectionViewCell: UICollectionViewCell {
     func bindSnapshot() {
         viewModel?.snapshotSubject.sink { [weak self] snapshot in
             guard let isFirstFetching = self?.viewModel?.isFirstFetching,
-                  let isRefreshing = self?.petFeedCollectionView.refreshControl?.isRefreshing else { return }
+                  let isRefreshing = self?.petFeedCollectionView.refreshControl?.isRefreshing
+            else { return }
+            self?.configureEmptyView(with: snapshot.numberOfItems)
             
             if isRefreshing {
                 self?.petFeedCollectionView.refreshControl?.endRefreshing()
@@ -95,10 +131,31 @@ class BaseCollectionViewCell: UICollectionViewCell {
                 self?.configurePetCollectionView()
                 self?.viewModel?.isFirstFetching = false
             }
-            
-            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: false)
+//           shimmering을 처음에만 주자
+            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: true)
         }.store(in: &cancellables)
     }
+      
+    private func configureEmptyView(with numberOfItems: Int) {
+        if numberOfItems == 0 {
+            configureEmptyLabel()
+            lazyCatAnimationView.isHidden = false
+            emptyFeedLabel.isHidden = false
+            lazyCatAnimationView.play()
+        } else {
+            lazyCatAnimationView.isHidden = true
+            emptyFeedLabel.isHidden = true
+            lazyCatAnimationView.stop()
+        }
+    }
+    
+    private func configureEmptyLabel() {
+        let currentDateComponents: DateComponents = .currentDateTimeComponents()
+        emptyFeedLabel.text = "어라.. 등록된 펫이 없네요 🥲 \n 지금 바로 \(currentDateComponents.month!)월의 첫번째 펫을 올려보세요!"
+        emptyFeedLabel.sizeToFit()
+    }
+    
+    
 }
 
 extension BaseCollectionViewCell: UICollectionViewDelegate {

@@ -35,6 +35,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     }()
     
     @objc private func dismissButtonDidTapped() {
+        scaleX = 1.0
         detailFeedCoordinator?.dismissDetailFeedView()
     }
     
@@ -145,6 +146,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
                 self.view?.transform = CGAffineTransform(scaleX: shrinkScale, y: shrinkScale)
             }
         } else if currentY > lastPoint + 30 {
+            self.scaleX = 0.84
             detailFeedCoordinator?.dismissDetailFeedView()
         }
     }
@@ -166,6 +168,8 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    var scaleX: Double = 1.0
     
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
@@ -362,8 +366,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     func setChildViewLayoutByZoomOut(childView: UIView,
                                      backgroundView: UIView,
                                      childViewFrame: CGRect,
-                                     imageFrame: CGRect,
-                                     scaleX: Double) {
+                                     imageFrame: CGRect) {
         self.view.transform = CGAffineTransform(scaleX: scaleX, y: scaleX)
         imageSlider.isHidden = true
         settingButton.isHidden = true
