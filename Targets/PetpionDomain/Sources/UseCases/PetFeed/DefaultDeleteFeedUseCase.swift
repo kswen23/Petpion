@@ -23,7 +23,7 @@ final public class DefaultDeleteFeedUseCase: DeleteFeedUseCase {
     // MARK: - Public
     public func deleteFeed(_ feed: PetpionFeed) async -> Bool {
         let imageDidDeleted: Bool = await firebaseStorageRepository.deleteFeedImages(feed)
-        let dataDidDeleted: Bool = await firestoreRepository.deleteFeedData(feed)
+        let dataDidDeleted: Bool = await firestoreRepository.deleteFeedDataWithFeed(feed)
 
         if imageDidDeleted, dataDidDeleted {
             return true
@@ -32,4 +32,7 @@ final public class DefaultDeleteFeedUseCase: DeleteFeedUseCase {
         }
     }
     
+    public func deleteUserTotalFeeds(_ user: User) async -> Bool {
+        await firestoreRepository.deleteUserFeeds(user)
+    }
 }

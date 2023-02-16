@@ -17,7 +17,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var latestCursor: DocumentSnapshot?
     
     private let numberOfShards = 10
-    private let firestoreUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID)
+    private let firestoreUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue)
     
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
@@ -199,20 +199,19 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed] {
-        return await withCheckedContinuation { continuation in
-            db
-                .collection(FirestoreCollection.feed.reference)
-                .whereField("uploaderID", isEqualTo: user.id)
-                .getDocuments { [weak self] (snapshot, error) in
-                    guard let strongSelf = self else { return }
-                    if let error = error {
-                        print(error.localizedDescription)
-                    }
-                    
-                    if let result = snapshot?.documents {
-                        continuation.resume(returning: strongSelf.convertCollectionToModel(result.map{ $0.data() }))
-                    }
+        return await withTaskGroup(of: [PetpionFeed].self) { taskGroup -> [PetpionFeed] in
+            let totalFeedPath = getTotalYearMonthCollectionPath()
+            for path in totalFeedPath {
+                taskGroup.addTask {
+                    await self.fetchMonthlyFeedsWithUserID(with: user, collectionPath: path)
                 }
+            }
+
+            var resultFeedArray = [PetpionFeed]()
+            for await feedArray in taskGroup {
+                resultFeedArray += feedArray
+            }
+            return resultFeedArray
         }
     }
     
@@ -302,6 +301,24 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             break
         }
         return count
+    }
+    
+    private func fetchMonthlyFeedsWithUserID(with user: User, collectionPath: String) async -> [PetpionFeed] {
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(collectionPath)
+                .whereField("uploaderID", isEqualTo: user.id)
+                .getDocuments { [weak self] (snapshot, error) in
+                    guard let strongSelf = self else { return }
+                    if let error = error {
+                        print(error.localizedDescription)
+                    }
+                    
+                    if let result = snapshot?.documents {
+                        continuation.resume(returning: strongSelf.convertCollectionToModel(result.map{ $0.data() }))
+                    }
+                }
+        }
     }
     
     // MARK: - Public Update
@@ -431,20 +448,55 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Delete
-    public func deleteFeedData(_ feed: PetpionFeed) async -> Bool {
-        let feedRef = db.document(FirestoreCollection.feed.reference + "/\(feed.id)")
+    public func deleteFeedDataWithFeed(_ feed: PetpionFeed) async -> Bool {
+        let feedRef = db.document("\(getFeedCollectionPath(feed: feed))/\(feed.id)")
         let countDocuments = FeedCountsType.allCases
             .map { getFeedCountsReference(reference: feedRef, type: $0) }
         
-        let shardsDeleteResult = await deleteMultipleSubcollection(documentReferences: countDocuments, collectionPath: "shards")
-
-        let countsDeleteResult = await deleteSingleSubcollection(documentRef: feedRef, collectionPath: "counts")
+        let shardsDeleteResult = await deleteMultipleSubCollection(documentReferences: countDocuments, collectionPath: "shards")
+        
+        let countsDeleteResult = await deleteSingleSubCollection(documentRef: feedRef, collectionPath: "counts")
         let feedDeleteResult = await deleteFeedDocument(feed)
         
         return shardsDeleteResult && countsDeleteResult && feedDeleteResult
     }
     
+    public func deleteUserFeeds(_ user: User) async -> Bool {
+        return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
+            let feedArray = await fetchFeedsWithUserID(with: user)
+            for feed in feedArray {
+                taskGroup.addTask {
+                    await self.deleteFeedDataWithFeed(feed)
+                }
+            }
+            
+            for await deleteResult in taskGroup {
+                if deleteResult == false {
+                    return false
+                }
+            }
+            return true
+        }
+    }
     // MARK: - Private Delete
+    private func deleteFeedsWithUserID(collectionPath: String, uploader: User) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            db
+                .collection(collectionPath)
+                .whereField("uploaderID", isEqualTo: uploader.id)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    } else {
+                        for document in snapshot!.documents {
+                            document.reference.delete()
+                        }
+                        continuation.resume(returning: true)
+                    }
+                }
+        }
+    }
     private func deleteFeedDocument(_ feed: PetpionFeed) async -> Bool {
         await withCheckedContinuation { continuation in
             db
@@ -459,11 +511,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    private func deleteMultipleSubcollection(documentReferences: [DocumentReference], collectionPath: String) async -> Bool {
+    private func deleteMultipleSubCollection(documentReferences: [DocumentReference], collectionPath: String) async -> Bool {
         return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
             for documentReference in documentReferences {
                 taskGroup.addTask {
-                    await self.deleteSingleSubcollection(documentRef: documentReference, collectionPath: collectionPath)
+                    await self.deleteSingleSubCollection(documentRef: documentReference, collectionPath: collectionPath)
                 }
             }
             
@@ -476,7 +528,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    private func deleteSingleSubcollection(documentRef: DocumentReference, collectionPath: String) async -> Bool {
+    private func deleteSingleSubCollection(documentRef: DocumentReference, collectionPath: String) async -> Bool {
         await withCheckedContinuation { continuation in
             documentRef.collection(collectionPath)
                 .getDocuments { (snapshot, error) in
@@ -506,8 +558,7 @@ extension DefaultFirestoreRepository {
             case .feed:
                 guard let year = DateComponents.currentDateTimeComponents().year,
                       let month = DateComponents.currentDateTimeComponents().month else { return ""}
-                //                return "feeds/\(year)/\(month)"
-                return "feeds/2022/11"
+                return "feeds/\(year)/\(month)"
             case .user:
                 return "user"
             }
@@ -560,5 +611,31 @@ extension DefaultFirestoreRepository {
         case .latest:
             return latestCursor
         }
+    }
+    
+    private func getTotalYearMonthCollectionPath() -> [String] {
+        let startDateComponents = DateComponents(year: 2023, month: 1, day: 1)
+        let endDateComponents = DateComponents.currentDateTimeComponents()
+
+        let calendar = Calendar.current
+        var currentDate = calendar.date(from: startDateComponents)!
+        var endDate = calendar.date(from: endDateComponents)!
+
+        var yearMonthArray: [String] = []
+
+        while currentDate <= endDate {
+            let yearMonth = calendar.dateComponents([.year, .month], from: currentDate)
+            let year = yearMonth.year!
+            let month = yearMonth.month!
+            yearMonthArray.append("feeds/\(year)/\(month)")
+            currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate)!
+        }
+
+        return yearMonthArray
+    }
+    
+    private func getFeedCollectionPath(feed: PetpionFeed) -> String {
+        let dateComponents = DateComponents.dateToDateComponents(feed.uploadDate)
+        return "feeds/\(dateComponents.year!)/\(dateComponents.month!)"
     }
 }
