@@ -6,11 +6,19 @@
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
-public struct UserInfoKey {
-    public static let isLogin = "isLogin"
-    public static let firebaseUID = "FirebaseUID"
-    public static let userNotificationsPermission = "userNotificationsPermission"
-    public static let voteChanceNotification = "voteChanceNotification"
+import Foundation
+
+public enum UserInfoKey: String, CaseIterable {
+    case isLogin = "isLogin"
+    case firebaseUID = "FirebaseUID"
+    case userNotificationsPermission = "userNotificationsPermission"
+    case voteChanceNotification = "voteChanceNotification"
+    
+    public static func deleteAllUserDefaultsValue() {
+        UserInfoKey.allCases.forEach { key in
+            UserDefaults.standard.removeObject(forKey: key.rawValue)
+        }
+    }
 }
 
 public struct NotificationName {
