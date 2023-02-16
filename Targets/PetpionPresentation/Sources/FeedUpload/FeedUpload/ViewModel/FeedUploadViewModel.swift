@@ -123,7 +123,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     func uploadNewFeed(message: String) {
         loadingSubject.send(.startUploading)
         let datas = imagesSubject.value.map { convertImageToData(image: $0) }
-        guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID) else { return }
+        guard let uploaderId = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
         
         let feed: PetpionFeed = PetpionFeed(id: UUID().uuidString,
                                             uploader: User.empty,

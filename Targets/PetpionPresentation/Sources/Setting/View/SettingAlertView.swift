@@ -97,7 +97,7 @@ final class SettingAlertView: UIView {
     private func configure() {
         switch alertType {
         case .voteChance:
-            let voteChanceIsOn = UserDefaults.standard.bool(forKey: UserInfoKey.voteChanceNotification)
+            let voteChanceIsOn = UserDefaults.standard.bool(forKey: UserInfoKey.voteChanceNotification.rawValue)
             toggleSwitch.setOn(voteChanceIsOn, animated: false)
         }
     }

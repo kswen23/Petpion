@@ -23,7 +23,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             let myPageViewController = getMyPageViewController()
             myPageViewController.coordinator = self
             navigationController.pushViewController(myPageViewController, animated: true)
@@ -37,7 +37,7 @@ public final class MyPageCoordinator: NSObject, Coordinator {
     public func pushSettingViewController() {
         guard let settingCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "SettingCoordinator") as? SettingCoordinator else { return }
         childCoordinators.append(settingCoordinator)
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             settingCoordinator.user = user
         }
         settingCoordinator.start()

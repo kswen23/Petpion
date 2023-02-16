@@ -23,7 +23,7 @@ public final class SettingCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             let settingViewController = getLoggedInSettingViewController()
             settingViewController.coordinator = self
             navigationController.pushViewController(settingViewController, animated: true)
@@ -38,6 +38,8 @@ public final class SettingCoordinator: NSObject, Coordinator {
         guard let settingActionCoordinator: Coordinator = DIContainer.shared.resolve(Coordinator.self, name: action.coordinatorString) else { return }
         if action == .profile {
             (settingActionCoordinator as! EditProfileCoordinator).user = user!
+        } else if action == .signOut {
+            (settingActionCoordinator as! SignOutCoordinator).user = user!
         }
         childCoordinators.append(settingActionCoordinator)
         settingActionCoordinator.start()

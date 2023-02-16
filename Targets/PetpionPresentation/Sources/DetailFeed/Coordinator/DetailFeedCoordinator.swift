@@ -35,7 +35,7 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
     }
     
     public func presentFeedSettingView() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             presentLoginView()
         } else {
             presentLoginView()

@@ -21,8 +21,8 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
             }
             
             if didAllow {
-                UserDefaults.standard.set(true, forKey: UserInfoKey.userNotificationsPermission)
-                UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification)
+                UserDefaults.standard.set(true, forKey: UserInfoKey.userNotificationsPermission.rawValue)
+                UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification.rawValue)
             } else {
                 print("UserNotifications Permission Denied")
             }
@@ -30,7 +30,7 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
     }
     
     public func createPetpionVoteNotification(heart count: Int, latestVoteTime: Date) {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.voteChanceNotification) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.voteChanceNotification.rawValue) == true {
             let content = makePetpionNotificationContent()
             let trigger = makeNotificationTrigger(heart: count, latestVoteTime: latestVoteTime)
             let request = UNNotificationRequest(identifier: petpionVoteIdentifier,
@@ -42,12 +42,12 @@ public final class DefaultMakeNotificationUseCase: MakeNotificationUseCase {
     }
     
     public func allowPetpionVoteNotification() {
-        UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification)
+        UserDefaults.standard.set(true, forKey: UserInfoKey.voteChanceNotification.rawValue)
     }
     
     public func preventPetpionVoteNotification() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [petpionVoteIdentifier])
-        UserDefaults.standard.set(false, forKey: UserInfoKey.voteChanceNotification)
+        UserDefaults.standard.set(false, forKey: UserInfoKey.voteChanceNotification.rawValue)
     }
     
     // MARK: - Private

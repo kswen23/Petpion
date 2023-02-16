@@ -93,7 +93,7 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     }
     
     private func requestNotification() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.userNotificationsPermission) == false {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.userNotificationsPermission.rawValue) == false {
             makeNotificationUseCase.requestAuthorization()
         }
     }

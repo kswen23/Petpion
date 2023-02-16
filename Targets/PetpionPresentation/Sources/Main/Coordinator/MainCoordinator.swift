@@ -48,7 +48,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func presentFeedImagePicker() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             guard let feedImagePickerCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedImagePickerCoordinator") as? FeedImagePickerCoordinator else { return }
             feedImagePickerCoordinator.parentCoordinator = self
             childCoordinators.append(feedImagePickerCoordinator)
@@ -67,7 +67,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     public func pushVoteMainViewController(user: User) {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin) == true {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
             guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") as? VoteMainCoordinator else { return }
             childCoordinators.append(voteMainCoordinator)
             voteMainCoordinator.user = user
