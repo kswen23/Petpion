@@ -144,6 +144,8 @@ final class NeedLoginViewController: SettingCustomViewController {
 extension NeedLoginViewController: UIViewControllerTransitioningDelegate {
     
     func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        LoginPresentationController(presentedViewController: presented, presenting: presenting)
+        let loginPresentationController = CustomPresentationController(presentedViewController: presented, presenting: presenting)
+        loginPresentationController.fractionalHeight = 0.4
+        return loginPresentationController
     }
 }

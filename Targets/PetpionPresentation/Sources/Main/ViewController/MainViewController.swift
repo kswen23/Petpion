@@ -224,13 +224,6 @@ extension MainViewController: BaseCollectionViewCellDelegation {
     }
 }
 
-extension MainViewController: UIViewControllerTransitioningDelegate {
-    
-    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        LoginPresentationController(presentedViewController: presented, presenting: presenting)
-    }
-}
-
 extension MainViewController: NotificationObservable {
     
     func addObserver() {

@@ -497,7 +497,9 @@ extension PresentableDetailFeedViewController: UIViewControllerTransitioningDele
     
     func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
         if presented is LoginViewController {
-            return LoginPresentationController(presentedViewController: presented, presenting: presenting)
+            let loginPresentationController = CustomPresentationController(presentedViewController: presented, presenting: presenting)
+            loginPresentationController.fractionalHeight = 0.4
+            return loginPresentationController
         } else {
             return FeedPresentationController(presentedViewController: presented, presenting: presenting)
         }
