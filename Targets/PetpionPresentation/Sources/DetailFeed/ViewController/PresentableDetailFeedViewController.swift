@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import UIKit
 
+import PetpionDomain
 import PetpionCore
 
 final class PresentableDetailFeedViewController: CustomPresentableViewController {
@@ -76,20 +77,8 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         }
         stackView.spacing = 8
         stackView.alignment = .center
-        stackView.addGestureRecognizer(profileStackViewTapGesture)
         return stackView
     }()
-    
-    private lazy var profileStackViewTapGesture: UITapGestureRecognizer = {
-        let tapGesture = UITapGestureRecognizer()
-        tapGesture.addTarget(self, action: #selector(profileStackViewDidTapped))
-        return tapGesture
-    }()
-    
-    @objc private func profileStackViewDidTapped() {
-//        detailFeedCoordinator?.pushUserPageView(user: viewModel.feed.uploader, userPageStyle: .otherUserPage)
-    }
-
     
     private lazy var settingButton: UIButton = {
         let button = UIButton()
@@ -101,8 +90,14 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     }()
     
     @objc func settingButtonDidTapped() {
-        detailFeedCoordinator?.presentFeedSettingView()
+        if User.isLogin {
+            self.present(detailFeedAlertController, animated: true)
+        } else {
+            detailFeedCoordinator?.presentLoginView()
+        }
     }
+    
+    private let detailFeedAlertController: UIAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
     
     private lazy var battleStackView: UIStackView = {
         let battleCountView: UIStackView = makeSymbolCountStackView(imageName: "fight", countInt: viewModel.feed.battleCount, countDouble: nil)
@@ -304,6 +299,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         imageSlider.numberOfPages = viewModel.feed.imageCount
         configureProfileStackView()
         configureCollectionViewShadowOn()
+        configureDetailFeedAlertViewController()
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -345,6 +341,21 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     private func configureProfileStackView() {
         profileNameLabel.text = viewModel.feed.uploader.nickname
         profileImageButton.setImage(viewModel.feed.uploader.profileImage, for: .normal)
+    }
+    
+    private func configureDetailFeedAlertViewController() {
+        
+        let blockFeed = UIAlertAction(title: "피드 차단", style: .destructive, handler: { [weak self] _ in
+            //                self?.viewModel.editFeed()
+        })
+        let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
+            //                guard let strongSelf = self else { return }
+            //                self?.present(strongSelf.deleteAlertController, animated: true)
+        })
+        let cancel = UIAlertAction(title: "취소", style: .cancel)
+        
+        [blockFeed, reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+        
     }
     
     // MARK: - Binding

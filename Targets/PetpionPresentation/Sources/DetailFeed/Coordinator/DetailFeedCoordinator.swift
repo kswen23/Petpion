@@ -41,15 +41,6 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         navigationController.present(detailFeedViewController, animated: true)
     }
     
-    public func presentFeedSettingView() {
-        if User.isLogin == true {
-            // 신고 및 차단기능 추가예정
-//            presentLoginView()
-        } else {
-            presentLoginView()
-        }
-    }
-    
     func pushUserPageView(user: User, userPageStyle: UserPageStyle) {
         guard let userPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
         childCoordinators.append(userPageCoordinator)
@@ -58,7 +49,7 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         userPageCoordinator.start()
     }
     
-    private func presentLoginView() {
+    func presentLoginView() {
         guard let mainViewController = navigationController.visibleViewController as? PresentableDetailFeedViewController else { return }
         let loginViewController = getLoginViewController()
         loginViewController.modalPresentationStyle = .custom
