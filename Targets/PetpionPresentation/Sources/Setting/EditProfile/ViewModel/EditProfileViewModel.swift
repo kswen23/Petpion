@@ -46,7 +46,7 @@ final class EditProfileViewModel: EditProfileViewModelProtocol {
     
     // MARK: - Initialize
     init(uploadUserUseCase: UploadUserUseCase,
-         user: User = .empty) {
+         user: User) {
         self.uploadUserUseCase = uploadUserUseCase
         self.user = user
     }

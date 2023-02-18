@@ -16,7 +16,6 @@ public final class SignOutCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -36,7 +35,7 @@ public final class SignOutCoordinator: NSObject, Coordinator {
 
 extension SignOutCoordinator {
     func getSignOutViewController() -> SignOutViewController {
-        guard let user = user,
+        guard let user = User.currentUser,
               let deleteFeedUseCase: DeleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self)
         else {
             fatalError("getSignOutViewController occurred error")

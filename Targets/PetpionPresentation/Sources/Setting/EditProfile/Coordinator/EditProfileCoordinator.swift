@@ -16,7 +16,6 @@ public final class EditProfileCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -48,7 +47,8 @@ extension EditProfileCoordinator {
     
     private func getEditProfileViewController() -> EditProfileViewController {
         guard let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self),
-              let user: User else {
+              let user = User.currentUser
+        else {
             fatalError("getEditProfileViewController did occurred error")
         }
         let viewModel: EditProfileViewModelProtocol = EditProfileViewModel(uploadUserUseCase: uploadUserUseCase, user: user)

@@ -35,11 +35,6 @@ public final class SettingCoordinator: NSObject, Coordinator {
     
     func startSettingActionScene(with action: SettingModel.SettingAction, user: User? = nil) {
         guard let settingActionCoordinator: Coordinator = DIContainer.shared.resolve(Coordinator.self, name: action.coordinatorString) else { return }
-        if action == .profile {
-            (settingActionCoordinator as! EditProfileCoordinator).user = user!
-        } else if action == .signOut {
-            (settingActionCoordinator as! SignOutCoordinator).user = user!
-        }
         childCoordinators.append(settingActionCoordinator)
         settingActionCoordinator.start()
     }
