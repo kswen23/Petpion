@@ -56,6 +56,10 @@ public struct PresentationDIContainer: Containable {
             UserPageCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "ReportUserCoordinator") { _ in
+            ReportUserCoordinator(navigationController: navigationController)
+        }
+        
         container.register(Coordinator.self, name: "SettingCoordinator") { _ in
             SettingCoordinator(navigationController: navigationController)
         }

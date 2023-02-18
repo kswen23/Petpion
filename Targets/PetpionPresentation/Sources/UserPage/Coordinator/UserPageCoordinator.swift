@@ -30,22 +30,9 @@ public final class UserPageCoordinator: NSObject, Coordinator {
     }
     
     public func start() {
-        if userPageStyle == .myPageWithSettings, User.isLogin == false {
-            
-        } else {
-            let myPageViewController = getUserPageViewController()
-            myPageViewController.coordinator = self
-            navigationController.pushViewController(myPageViewController, animated: true)
-        }
-//        if User.isLogin {
-//            let myPageViewController = getUserPageViewController()
-//            myPageViewController.coordinator = self
-//            navigationController.pushViewController(myPageViewController, animated: true)
-//        } else {
-//            let needLoginViewController = getNeedLoginViewController()
-//            needLoginViewController.coordinator = self
-//            navigationController.pushViewController(needLoginViewController, animated: true)
-//        }
+        let myPageViewController = getUserPageViewController()
+        myPageViewController.coordinator = self
+        navigationController.pushViewController(myPageViewController, animated: true)
     }
     
     func pushSettingViewController() {
@@ -60,6 +47,15 @@ public final class UserPageCoordinator: NSObject, Coordinator {
         detailFeedCoordinator.feed = feed
         detailFeedCoordinator.detailFeedStyle = detailFeedStyle
         detailFeedCoordinator.start()
+    }
+    
+    func presentReportUserViewController() {
+        guard let reportUserCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "ReportUserCoordinator") as? ReportUser Coordinator else { return }
+        childCoordinators.append(reportUserCoordinator)
+        let reportUserNavigationController = UINavigationController()
+        reportUserCoordinator.navigationController = reportUserNavigationController
+        reportUserCoordinator.start()
+        navigationController.present(reportUserNavigationController, animated: true)
     }
 }
 

@@ -69,6 +69,10 @@ public struct DomainDIContainer: Containable {
         container.register(MakeNotificationUseCase.self) { _ in
             DefaultMakeNotificationUseCase()
         }
+        
+        container.register(ReportUseCase.self) { _ in
+            DefaultReportUseCase(firestoreRepository: firestoreRepository)
+        }
     }
     
 }

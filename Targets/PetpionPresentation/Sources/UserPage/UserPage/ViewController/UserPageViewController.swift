@@ -188,8 +188,7 @@ final class UserPageViewController: HasCoordinatorViewController {
                 //                self?.viewModel.editFeed()
             })
             let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
-                //                guard let strongSelf = self else { return }
-                //                self?.present(strongSelf.deleteAlertController, animated: true)
+                self?.userPageCoordinator?.presentReportUserViewController()
             })
             let cancel = UIAlertAction(title: "취소", style: .cancel)
             
@@ -248,6 +247,7 @@ extension UserPageViewController: NotificationObservable {
 }
 
 extension UserPageViewController: UICollectionViewDelegate {
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let selectedFeed = viewModel.userFeedSubject.value[indexPath.item]
         var detailFeedStyle: DetailFeedStyle!
