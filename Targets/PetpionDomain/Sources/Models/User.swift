@@ -33,6 +33,12 @@ public struct User: Identifiable {
 }
 
 public extension User {
+    static var currentUser: Self?
+    
+    static let isLogin: Bool = {
+        currentUser != nil
+    }()
+    
     static let voteMaxCountPolicy: Int = 5
     
     static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)

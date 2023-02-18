@@ -12,25 +12,6 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-public protocol Coordinator: AnyObject {
-    var childCoordinators: [Coordinator] { get set }
-    var navigationController: UINavigationController { get set }
-    
-    func start()
-}
-
-public extension Coordinator {
-    
-    func childDidFinish(_ child: Coordinator?) {
-        for (index, coordinator) in childCoordinators.enumerated() {
-            if coordinator === child {
-                childCoordinators.remove(at: index)
-                break
-            }
-        }
-    }
-}
-
 public final class MainCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
@@ -47,49 +28,57 @@ public final class MainCoordinator: NSObject, Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
-    public func presentFeedImagePicker() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
+    func presentFeedImagePicker() {
+        if User.isLogin == true {
             guard let feedImagePickerCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedImagePickerCoordinator") as? FeedImagePickerCoordinator else { return }
             feedImagePickerCoordinator.parentCoordinator = self
             childCoordinators.append(feedImagePickerCoordinator)
             feedImagePickerCoordinator.start()
             navigationController.present(feedImagePickerCoordinator.navigationController, animated: true)
         } else {
-            presentLoginView()
+            pushNeedLoginView(navigationItemType: .uploadFeed)
         }
     }
     
-    public func presentDetailFeed(transitionDependency: FeedTransitionDependency, feed: PetpionFeed) {
+    func presentDetailFeed(transitionDependency: FeedTransitionDependency, feed: PetpionFeed) {
         guard let detailFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "DetailFeedCoordinator") as? DetailFeedCoordinator else { return }
-        childCoordinators.append(detailFeedCoordinator)
         detailFeedCoordinator.feed = feed
+        detailFeedCoordinator.detailFeedStyle = DetailFeedStyle.otherUserDetailFeed
+        childCoordinators.append(detailFeedCoordinator)
         detailFeedCoordinator.presentDetailFeedView(transitionDependency: transitionDependency)
     }
     
-    public func pushVoteMainViewController(user: User) {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
+    func pushVoteMainView() {
+        if User.isLogin == true {
             guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") as? VoteMainCoordinator else { return }
             childCoordinators.append(voteMainCoordinator)
-            voteMainCoordinator.user = user
+//            voteMainCoordinator.user = user
             voteMainCoordinator.start()
         } else {
-            presentLoginView()
+            pushNeedLoginView(navigationItemType: .vote)
         }
     }
     
-    public func pushMyPageViewController(user: User) {
-        guard let myPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "MyPageCoordinator") as? MyPageCoordinator else { return }
-        childCoordinators.append(myPageCoordinator)
-        myPageCoordinator.user = user
-        myPageCoordinator.start()
+    func pushUserPageView(user: User?, userPageStyle: UserPageStyle) {
+        if User.isLogin == false, userPageStyle == .myPageWithSettings {
+            return pushNeedLoginView(navigationItemType: .myPage)
+        }
+        guard let userPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
+        childCoordinators.append(userPageCoordinator)
+        userPageCoordinator.user = user
+        if User.isLogin == true {
+            userPageCoordinator.userPageStyle = userPageStyle
+        } else {
+            userPageCoordinator.userPageStyle = .myPageWithOutSettings
+        }
+        userPageCoordinator.start()
     }
     
-    public func presentLoginView() {
-        guard let mainViewController = navigationController.visibleViewController as? MainViewController else { return }
-        let loginViewController = getLoginViewController()
-        loginViewController.modalPresentationStyle = .custom
-        loginViewController.transitioningDelegate = mainViewController
-        mainViewController.present(loginViewController, animated: true)
+    private func pushNeedLoginView(navigationItemType: NavigationItemType) {
+        guard let needLoginCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "NeedLoginCoordinator") as? NeedLoginCoordinator else { return }
+        needLoginCoordinator.navigationItemType = navigationItemType
+        childCoordinators.append(needLoginCoordinator)
+        needLoginCoordinator.start()
     }
 }
 
