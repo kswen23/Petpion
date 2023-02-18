@@ -48,11 +48,11 @@ public final class MainCoordinator: NSObject, Coordinator {
         detailFeedCoordinator.presentDetailFeedView(transitionDependency: transitionDependency)
     }
     
+    
     func pushVoteMainView() {
         if User.isLogin == true {
             guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") as? VoteMainCoordinator else { return }
             childCoordinators.append(voteMainCoordinator)
-//            voteMainCoordinator.user = user
             voteMainCoordinator.start()
         } else {
             pushNeedLoginView(navigationItemType: .vote)
@@ -110,15 +110,5 @@ private extension MainCoordinator {
         }
         let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
         return MainViewController(viewModel: viewModel)
-    }
-    
-    
-    private func getLoginViewController() -> LoginViewController {
-        guard let loginUseCase: LoginUseCase = DIContainer.shared.resolve(LoginUseCase.self),
-              let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else {
-            fatalError("getLoginViewController did occurred error")
-        }
-        let viewModel: LoginViewModelProtocol = LoginViewModel(loginUseCase: loginUseCase, uploadUserUseCase: uploadUserUseCase)
-        return LoginViewController(viewModel: viewModel)
     }
 }

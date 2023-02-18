@@ -49,11 +49,9 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         userPageCoordinator.start()
     }
     
-    func presentLoginView() {
+    func presentLoginView(transitioningDelegate: UIViewControllerTransitioningDelegate?) {
         guard let mainViewController = navigationController.visibleViewController as? PresentableDetailFeedViewController else { return }
-        let loginViewController = getLoginViewController()
-        loginViewController.modalPresentationStyle = .custom
-        loginViewController.transitioningDelegate = mainViewController
+        let loginViewController = getLoginViewController(transitioningDelegate: transitioningDelegate)
         mainViewController.present(loginViewController, animated: true)
     }
     
@@ -100,7 +98,7 @@ private extension DetailFeedCoordinator {
         return PresentableDetailFeedViewController(dependency: transitionDependency, viewModel: detailFeedViewModel)
     }
     
-    private func getLoginViewController() -> LoginViewController {
+    private func getLoginViewController(transitioningDelegate: UIViewControllerTransitioningDelegate?) -> LoginViewController {
         guard let loginUseCase: LoginUseCase = DIContainer.shared.resolve(LoginUseCase.self),
               let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self) else {
             fatalError("getLoginViewController did occurred error")

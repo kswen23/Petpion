@@ -29,7 +29,15 @@ final class LoginViewController: UIViewController {
     init(viewModel: LoginViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.initializeTransition()
+        
     }
+    
+    private func initializeTransition() {
+        self.transitioningDelegate = self
+        self.modalPresentationStyle = .custom
+    }
+
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -86,5 +94,14 @@ extension LoginViewController: ASAuthorizationControllerDelegate, ASAuthorizatio
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         print("Sign in with Apple errored: \(error)")
+    }
+}
+
+extension LoginViewController: UIViewControllerTransitioningDelegate {
+    
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+        let loginPresentationController = CustomPresentationController(presentedViewController: presented, presenting: presenting)
+        loginPresentationController.fractionalHeight = 0.4
+        return loginPresentationController
     }
 }

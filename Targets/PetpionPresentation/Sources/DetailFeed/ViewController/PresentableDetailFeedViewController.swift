@@ -93,7 +93,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         if User.isLogin {
             self.present(detailFeedAlertController, animated: true)
         } else {
-            detailFeedCoordinator?.presentLoginView()
+            detailFeedCoordinator?.presentLoginView(transitioningDelegate: self)
         }
     }
     
@@ -496,29 +496,15 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
 extension PresentableDetailFeedViewController: UIViewControllerTransitioningDelegate {
     
     func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        if presented is LoginViewController {
-            let loginPresentationController = CustomPresentationController(presentedViewController: presented, presenting: presenting)
-            loginPresentationController.fractionalHeight = 0.4
-            return loginPresentationController
-        } else {
-            return FeedPresentationController(presentedViewController: presented, presenting: presenting)
-        }
+        FeedPresentationController(presentedViewController: presented, presenting: presenting)
     }
     
     func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        if presented is LoginViewController {
-            return nil
-        } else {
-            return FeedTransitionAnimation(animationType: .present, dependency: dependency)
-        }
+        FeedTransitionAnimation(animationType: .present, dependency: dependency)
     }
     
     func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        if dismissed is LoginViewController {
-            return nil
-        } else {
-            return FeedTransitionAnimation(animationType: .dismiss, dependency: dependency)
-        }
+        FeedTransitionAnimation(animationType: .dismiss, dependency: dependency)
     }
     
 }

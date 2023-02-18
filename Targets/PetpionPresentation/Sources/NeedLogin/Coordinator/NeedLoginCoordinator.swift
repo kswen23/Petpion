@@ -29,11 +29,8 @@ final class NeedLoginCoordinator: NSObject, Coordinator {
     }
     
     func presentLoginView() {
-        guard let needLoginViewController = navigationController.visibleViewController as? NeedLoginViewController else { return }
         let loginViewController = getLoginViewController()
-        loginViewController.modalPresentationStyle = .custom
-        loginViewController.transitioningDelegate = needLoginViewController
-        needLoginViewController.present(loginViewController, animated: true)
+        navigationController.present(loginViewController, animated: true)
     }
     
     func pushSettingViewController() {
