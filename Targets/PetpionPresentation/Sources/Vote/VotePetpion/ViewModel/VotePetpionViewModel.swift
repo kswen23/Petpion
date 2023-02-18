@@ -59,14 +59,13 @@ final class VotePetpionViewModel: VotePetpionViewModelProtocol {
     
     // MARK: - Input
     func petpionFeedDidSelected(to section: ImageCollectionViewSection) {
-        let nextIndex = currentIndex + 1
-        guard nextIndex < petpionVotePareArraySubject.value.count else {
-            return voteIndexSubject.send(needToPopViewController)
-        }
-        
         Task {
             await uploadVoteResultOnServer(section: section)
             await MainActor.run {
+                let nextIndex = currentIndex + 1
+                guard nextIndex < petpionVotePareArraySubject.value.count else {
+                    return voteIndexSubject.send(needToPopViewController)
+                }
                 currentIndex = nextIndex
                 voteIndexSubject.send(nextIndex)
             }
