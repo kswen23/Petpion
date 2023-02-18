@@ -15,7 +15,6 @@ public final class VoteMainCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
-    var user: User!
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -44,7 +43,8 @@ private extension VoteMainCoordinator {
               let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let fetchUserUseCase: FetchUserUseCase = DIContainer.shared.resolve(FetchUserUseCase.self),
               let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self),
-              let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self)
+              let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self),
+              let user = User.currentUser
         else {
             fatalError("GetVoteMainViewController did occurred error")
         }

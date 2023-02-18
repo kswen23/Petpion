@@ -20,7 +20,7 @@ protocol BaseViewModelInput {
 
 protocol BaseViewModelOutput {
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
-    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView, listener: UICollectionViewCell) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
     func getSelectedFeed(index: IndexPath) -> PetpionFeed
 }
 
@@ -32,6 +32,7 @@ protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput {
 
 final class BaseViewModel: BaseViewModelProtocol {
     
+    weak var petFeedCollectionViewCellListener: PetFeedCollectionViewCellListener?
     private var cancellables = Set<AnyCancellable>()
     var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     lazy var snapshotSubject = petpionFeedSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
@@ -55,8 +56,8 @@ final class BaseViewModel: BaseViewModelProtocol {
             }
     }
 
-    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
-        let registration = makePetFeedCollectionViewCellRegistration()
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView, listener: UICollectionViewCell) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
+        let registration = makePetFeedCollectionViewCellRegistration(listener: listener)
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
                 using: registration,
@@ -66,10 +67,12 @@ final class BaseViewModel: BaseViewModelProtocol {
         }
     }
 
-    func makePetFeedCollectionViewCellRegistration() -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
+    func makePetFeedCollectionViewCellRegistration(listener: UICollectionViewCell) -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
         UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
             guard let viewModel = self?.makeViewModel(for: item) else { return }
+            cell.listener = self?.petFeedCollectionViewCellListener
             cell.configure(with: viewModel)
+            cell.listener = listener as? any PetFeedCollectionViewCellListener
         }
     }
 

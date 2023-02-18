@@ -19,7 +19,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         self.coordinator as? DetailFeedCoordinator
     }()
     private var cancellables = Set<AnyCancellable>()
-
+    
     let viewModel: DetailFeedViewModelProtocol
     
     private lazy var detailFeedImageCollectionView: UICollectionView = UICollectionView(frame: .zero,
@@ -39,14 +39,22 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         viewModel.pageControlValueChanged(imageSlider.currentPage)
     }
     
-    private let profileImageButton: CircleButton = {
-        let circleImageButton = CircleButton(diameter: 35)
-        circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
-        circleImageButton.tintColor = .darkGray
-        circleImageButton.backgroundColor = .white
-        circleImageButton.layer.borderWidth = 1
-        circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
-        return circleImageButton
+    private lazy var profileImageView: UIImageView = {
+        let imageView = UIImageView()
+        let radius: CGFloat = 18
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            imageView.heightAnchor.constraint(equalToConstant: radius*2),
+            imageView.widthAnchor.constraint(equalToConstant: radius*2)
+        ])
+        imageView.image = UIImage(systemName: "person.fill")
+        imageView.contentMode = .scaleAspectFill
+        imageView.tintColor = .darkGray
+        imageView.backgroundColor = .white
+        imageView.layer.borderWidth = 1.0
+        imageView.layer.borderColor = UIColor.lightGray.cgColor
+        imageView.roundCorners(cornerRadius: radius)
+        return imageView
     }()
     
     private let profileNameLabel: UILabel = {
@@ -58,37 +66,14 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     private lazy var profileStackView: UIStackView = {
         let stackView = UIStackView()
-        [profileImageButton, profileNameLabel].forEach {
+        [profileImageView, profileNameLabel].forEach {
             stackView.addArrangedSubview($0)
         }
         stackView.spacing = 8
         stackView.alignment = .center
         return stackView
     }()
-    
-    private lazy var settingButton: UIButton = {
-        let button = UIButton()
-        let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular, scale: .medium)
-        button.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
-        button.tintColor = .black
-        button.addTarget(self, action: #selector(settingButtonDidTapped), for: .touchUpInside)
-        return button
-    }()
-    
-    @objc func settingButtonDidTapped() {
-        present(settingAlertController, animated: true)
-    }
-    
-    private lazy var settingAlertController: UIAlertController = {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        return alert
-    }()
-    
-    private lazy var deleteAlertController: UIAlertController = {
-        let alert = UIAlertController(title: "정말 피드를 삭제하시겠어요?", message: "삭제한 정보들은 되돌릴수 없습니다.", preferredStyle: .alert)
-        return alert
-    }()
-    
+
     private lazy var battleStackView: UIStackView = {
         let battleCountView: UIStackView = makeSymbolCountStackView(imageName: "fight", countInt: viewModel.feed.battleCount, countDouble: nil)
         let winCountView: UIStackView = makeSymbolCountStackView(imageName: "win", countInt: viewModel.feed.likeCount, countDouble: nil)
@@ -103,6 +88,12 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }()
     private lazy var commentLabel: UILabel = UILabel()
     private lazy var timeLogLabel: UILabel = UILabel()
+    
+    private var settingBarButton: UIBarButtonItem?
+    private var settingAlertController: UIAlertController?
+    private var deleteAlertController: UIAlertController?
+    private var ellipsisBarButton: UIBarButtonItem?
+    private var detailFeedAlertController: UIAlertController?
     
     private lazy var indicatorBarButton: UIBarButtonItem = {
         let indicatorView = UIActivityIndicatorView(style: .medium)
@@ -124,9 +115,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.topItem?.title = ""
         self.navigationItem.title = "피드"
-        view.backgroundColor = .white
     }
     
     override func viewDidLoad() {
@@ -141,7 +130,6 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         layoutDetailFeedImageCollectionView()
         layoutImageSlider()
         layoutProfileStackView()
-        layoutSettingButton()
         layoutBattleStackView()
         layoutCommentLabel()
         layoutTimeLogLabel()
@@ -180,15 +168,6 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         ])
     }
     
-    private func layoutSettingButton() {
-        view.addSubview(settingButton)
-        settingButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            settingButton.centerYAnchor.constraint(equalTo: profileStackView.centerYAnchor),
-            settingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -25)
-        ])
-    }
-    
     private func layoutBattleStackView() {
         view.addSubview(battleStackView)
         battleStackView.translatesAutoresizingMaskIntoConstraints = false
@@ -220,13 +199,70 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     // MARK: - Configure
     private func configure() {
+        configureNavigationItem()
         configureDetailFeedImageCollectionView()
         configureCommentLabel()
         configureTimeLogLabel()
         imageSlider.numberOfPages = viewModel.feed.imageCount
         configureProfileStackView()
         configureCollectionViewShadowOn()
-        configureAlertController()
+    }
+    
+    private func configureNavigationItem() {
+        switch viewModel.detailFeedStyle {
+        case .editableUserDetailFeed:
+            configureSettingBarButton()
+            configureAlertController()
+        case .uneditableUserDetailFeed:
+            self.navigationItem.rightBarButtonItem = nil
+        case .otherUserDetailFeed:
+            configureEllipsisBarButton()
+            configureDetailFeedAlertViewController()
+        }
+    }
+    
+    private func configureSettingBarButton() {
+        settingBarButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis"), style: .done, target: self, action: #selector(settingButtonDidTapped))
+        if let settingBarButton = settingBarButton {
+            settingBarButton.tintColor = .black
+            self.navigationItem.rightBarButtonItem = settingBarButton
+        }
+    }
+    
+    @objc private func settingButtonDidTapped() {
+        if let settingAlertController = settingAlertController {
+            present(settingAlertController, animated: true)
+        }
+    }
+    
+    private func configureEllipsisBarButton() {
+        ellipsisBarButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis"), style: .done, target: self, action: #selector(ellipsisButtonDidTapped))
+        if let ellipsisBarButton = ellipsisBarButton {
+            ellipsisBarButton.tintColor = .black
+            self.navigationItem.rightBarButtonItem = ellipsisBarButton
+        }
+    }
+    
+    @objc func ellipsisButtonDidTapped() {
+        if let detailFeedAlertController = detailFeedAlertController {
+            present(detailFeedAlertController, animated: true)
+        }
+    }
+    
+    private func configureDetailFeedAlertViewController() {
+        detailFeedAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        if let detailFeedAlertController = detailFeedAlertController {
+            let blockFeed = UIAlertAction(title: "피드 차단", style: .destructive, handler: { [weak self] _ in
+                //                self?.viewModel.editFeed()
+            })
+            let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
+                //                guard let strongSelf = self else { return }
+                //                self?.present(strongSelf.deleteAlertController, animated: true)
+            })
+            let cancel = UIAlertAction(title: "취소", style: .cancel)
+            
+            [blockFeed, reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+        }
     }
     
     private func configureDetailFeedImageCollectionView() {
@@ -262,27 +298,30 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     private func configureProfileStackView() {
         profileNameLabel.text = viewModel.feed.uploader.nickname
-        profileImageButton.setImage(viewModel.feed.uploader.profileImage, for: .normal)
+        profileImageView.image = viewModel.feed.uploader.profileImage
     }
     
     private func configureAlertController() {
-        let editAction = UIAlertAction(title: "수정하기", style: .default, handler: { [weak self] _ in
-            self?.viewModel.editFeed()
-        })
-        let deleteAction = UIAlertAction(title: "삭제하기", style: .destructive, handler: { [weak self] _ in
-            guard let strongSelf = self else { return }
-            self?.present(strongSelf.deleteAlertController, animated: true)
-        })
-        let cancel = UIAlertAction(title: "취소", style: .cancel)
-        
-        [editAction, deleteAction, cancel].forEach { settingAlertController.addAction($0) }
-        
-        let willDelete = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
-            self?.viewModel.deleteFeed()
+        settingAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        deleteAlertController = UIAlertController(title: "정말 피드를 삭제하시겠어요?", message: "삭제한 정보들은 되돌릴수 없습니다.", preferredStyle: .alert)
+        if  let settingAlertController = settingAlertController,
+            let deleteAlertController = deleteAlertController {
+            let editAction = UIAlertAction(title: "수정하기", style: .default, handler: { [weak self] _ in
+                self?.viewModel.editFeed()
+            })
+            let deleteAction = UIAlertAction(title: "삭제하기", style: .destructive, handler: { [weak self] _ in
+                self?.present(deleteAlertController, animated: true)
+            })
+            let cancel = UIAlertAction(title: "취소", style: .cancel)
+            
+            [editAction, deleteAction, cancel].forEach { settingAlertController.addAction($0) }
+            let willDelete = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+                self?.viewModel.deleteFeed()
+            }
+            let willNotDelete = UIAlertAction(title: "취소", style: .default)
+            
+            [willDelete, willNotDelete].forEach { deleteAlertController.addAction($0) }
         }
-        let willNotDelete = UIAlertAction(title: "취소", style: .default)
-
-        [willDelete, willNotDelete].forEach { deleteAlertController.addAction($0) }
     }
     
     // MARK: - Binding
@@ -310,7 +349,19 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }
     
     private func bindDetailFeedViewState() {
-        viewModel.viewStateSubject.sink { [weak self] state in
+        switch viewModel.detailFeedStyle {
+            
+        case .editableUserDetailFeed:
+            bindFeedManagingSubject()
+        case .uneditableUserDetailFeed:
+            return
+        case .otherUserDetailFeed:
+            return
+        }
+    }
+    
+    private func bindFeedManagingSubject() {
+        viewModel.feedManagingSubject.sink { [weak self] state in
             guard let strongSelf = self else { return }
             switch state {
             case .delete:
@@ -318,7 +369,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             case .edit:
                 self?.detailFeedCoordinator?.pushEditFeedView(listener: strongSelf, snapshot: strongSelf.datasource.snapshot())
             case .finish:
-                self?.navigationItem.rightBarButtonItem = nil
+                self?.navigationItem.rightBarButtonItem = strongSelf.settingBarButton
                 self?.detailFeedCoordinator?.popDetailFeedView()
             }
         }.store(in: &cancellables)
@@ -363,7 +414,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         
         return symbolCountStackView
     }
-
+    
 }
 
 extension PushableDetailFeedViewController: EditFeedViewControllerListener {

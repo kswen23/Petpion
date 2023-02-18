@@ -76,8 +76,20 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         }
         stackView.spacing = 8
         stackView.alignment = .center
+        stackView.addGestureRecognizer(profileStackViewTapGesture)
         return stackView
     }()
+    
+    private lazy var profileStackViewTapGesture: UITapGestureRecognizer = {
+        let tapGesture = UITapGestureRecognizer()
+        tapGesture.addTarget(self, action: #selector(profileStackViewDidTapped))
+        return tapGesture
+    }()
+    
+    @objc private func profileStackViewDidTapped() {
+//        detailFeedCoordinator?.pushUserPageView(user: viewModel.feed.uploader, userPageStyle: .otherUserPage)
+    }
+
     
     private lazy var settingButton: UIButton = {
         let button = UIButton()

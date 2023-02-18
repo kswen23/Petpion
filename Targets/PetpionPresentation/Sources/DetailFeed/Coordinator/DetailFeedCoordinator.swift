@@ -12,11 +12,18 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
+enum DetailFeedStyle {
+    case editableUserDetailFeed
+    case uneditableUserDetailFeed
+    case otherUserDetailFeed
+}
+
 public final class DetailFeedCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     var feed: PetpionFeed?
+    var detailFeedStyle: DetailFeedStyle?
     
     public init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -35,11 +42,20 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
     }
     
     public func presentFeedSettingView() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) == true {
-            presentLoginView()
+        if User.isLogin == true {
+            // 신고 및 차단기능 추가예정
+//            presentLoginView()
         } else {
             presentLoginView()
         }
+    }
+    
+    func pushUserPageView(user: User, userPageStyle: UserPageStyle) {
+        guard let userPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
+        childCoordinators.append(userPageCoordinator)
+        userPageCoordinator.user = user
+        userPageCoordinator.userPageStyle = userPageStyle
+        userPageCoordinator.start()
     }
     
     private func presentLoginView() {
@@ -50,15 +66,15 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         mainViewController.present(loginViewController, animated: true)
     }
     
-    public func popDetailFeedView() {
+    func popDetailFeedView() {
         navigationController.popViewController(animated: true)
     }
     
-    public func dismissDetailFeedView() {
+    func dismissDetailFeedView() {
         navigationController.dismiss(animated: true)
     }
     
-    public func pushEditFeedView(listener: EditFeedViewControllerListener?,
+    func pushEditFeedView(listener: EditFeedViewControllerListener?,
                                  snapshot: NSDiffableDataSourceSnapshot<Int, URL>) {
         guard let editFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "EditFeedCoordinator") as? EditFeedCoordinator else { return }
         childCoordinators.append(editFeedCoordinator)
@@ -74,20 +90,22 @@ private extension DetailFeedCoordinator {
     private func getPushableDetailFeedViewController() -> PushableDetailFeedViewController {
         guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let deleteFeedUseCase: DeleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self),
-              let feed = feed
+              let feed = feed,
+              let detailFeedStyle = detailFeedStyle
         else {
             fatalError("getDetailFeedViewController occurred Error")
         }
-        let viewModel: DetailFeedViewModelProtocol = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
+        let viewModel: DetailFeedViewModelProtocol = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
         return PushableDetailFeedViewController(viewModel: viewModel)
     }
     
     private func getPresentableDetailFeedViewController(transitionDependency: FeedTransitionDependency) -> PresentableDetailFeedViewController {
         guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let deleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self),
-              let feed = feed
+              let feed = feed,
+              let detailFeedStyle = detailFeedStyle
         else { fatalError("getDetailFeedViewController did occurred error") }
-        let detailFeedViewModel = DetailFeedViewModel(feed: feed, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
+        let detailFeedViewModel = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
         return PresentableDetailFeedViewController(dependency: transitionDependency, viewModel: detailFeedViewModel)
     }
     

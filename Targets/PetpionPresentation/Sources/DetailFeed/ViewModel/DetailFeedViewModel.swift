@@ -12,7 +12,7 @@ import UIKit
 
 import PetpionDomain
 
-enum DetailFeedViewState {
+enum FeedManagingState {
     case delete
     case edit
     case finish
@@ -35,7 +35,8 @@ protocol DetailFeedViewModelOutput {
 protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var feed: PetpionFeed { get }
-    var viewStateSubject: PassthroughSubject<DetailFeedViewState, Never> { get }
+    var detailFeedStyle: DetailFeedStyle { get }
+    var feedManagingSubject: PassthroughSubject<FeedManagingState, Never> { get }
     var urlSubject: CurrentValueSubject<[URL], Never> { get }
     var currentPageSubject: CurrentValueSubject<Int, Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, URL>,Publishers.Map<PassthroughSubject<[URL], Never>,NSDiffableDataSourceSnapshot<Int, URL>>.Failure> { get }
@@ -46,8 +47,9 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     let fetchFeedUseCase: FetchFeedUseCase
     let deleteFeedUseCase: DeleteFeedUseCase
     var feed: PetpionFeed
+    let detailFeedStyle: DetailFeedStyle
     
-    let viewStateSubject: PassthroughSubject<DetailFeedViewState, Never> = .init()
+    let feedManagingSubject: PassthroughSubject<FeedManagingState, Never> = .init()
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
     // no data일시 
 //    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
@@ -63,9 +65,11 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
     // MARK: - Initialize
     init(feed: PetpionFeed,
+         detailFeedStyle: DetailFeedStyle,
          fetchFeedUseCase: FetchFeedUseCase,
          deleteFeedUseCase: DeleteFeedUseCase) {
         self.feed = feed
+        self.detailFeedStyle = detailFeedStyle
         self.fetchFeedUseCase = fetchFeedUseCase
         self.deleteFeedUseCase = deleteFeedUseCase
         fetchFeedImages()
@@ -93,16 +97,16 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     }
     
     func editFeed() {
-        viewStateSubject.send(.edit)
+        feedManagingSubject.send(.edit)
     }
     
     func deleteFeed() {
-        viewStateSubject.send(.delete)
+        feedManagingSubject.send(.delete)
         Task {
             let feedDeleted = await deleteFeedUseCase.deleteFeed(feed)
             if feedDeleted {
                 await MainActor.run {
-                    viewStateSubject.send(.finish)
+                    feedManagingSubject.send(.finish)
                 }
             }
         }

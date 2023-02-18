@@ -11,10 +11,15 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
-public final class PetFeedCollectionViewCell: UICollectionViewCell {
+protocol PetFeedCollectionViewCellListener: NSObject {
+    func profileStackViewDidTapped(with cell: UICollectionViewCell)
+}
+
+final class PetFeedCollectionViewCell: UICollectionViewCell {
+    
+    weak var listener: PetFeedCollectionViewCellListener?
     
     let baseView: UIView = UIView()
-    
     let thumbnailImageView: CustomShimmerImageView = {
         let imageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
         imageView.contentMode = .scaleAspectFill
@@ -28,15 +33,22 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         return button
     }()
     
-    private let profileImageButton: CircleButton = {
-        let circleImageButton = CircleButton(diameter: 25)
-        circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
-        circleImageButton.contentMode = .scaleAspectFill
-        circleImageButton.tintColor = .petpionLightGray
-        circleImageButton.backgroundColor = .white
-        circleImageButton.layer.borderWidth = 0.5
-        circleImageButton.layer.borderColor = UIColor.lightGray.cgColor
-        return circleImageButton
+    private lazy var profileImageView: UIImageView = {
+        let imageView = UIImageView()
+        let radius: CGFloat = 13
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            imageView.heightAnchor.constraint(equalToConstant: radius*2),
+            imageView.widthAnchor.constraint(equalToConstant: radius*2)
+        ])
+        imageView.image = UIImage(systemName: "person.fill")
+        imageView.contentMode = .scaleAspectFill
+        imageView.tintColor = .petpionLightGray
+        imageView.backgroundColor = .white
+        imageView.layer.borderWidth = 0.5
+        imageView.layer.borderColor = UIColor.lightGray.cgColor
+        imageView.roundCorners(cornerRadius: radius)
+        return imageView
     }()
     
     private let profileNameLabel: UILabel = {
@@ -48,13 +60,24 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     private lazy var profileStackView: UIStackView = {
         let stackView = UIStackView()
-        [profileImageButton, profileNameLabel].forEach {
+        [profileImageView, profileNameLabel].forEach {
             stackView.addArrangedSubview($0)
         }
-        stackView.spacing = 3
+        stackView.spacing = 4
         stackView.alignment = .center
+        stackView.addGestureRecognizer(profileStackViewTapGesture)
         return stackView
     }()
+    
+    private lazy var profileStackViewTapGesture: UITapGestureRecognizer = {
+        let tapGesture = UITapGestureRecognizer()
+        tapGesture.addTarget(self, action: #selector(profileStackViewDidTapped))
+        return tapGesture
+    }()
+    
+    @objc private func profileStackViewDidTapped() {
+        listener?.profileStackViewDidTapped(with: self)
+    }
     
     private let commentLabel: UILabel = {
         let label = UILabel()
@@ -91,11 +114,12 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
     private var heightLayoutAnchor: NSLayoutConstraint?
     
     // MARK: - Cell LifeCycle
-    public override func prepareForReuse() {
+    override func prepareForReuse() {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
         thumbnailImageView.image = nil
-        profileImageButton.imageView?.image = nil
+        thumbnailImageView.stopShimmerAnimating()
+        profileImageView.image = nil
         imageCountButton.isHidden = true
     }
     
@@ -190,18 +214,14 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
         configureCellHeight(viewModel.thumbnailRatio)
         configureImageCountButtonTitle(with: viewModel.imageCount)
         configureThumbnailImageView(viewModel.thumbnailImageURL)
-        profileImageButton.setImage(viewModel.profileImage, for: .normal)
+//        configureImage(viewModel)
+        profileImageView.image = viewModel.profileImage
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
         likeCountLabel.text = String(viewModel.likeCount)
     }
     
-    private func configureThumbnailImageView(_ url: URL?) {
-        // image cache 후 image 저장
-//        if let image = thumbnailImageView.image {
-//            return thumbnailImageView.image = image
-//        }
-        
+    func configureThumbnailImageView(_ url: URL?) {
         Task {
             guard let url = url else { return }
             let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
@@ -211,19 +231,56 @@ public final class PetFeedCollectionViewCell: UICollectionViewCell {
             }
         }
     }
+//    func configureThumbnailImageView(_ url: URL?) {
+//        guard let url = url else {
+//            thumbnailImageView.stopShimmerAnimating()
+//            thumbnailImageView.image = nil
+//            return
+//        }
+//
+//        // URL을 통해 이미지 다운로드
+//        let task = Task {
+//
+//            await MainActor.run {
+//                guard let data = try? Data(contentsOf: url),
+//                      let image = UIImage(data: data) else {
+//                    return
+//                }
+//                apply(image: image, to: thumbnailImageView)
+//            }
+//        }
+//
+//        // 이미지 로드 도중 셀이 재사용될 경우에 대비하여 취소 처리
+////        thumbnailImageView.taskIdentifier = task.id
+//    }
+    
+    func apply(image: UIImage, to thumbnailImageView: UIImageView) {
+        let fadeDuration = 0.2
+        let animator = UIViewPropertyAnimator(duration: fadeDuration, curve: .linear) {
+            thumbnailImageView.alpha = 0.0
+        }
+        animator.addCompletion { _ in
+            thumbnailImageView.image = image
+            UIViewPropertyAnimator.runningPropertyAnimator(withDuration: fadeDuration, delay: 0, options: .curveLinear) {
+                thumbnailImageView.alpha = 1.0
+            }
+        }
+        animator.startAnimation()
+    }
+
     
     private func configureCellHeight(_ thumbnailRatio: Double) {
         heightLayoutAnchor = thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*thumbnailRatio)
         heightLayoutAnchor?.isActive = true
-        
     }
         
     private func configureImageCountButtonTitle(with imageCount: Int) {
-        guard imageCount > 1 else {
-            return imageCountButton.isHidden = true
+        if imageCount <= 1 {
+            imageCountButton.isHidden = true
+        } else {
+            imageCountButton.isHidden = false
+            imageCountButton.setTitle("+\(imageCount)", for: .normal)
         }
-        imageCountButton.isHidden = false
-        imageCountButton.setTitle("+\(imageCount)", for: .normal)
     }
     
 }
@@ -240,6 +297,8 @@ extension PetFeedCollectionViewCell {
         let comment: String
         let likeCount: Int
         
+        var image: UIImage?
+
         init(petpionFeed: PetpionFeed) {
             self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
             self.profileImage = petpionFeed.uploader.profileImage!
@@ -248,6 +307,8 @@ extension PetFeedCollectionViewCell {
             self.userNickname = petpionFeed.uploader.nickname
             self.comment = petpionFeed.message
             self.likeCount = petpionFeed.likeCount
+            
+            self.image = petpionFeed.image
         }
     }
 }
@@ -255,17 +316,17 @@ extension PetFeedCollectionViewCell {
 extension PetFeedCollectionViewCell {
     
     // when Cell did tapped
-    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         bounceAnimate(isTouched: true)
     }
     
-    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         bounceAnimate(isTouched: false)
     }
     
-    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
         bounceAnimate(isTouched: false)
     }

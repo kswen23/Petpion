@@ -20,6 +20,8 @@ public protocol FetchFeedUseCase {
     func fetchUserTotalFeeds(user: User) async -> [PetpionFeed]
     
     func updateFeeds(origin: [PetpionFeed]) async -> [PetpionFeed]
+    
+    func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed]
 }
 
 public enum SortingOption: Int, CaseIterable {

@@ -27,7 +27,7 @@ protocol MainViewModelInput {
 protocol MainViewModelOutput {
     var baseCollectionViewNeedToScroll: Bool { get }
     func configureBaseCollectionViewLayout() -> UICollectionViewLayout
-    func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
+    func makeBaseCollectionViewDataSource(parentViewController: UIViewController,
                                           collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption>
 }
 
@@ -35,7 +35,6 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
-    var user: User { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -53,7 +52,6 @@ final class MainViewModel: MainViewModelProtocol {
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
     var isFirstFetching: Bool = true
-    var user: User = .empty
     
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
@@ -85,14 +83,14 @@ final class MainViewModel: MainViewModelProtocol {
             guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
             let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
-            self.user = fetchedUser
+            User.currentUser = fetchedUser
             
             // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
             if initUserInfoResult {
-                fetchUserUseCase.bindUser { [weak self] fetchedUser in
-                    self?.user.nickname = fetchedUser.nickname
-                    self?.user.voteChanceCount = fetchedUser.voteChanceCount
-                    self?.user.latestVoteTime = fetchedUser.latestVoteTime
+                fetchUserUseCase.bindUser { fetchedUser in
+                    User.currentUser?.nickname = fetchedUser.nickname
+                    User.currentUser?.voteChanceCount = fetchedUser.voteChanceCount
+                    User.currentUser?.latestVoteTime = fetchedUser.latestVoteTime
                 }
             }
         }
@@ -102,6 +100,7 @@ final class MainViewModel: MainViewModelProtocol {
     func refreshCurrentFeed() {
         let currentOption = sortingOptionSubject.value
         Task {
+            // 새로고침을 두 option 다 해줘야됨
             let refreshedFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: currentOption)
             await MainActor.run {
                 switch currentOption {
@@ -117,8 +116,8 @@ final class MainViewModel: MainViewModelProtocol {
     func updateFeedSubject(origin: [PetpionFeed]) -> [PetpionFeed] {
         var resultFeedArray = origin
         for i in 0 ..< resultFeedArray.count {
-            if resultFeedArray[i].uploaderID == user.id {
-                resultFeedArray[i].uploader = user
+            if resultFeedArray[i].uploaderID == User.currentUser?.id {
+                resultFeedArray[i].uploader = User.currentUser!
             }
         }
         return resultFeedArray
@@ -194,8 +193,8 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     func userDidUpdated(to updatedUser: User) {
-        user.nickname = updatedUser.nickname
-        user.profileImage = updatedUser.profileImage
+        User.currentUser?.nickname = updatedUser.nickname
+        User.currentUser?.profileImage = updatedUser.profileImage
     }
     
     // MARK: - Output
@@ -220,7 +219,7 @@ final class MainViewModel: MainViewModelProtocol {
         return layout
     }
     
-    func makeBaseCollectionViewDataSource(parentViewController: BaseCollectionViewCellDelegation,
+    func makeBaseCollectionViewDataSource(parentViewController: UIViewController,
                                           collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<MainViewModel.Section, SortingOption> {
         let registration = makeBaseCollectionViewCellRegistration(parentViewController: parentViewController)
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -232,9 +231,9 @@ final class MainViewModel: MainViewModelProtocol {
         }
     }
     
-    private func makeBaseCollectionViewCellRegistration(parentViewController: BaseCollectionViewCellDelegation) -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
+    private func makeBaseCollectionViewCellRegistration(parentViewController: UIViewController) -> UICollectionView.CellRegistration<BaseCollectionViewCell, SortingOption> {
         UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
-            cell.parentViewController = parentViewController
+            cell.parentViewController = parentViewController as? any BaseCollectionViewCellDelegation
             cell.viewModel = self?.makeChildViewModel(item: item)
             cell.bindSnapshot()
         }

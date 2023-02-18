@@ -13,6 +13,12 @@ import Lottie
 import PetpionCore
 import PetpionDomain
 
+enum NavigationItemType: String, CaseIterable {
+    case myPage = "person"
+    case uploadFeed = "camera"
+    case vote = "crown"
+}
+
 final class MainViewController: HasCoordinatorViewController {
         
     lazy var mainCoordinator: MainCoordinator? = {
@@ -88,12 +94,7 @@ final class MainViewController: HasCoordinatorViewController {
         self.view.backgroundColor = .white
         self.navigationController?.navigationBar.tintColor = .black
         navigationItem.leftBarButtonItems = [latestBarButton, popularBarButton]
-        
-        navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTapped)),
-            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTapped)),
-            UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(crownButtonDidTapped))
-        ]
+        navigationItem.rightBarButtonItems = NavigationItemType.allCases.map { makeNavigationBarButtonItem(type: $0) }
     }
     
     private func configureBaseCollectionView() {
@@ -146,6 +147,19 @@ final class MainViewController: HasCoordinatorViewController {
         }
     }
     
+    private func makeNavigationBarButtonItem(type: NavigationItemType) -> UIBarButtonItem {
+        var barButton = UIBarButtonItem()
+        switch type {
+        case .vote:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(crownButtonDidTapped))
+        case .uploadFeed:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(cameraButtonDidTapped))
+        case .myPage:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(personButtonDidTapped))
+        }
+        return barButton
+    }
+    
     @objc private func popularDidTapped() {
         viewModel.sortingOptionWillChange(with: .popular)
     }
@@ -159,11 +173,12 @@ final class MainViewController: HasCoordinatorViewController {
     }
     
     @objc private func personButtonDidTapped() {
-        mainCoordinator?.pushMyPageViewController(user: viewModel.user)
+        mainCoordinator?.pushUserPageView(user: User.currentUser,
+                                          userPageStyle: .myPageWithSettings)
     }
     
     @objc private func crownButtonDidTapped() {
-        mainCoordinator?.pushVoteMainViewController(user: viewModel.user)
+        mainCoordinator?.pushVoteMainView()
     }
     
     // MARK: - binding
@@ -197,6 +212,15 @@ extension MainViewController: BaseCollectionViewCellDelegation {
     
     func refreshBaseCollectionView() {
         viewModel.refreshCurrentFeed()
+    }
+    
+    func profileStackViewDidTapped(with user: User) {
+        if User.currentUser?.id == user.id {
+            mainCoordinator?.pushUserPageView(user: user, userPageStyle: .myPageWithOutSettings)
+        } else {
+            mainCoordinator?.pushUserPageView(user: user, userPageStyle: .otherUserPage)
+        }
+        
     }
 }
 

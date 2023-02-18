@@ -34,7 +34,7 @@ public final class ImageCache {
     }
 
     // MARK: - Private Method
-    private func image(url: NSURL) -> UIImage? {
+    public func image(url: NSURL) -> UIImage? {
         cachedImages.object(forKey: url)
     }
 
@@ -54,7 +54,7 @@ public final class ImageCache {
         return image
     }
     
-    private func saveImageCache(image: UIImage, key: NSURL) {
+    public func saveImageCache(image: UIImage, key: NSURL) {
         guard let imageDataCount = (image.jpegData(compressionQuality: 1.0)?.count) else { return }
         self.cachedImages.setObject(image, forKey: key, cost: imageDataCount)
     }

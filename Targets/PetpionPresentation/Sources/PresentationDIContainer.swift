@@ -32,6 +32,10 @@ public struct PresentationDIContainer: Containable {
             MainCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "NeedLoginCoordinator") { _ in
+            NeedLoginCoordinator(navigationController: navigationController)
+        }
+        
         container.register(Coordinator.self, name: "FeedImagePickerCoordinator") { _ in
             FeedImagePickerCoordinator(navigationController: FeedImagePickerViewController())
         }
@@ -48,8 +52,8 @@ public struct PresentationDIContainer: Containable {
             VotePetpionCoordinator(navigationController: navigationController)
         }
         
-        container.register(Coordinator.self, name: "MyPageCoordinator") { _ in
-            MyPageCoordinator(navigationController: navigationController)
+        container.register(Coordinator.self, name: "UserPageCoordinator") { _ in
+            UserPageCoordinator(navigationController: navigationController)
         }
         
         container.register(Coordinator.self, name: "SettingCoordinator") { _ in

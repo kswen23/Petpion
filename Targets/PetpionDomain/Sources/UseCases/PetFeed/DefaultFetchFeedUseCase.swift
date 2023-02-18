@@ -83,9 +83,9 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
             for feed in fetchedFeeds {
                 taskGroup.addTask {
-                    var feed = feed
-                    feed.uploader = user
-                    return await self.addThumbnailImage(with: feed)
+                    var resultFeed = await self.firestoreRepository.fetchFeedCounts(feed)
+                    resultFeed.uploader = user
+                    return await self.addThumbnailImage(with: resultFeed)
                 }
             }
             var resultFeedArr = [PetpionFeed]()
@@ -106,6 +106,34 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
                     
                     var resultFeed = profileUpdatedFeed
                     resultFeed.imageURLArr = feed.imageURLArr
+                    
+                    if let image = feed.image {
+                        print("이미지있음")
+                        resultFeed.image = image
+                    }
+                    
+                    return resultFeed
+                }
+            }
+            var result = origin
+            for await value in taskGroup {
+                for i in 0 ..< result.count {
+                    if value.id == result[i].id {
+                        result[i] = value
+                    }
+                }
+            }
+            
+            return result
+        }
+    }
+    
+    public func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed] {
+        await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in origin {
+                taskGroup.addTask {
+                    var resultFeed = feed
+                    resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
                     return resultFeed
                 }
             }
@@ -144,6 +172,12 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     private func addThumbnailImage(with feed: PetpionFeed) async -> PetpionFeed {
         var resultFeed = feed
         resultFeed.imageURLArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
+        return resultFeed
+    }
+    
+    private func addRealImage(with feed: PetpionFeed) async -> PetpionFeed {
+        var resultFeed = feed
+        resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
         return resultFeed
     }
     

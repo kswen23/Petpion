@@ -129,6 +129,7 @@ final class VoteMainViewController: HasCoordinatorViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .white
+        self.view.backgroundColor = .petpionIndigo
         self.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
         viewModel.viewWillAppear()
     }
@@ -136,7 +137,6 @@ final class VoteMainViewController: HasCoordinatorViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
-        configure()
         binding()
     }
     
@@ -264,17 +264,6 @@ final class VoteMainViewController: HasCoordinatorViewController {
             appearCatView.heightAnchor.constraint(equalToConstant: 300)
         ])
         appearCatView.isHidden = true
-    }
-    
-    // MARK: - Configure
-    private func configure() {
-        configureBackground()
-    }
-    
-    private func configureBackground() {
-        view.backgroundColor = .petpionIndigo
-        self.navigationController?.navigationBar.topItem?.title = ""
-        self.navigationController?.navigationBar.tintColor = .white
     }
     
     // MARK: - Binding

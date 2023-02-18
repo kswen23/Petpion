@@ -13,15 +13,16 @@ import Lottie
 import PetpionDomain
 import PetpionCore
 
-protocol BaseCollectionViewCellDelegation {
+protocol BaseCollectionViewCellDelegation: NSObject {
     func baseCollectionViewNeedNewFeed()
     func baseCollectionViewCellDidTapped(index: IndexPath, feed: PetpionFeed)
     func refreshBaseCollectionView()
+    func profileStackViewDidTapped(with user: User)
 }
 
 class BaseCollectionViewCell: UICollectionViewCell {
     
-    var parentViewController: BaseCollectionViewCellDelegation?
+    weak var parentViewController: BaseCollectionViewCellDelegation?
     var viewModel: BaseViewModelProtocol?
     private var cancellables = Set<AnyCancellable>()
     
@@ -32,7 +33,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
         return collectionView
     }()
     
-    private lazy var petFeedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>? = self.viewModel?.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView)
+    private lazy var petFeedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed>? = self.viewModel?.makePetFeedCollectionViewDataSource(collectionView: petFeedCollectionView, listener: self)
     
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
@@ -158,7 +159,7 @@ class BaseCollectionViewCell: UICollectionViewCell {
     
 }
 
-extension BaseCollectionViewCell: UICollectionViewDelegate {
+extension BaseCollectionViewCell: UICollectionViewDelegate, PetFeedCollectionViewCellListener {
     
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
@@ -170,5 +171,12 @@ extension BaseCollectionViewCell: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let selectedFeed = viewModel?.getSelectedFeed(index: indexPath) else { return }
         parentViewController?.baseCollectionViewCellDidTapped(index: indexPath, feed: selectedFeed)
+    }
+    
+    func profileStackViewDidTapped(with cell: UICollectionViewCell) {
+        guard let item = petFeedCollectionView.indexPath(for: cell)?.item,
+              let selectedUser = viewModel?.petpionFeedSubject.value[item].uploader
+        else { return }
+        parentViewController?.profileStackViewDidTapped(with: selectedUser)
     }
 }
