@@ -10,9 +10,9 @@ import Foundation
 
 public enum ReportType: String {
     
-    public static let user: [ReportType] = [.unrelatedUserWithPet, .inappropriateUserImage, .inappropriateUserNickname]
+    public static let user: [ReportType] = [.unrelatedUserWithPet, .inappropriateUserImage, .inappropriateUserNickname, .other]
     
-    public static let feed: [ReportType] = [.unrelatedFeedWithPet, .containsPromotional, .inappropriateFeed]
+    public static let feed: [ReportType] = [.unrelatedFeedWithPet, .containsPromotional, .inappropriateFeed, .other]
     
     // User
     case unrelatedUserWithPet =  "펫과 관련된 게시글을 올리지 않아요"
@@ -23,4 +23,6 @@ public enum ReportType: String {
     case unrelatedFeedWithPet = "펫과 관련된 내용이 아니에요"
     case containsPromotional = "스팸·홍보성 내용이 포함되어 있어요"
     case inappropriateFeed = "게시글에 부적절한 이미지 혹은 내용이 포함되어 있어요"
+    
+    case other = "기타 (직접 입력)"
 }

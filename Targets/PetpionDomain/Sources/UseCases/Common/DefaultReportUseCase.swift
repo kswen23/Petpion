@@ -18,12 +18,26 @@ public final class DefaultReportUseCase: ReportUseCase {
     }
     
     // MARK: - Public
-    public func reportUser(user: User, type: ReportType, description: String? = nil) {
+    public func reportUser(reportedUser: User, type: ReportType, description: String? = nil) async -> Bool {
+        var reason = type.rawValue
+        if let description = description {
+            reason = "\(type.rawValue) - \(description)"
+        }
+        let uploadReportResult = await firestoreRepository.uploadUserReported(reportedUser: reportedUser, reason: reason)
+        let uploadCurrentUserReportListResult = await firestoreRepository.uploadCurrentUserReportList(reportedUser: reportedUser, reason: reason)
         
+        return uploadReportResult && uploadCurrentUserReportListResult
     }
     
-    public func reportFeed(feed: PetpionFeed, type: ReportType, description: String? = nil) {
+    public func reportFeed(feed: PetpionFeed, type: ReportType, description: String? = nil) async -> Bool {
+        var reason = type.rawValue
+        if let description = description {
+            reason = "\(type.rawValue) - \(description)"
+        }
+        let uploadReportResult = await firestoreRepository.uploadFeedReported(reportedFeed: feed, reason: reason)
+        let uploadCurrentUserReportListResult = await firestoreRepository.uploadCurrentFeedReportList(reportedFeed: feed, reason: reason)
         
+        return uploadReportResult && uploadCurrentUserReportListResult
     }
     
 }

@@ -12,6 +12,6 @@ public protocol ReportUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
     
-    func reportUser(user: User, type: ReportType, description: String?)
-    func reportFeed(feed: PetpionFeed, type: ReportType, description: String?)
+    func reportUser(reportedUser: User, type: ReportType, description: String?) async -> Bool
+    func reportFeed(feed: PetpionFeed, type: ReportType, description: String?) async -> Bool
 }

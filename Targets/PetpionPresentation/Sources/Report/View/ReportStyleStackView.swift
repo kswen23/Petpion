@@ -12,12 +12,12 @@ import UIKit
 import PetpionDomain
 
 protocol ReportTypeStackViewDelegate: AnyObject {
-//    func settingActionViewDidTapped(action: SettingModel.SettingAction)
+    func reportActionViewDidTapped(type: ReportType)
 }
 
 final class ReportTypeStackView: UIStackView {
     
-    weak var settingCategoryStackViewListener: SettingCategoryStackViewDelegate?
+    weak var settingCategoryStackViewListener: ReportTypeStackViewDelegate?
     
     private var typeArray = [ReportType]()
     private var typeIndex = 0
@@ -31,6 +31,15 @@ final class ReportTypeStackView: UIStackView {
         view.backgroundColor = .lightGray
         return view
     }()
+    
+    private lazy var indicatorView: UIActivityIndicatorView = {
+        let indicatorView = UIActivityIndicatorView(style: .medium)
+        indicatorView.hidesWhenStopped = true
+        indicatorView.startAnimating()
+        return indicatorView
+    }()
+    
+    private var chevronImageViewArray = [UIImageView]()
     
     // MARK: - Initialize
     init(typeArray: [ReportType]) {
@@ -83,6 +92,14 @@ final class ReportTypeStackView: UIStackView {
             view.backgroundColor = .lightGray
             return view
         }()
+        
+        let chevronView: UIImageView = {
+            let imageView = UIImageView()
+            imageView.image = UIImage(systemName: "chevron.right")
+            imageView.tintColor = .lightGray
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            return imageView
+        }()
                 
         let actionLabel: UILabel = {
             let label = UILabel()
@@ -94,17 +111,10 @@ final class ReportTypeStackView: UIStackView {
             return label
         }()
         
-        let chevronView: UIImageView = {
-            let imageView = UIImageView()
-            imageView.image = UIImage(systemName: "chevron.right")
-            imageView.tintColor = .lightGray
-            imageView.translatesAutoresizingMaskIntoConstraints = false
-            return imageView
-        }()
-        
         baseButton.addSubview(borderView)
         baseButton.addSubview(actionLabel)
         baseButton.addSubview(chevronView)
+        chevronImageViewArray.append(chevronView)
         NSLayoutConstraint.activate([
             borderView.leadingAnchor.constraint(equalTo: baseButton.leadingAnchor),
             borderView.trailingAnchor.constraint(equalTo: baseButton.trailingAnchor),
@@ -120,7 +130,8 @@ final class ReportTypeStackView: UIStackView {
     
     @objc private func settingActionButtonTouchUpInsideAction(_ sender: UIButton) {
         sender.backgroundColor = .white
-//        settingCategoryStackViewListener?.settingActionViewDidTapped(action: typeArray[sender.tag])
+        configureLoading(index: sender.tag)
+        settingCategoryStackViewListener?.reportActionViewDidTapped(type: typeArray[sender.tag])
     }
     
     @objc private func settingActionButtonTouchDownAction(_ sender: UIButton) {
@@ -131,5 +142,14 @@ final class ReportTypeStackView: UIStackView {
         sender.backgroundColor = .white
     }
     
+    private func configureLoading(index: Int) {
+        chevronImageViewArray[index].isHidden = true
+        self.arrangedSubviews[index].addSubview(indicatorView)
+        indicatorView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            indicatorView.trailingAnchor.constraint(equalTo: self.arrangedSubviews[index].trailingAnchor, constant: -widthPadding),
+            indicatorView.centerYAnchor.constraint(equalTo: self.arrangedSubviews[index].centerYAnchor)
+        ])
+    }
 }
 

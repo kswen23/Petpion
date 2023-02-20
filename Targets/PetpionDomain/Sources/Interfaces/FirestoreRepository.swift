@@ -15,6 +15,12 @@ public protocol FirestoreRepository {
     func createCounters(_ feed: PetpionFeed) async -> Bool
     func uploadNewUser(_ user: User)
     
+    // 신고내용생성
+    func uploadCurrentUserReportList(reportedUser: User, reason: String) async -> Bool
+    func uploadUserReported(reportedUser: User, reason: String) async -> Bool
+    func uploadCurrentFeedReportList(reportedFeed: PetpionFeed, reason: String) async -> Bool
+    func uploadFeedReported(reportedFeed: PetpionFeed, reason: String) async -> Bool
+    
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed]
     func fetchFeedArray(by option: SortingOption) async -> [PetpionFeed]

@@ -50,11 +50,14 @@ public final class UserPageCoordinator: NSObject, Coordinator {
     }
     
     func presentReportUserViewController() {
-        guard let reportUserCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "ReportUserCoordinator") as? ReportUserCoordinator else { return }
-        childCoordinators.append(reportUserCoordinator)
+        guard let reportCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "ReportCoordinator") as? ReportCoordinator else { return }
+        childCoordinators.append(reportCoordinator)
         let reportUserNavigationController = UINavigationController()
-        reportUserCoordinator.navigationController = reportUserNavigationController
-        reportUserCoordinator.start()
+        reportCoordinator.navigationController = reportUserNavigationController
+        reportCoordinator.parentableNavigationController = navigationController
+        reportCoordinator.reportType = .user
+        reportCoordinator.user = user
+        reportCoordinator.start()
         navigationController.present(reportUserNavigationController, animated: true)
     }
 }

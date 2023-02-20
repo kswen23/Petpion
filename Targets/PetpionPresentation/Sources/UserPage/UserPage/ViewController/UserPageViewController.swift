@@ -188,6 +188,7 @@ final class UserPageViewController: HasCoordinatorViewController {
                 //                self?.viewModel.editFeed()
             })
             let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
+                // 중복신고인지 체크 후 (구현필요)
                 self?.userPageCoordinator?.presentReportUserViewController()
             })
             let cancel = UIAlertAction(title: "취소", style: .cancel)

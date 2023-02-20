@@ -1,8 +1,8 @@
 //
-//  ReportUserViewController.swift
+//  ReportFeedViewController.swift
 //  PetpionPresentation
 //
-//  Created by 김성원 on 2023/02/18.
+//  Created by 김성원 on 2023/02/19.
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
@@ -12,14 +12,14 @@ import UIKit
 
 import PetpionDomain
 
-final class ReportUserViewController: HasCoordinatorViewController {
+final class ReportFeedViewController: HasCoordinatorViewController {
     
     lazy var reportCoordinator: ReportCoordinator? = {
         self.coordinator as? ReportCoordinator
     }()
     
     private var cancelables = Set<AnyCancellable>()
-    let viewModel: ReportUserViewModelProtocol
+    let viewModel: ReportFeedViewModelProtocol
     
     private let headerLabel: UILabel = {
         let label = UILabel()
@@ -33,7 +33,7 @@ final class ReportUserViewController: HasCoordinatorViewController {
     
     private let headerTextLabel: UILabel = {
         let label = UILabel()
-        label.text = "만약 이 계정이 커뮤니티 가이드라인이나 이용약관을 위반하고 있다고 생각하신다면, 신고를 통해 알려주시기 바랍니다. 신고 내용을 검토한 후 적절한 조치를 취하겠습니다."
+        label.text = "만약 이 게시글이 커뮤니티 가이드라인이나 이용약관을 위반하고 있다고 생각하신다면, 신고를 통해 알려주시기 바랍니다. 신고 내용을 검토한 후 적절한 조치를 취하겠습니다."
         label.textColor = .darkGray
         label.lineBreakMode = .byCharWrapping
         label.numberOfLines = 0
@@ -52,14 +52,14 @@ final class ReportUserViewController: HasCoordinatorViewController {
     }()
     
     private lazy var detailStackView: ReportTypeStackView = {
-        let stackView = ReportTypeStackView(typeArray: ReportType.user)
+        let stackView = ReportTypeStackView(typeArray: ReportType.feed)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.settingCategoryStackViewListener = self
         return stackView
     }()
     
     // MARK: - Initialize
-    init(viewModel: ReportUserViewModelProtocol) {
+    init(viewModel: ReportFeedViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -105,12 +105,12 @@ final class ReportUserViewController: HasCoordinatorViewController {
     
     // MARK: - Binding
     private func binding() {
-        bindReportUserViewStateSubject()
+        bindReportFeedViewStateSubject()
     }
     
-    private func bindReportUserViewStateSubject() {
-        viewModel.reportUserViewStateSubject.sink { [weak self] reportUserViewState in
-            switch reportUserViewState {
+    private func bindReportFeedViewStateSubject() {
+        viewModel.reportFeedViewStateSubject.sink { [weak self] reportFeedViewState in
+            switch reportFeedViewState {
                 
             case .inputMode:
                 self?.reportCoordinator?.pushInputReportView()
@@ -121,21 +121,21 @@ final class ReportUserViewController: HasCoordinatorViewController {
             }
         }.store(in: &cancelables)
     }
-
+    
 }
-extension ReportUserViewController: UIViewControllerTransitioningDelegate {
+extension ReportFeedViewController: UIViewControllerTransitioningDelegate {
     
     func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
         let reportUserPresentationController = CustomPresentationController(presentedViewController: presented, presenting: presenting)
         reportUserPresentationController.fractionalHeight = 0.6
         return reportUserPresentationController
     }
-
 }
 
-extension ReportUserViewController: ReportTypeStackViewDelegate {
+extension ReportFeedViewController: ReportTypeStackViewDelegate {
     
     func reportActionViewDidTapped(type: ReportType) {
-        viewModel.reportUser(type: type)
+        viewModel.reportFeed(type: type)
     }
 }
+

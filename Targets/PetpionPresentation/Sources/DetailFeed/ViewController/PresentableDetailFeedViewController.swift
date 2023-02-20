@@ -349,8 +349,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
             //                self?.viewModel.editFeed()
         })
         let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
-            //                guard let strongSelf = self else { return }
-            //                self?.present(strongSelf.deleteAlertController, animated: true)
+            self?.detailFeedCoordinator?.presentReportFeedViewController()
         })
         let cancel = UIAlertAction(title: "취소", style: .cancel)
         
