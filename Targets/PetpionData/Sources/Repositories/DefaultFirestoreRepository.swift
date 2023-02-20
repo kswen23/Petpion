@@ -62,6 +62,73 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
     }
     
+    public func uploadCurrentUserReportList(reportedUser: User, reason: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            db
+                .document(FirestoreCollection.user.reference + "/\(currentUser.id)")
+                .collection("reportedUserList")
+                .document(reportedUser.id)
+                .setData(ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
+    public func uploadUserReported(reportedUser: User, reason: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            db
+                .collection(FirestoreCollection.reportUser.reference)
+                .document()
+                .setData(ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+
+    public func uploadCurrentFeedReportList(reportedFeed: PetpionFeed, reason: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            db
+                .document(FirestoreCollection.user.reference + "/\(currentUser.id)")
+                .collection("reportedFeedList")
+                .document(reportedFeed.id)
+                .setData(ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
+    public func uploadFeedReported(reportedFeed: PetpionFeed, reason: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            db
+                .collection(FirestoreCollection.reportFeed.reference)
+                .document()
+                .setData(ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+
+    
     // MARK: - Private Create
     private func createDistributedCounter(to reference: DocumentReference) async -> Bool {
         let createDistributedCounterResult = await FirestoreDistributedCounter.createCounter(reference: reference, numberOfShards: numberOfShards)
@@ -552,15 +619,22 @@ extension DefaultFirestoreRepository {
     enum FirestoreCollection {
         case feed
         case user
+        case reportUser
+        case reportFeed
         
         var reference: String {
+            let year = DateComponents.currentDateTimeComponents().year!
+            let month = DateComponents.currentDateTimeComponents().month!
+            let day = DateComponents.currentDateTimeComponents().day!
             switch self {
             case .feed:
-                guard let year = DateComponents.currentDateTimeComponents().year,
-                      let month = DateComponents.currentDateTimeComponents().month else { return ""}
                 return "feeds/\(year)/\(month)"
             case .user:
                 return "user"
+            case .reportUser:
+                return "report/user/\(year)/\(month)/\(day)"
+            case .reportFeed:
+                return "report/feed/\(year)/\(month)/\(day)"
             }
         }
     }
@@ -590,6 +664,8 @@ extension DefaultFirestoreRepository {
         case .latest:
             return db
                 .collection(FirestoreCollection.feed.reference)
+//                .whereField("uploaderID", notIn: ["123123"])
+//                .order(by: "uploaderID")
                 .order(by: "uploadTimestamp", descending: true)
                 .limit(to: 20)
         }
