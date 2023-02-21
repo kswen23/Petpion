@@ -93,6 +93,7 @@ final class MainViewModel: MainViewModelProtocol {
             User.currentUser = fetchedUser
             await initializeUserActionData()
             await fetchInit()
+            await fetchBlockedUser()
             if await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser) {
                 fetchUserUseCase.bindUser { fetchedUser in
                     User.currentUser = fetchedUser
@@ -108,6 +109,12 @@ final class MainViewModel: MainViewModelProtocol {
         User.blockedUserIDArray = await blockUseCase.getBlockedArray(type: .user)
         User.blockedFeedIDArray = await blockUseCase.getBlockedArray(type: .feed)
     }
+    
+    private func fetchBlockedUser() async {
+        guard let blockedUserIDArray = User.blockedUserIDArray else { return }
+        User.blockedUserArray = await fetchUserUseCase.fetchBlockedUser(with: blockedUserIDArray)
+    }
+    
     
     // MARK: - Input
     func refreshCurrentFeed() {

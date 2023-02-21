@@ -100,6 +100,7 @@ final class UserPageViewModel: UserPageViewModelProtocol {
             await MainActor.run {
                 if isBlocked {
                     User.blockedUserIDArray?.append(user.id)
+                    User.blockedUserArray?.append(user)
                     blockUserStateSubject.send(.done)
                 } else {
                     blockUserStateSubject.send(.error)

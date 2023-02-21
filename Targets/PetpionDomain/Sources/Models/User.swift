@@ -38,6 +38,7 @@ public extension User {
     static var reportedFeedIDArray: [String]?
     static var blockedUserIDArray: [String]?
     static var blockedFeedIDArray: [String]?
+    static var blockedUserArray: [User]?
     
     static let isLogin: Bool = {
         currentUser != nil
@@ -84,7 +85,17 @@ public extension User {
     static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
     
     static func getProfileImageData(user: Self) -> Data {
-        user.profileImage?.jpegData(compressionQuality: 0.8) ?? Data()
+        guard let image = user.profileImage else { return .init() }
+        let targetImageRatio = 600/image.size.width
+        let targetHeight = image.size.height*targetImageRatio
+        let targetWidth = image.size.width*targetImageRatio
+        
+        let newSize: CGSize = CGSize(width: targetWidth, height: targetHeight)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: CGPoint.zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return resizedImage?.jpegData(compressionQuality: 1.0) ?? .init()
     }
 }
 

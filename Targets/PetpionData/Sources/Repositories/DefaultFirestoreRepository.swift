@@ -81,8 +81,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 data = ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))
                 
             default:
-                    fatalError("Undefined type")
-
+                fatalError("Undefined type")
+                
             }
             
             db
@@ -115,8 +115,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 data = ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))
                 
             default:
-                    fatalError("Undefined type")
-
+                fatalError("Undefined type")
+                
             }
             
             db
@@ -129,7 +129,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     }
                     continuation.resume(returning: true)
                 }
-
+            
         }
     }
     
@@ -150,8 +150,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 documentPath = blockedFeed.id
                 data = BlockFeedData.toKeyValueCollections(BlockFeedData.init(blockedFeed: blockedFeed))
             default:
-                    fatalError("Undefined type")
-
+                fatalError("Undefined type")
+                
             }
             
             db
@@ -322,7 +322,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func getUserActionArray(action: UserActionType,
-                                 type: ReportBlockType) async -> [String]? {
+                                   type: ReportBlockType) async -> [String]? {
         return await withCheckedContinuation { continuation in
             guard let userID = User.currentUser?.id else { return }
             let collectionPath = "\(action.rawValue)\(type.rawValue)List"
@@ -613,6 +613,28 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             return true
         }
     }
+    
+    public func deleteBlockedUser(_ user: User) async -> Bool {
+        await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(currentUser.id)
+                .collection("blockedUserList")
+                .whereField("blockedUserID", isEqualTo: user.id)
+                .getDocuments { snapshot, error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    for document in snapshot!.documents {
+                        document.reference.delete()
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
     // MARK: - Private Delete
     private func deleteFeedsWithUserID(collectionPath: String, uploader: User) async -> Bool {
         return await withCheckedContinuation { continuation in
@@ -730,11 +752,11 @@ extension DefaultFirestoreRepository {
                 .whereField("uploaderID", notIn: blockedUserArray)
                 .order(by: "uploaderID")
         }
-//        if let blockedFeedArray = User.blockedFeedIDArray {
-//            resultQuery = resultQuery
-//                .whereField("feedID", notIn: blockedFeedArray)
-//                .order(by: "feedID")
-//        }
+        //        if let blockedFeedArray = User.blockedFeedIDArray {
+        //            resultQuery = resultQuery
+        //                .whereField("feedID", notIn: blockedFeedArray)
+        //                .order(by: "feedID")
+        //        }
         
         switch option {
         case .popular:

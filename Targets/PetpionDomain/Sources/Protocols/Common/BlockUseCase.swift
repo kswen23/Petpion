@@ -13,6 +13,7 @@ public protocol BlockUseCase {
     var firestoreRepository: FirestoreRepository { get }
     
     func block<T>(blocked: T) async -> Bool
+    func unblockUser(user: User) async -> Bool
     func getBlockedArray(type: ReportBlockType) async -> [String]?
 
 }

@@ -22,6 +22,10 @@ public final class DefaultBlockUseCase: BlockUseCase {
         await firestoreRepository.uploadBlockList(blocked: blocked)
     }
     
+    public func unblockUser(user: User) async -> Bool {
+        await firestoreRepository.deleteBlockedUser(user)
+    }
+    
     public func getBlockedArray(type: ReportBlockType) async -> [String]? {
         await firestoreRepository.getUserActionArray(action: .block, type: type)
     }

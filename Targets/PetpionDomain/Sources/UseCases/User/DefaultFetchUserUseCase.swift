@@ -40,6 +40,24 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
         }
     }
     
+    public func fetchBlockedUser(with userIDArray: [String]) async -> [User] {
+        return await withTaskGroup(of: User.self) { taskGroup -> [User] in
+            for userID in userIDArray {
+                taskGroup.addTask {
+                    await self.fetchUser(uid: userID)
+                }
+            }
+            var resultUserArray: [User] = .init()
+            for await value in taskGroup {
+                resultUserArray.append(value)
+            }
+            return resultUserArray.sorted {
+                $0.nickname < $1.nickname
+            }
+        }
+    }
+    
+    // MARK: - Private
     private func fetchUserProfileImage(user: User) async -> UIImage {
         guard let profileURL = user.imageURL else {
             return UIImage(systemName: "person.fill")!
