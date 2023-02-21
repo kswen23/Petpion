@@ -345,10 +345,10 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     
     private func configureDetailFeedAlertViewController() {
         
-        let blockFeed = UIAlertAction(title: "피드 차단", style: .destructive, handler: { [weak self] _ in
+        let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
             //                self?.viewModel.editFeed()
         })
-        let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
+        let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
             self?.detailFeedCoordinator?.presentReportFeedViewController()
         })
         let cancel = UIAlertAction(title: "취소", style: .cancel)

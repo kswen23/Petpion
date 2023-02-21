@@ -6,25 +6,89 @@
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
+import Combine
 import Foundation
 
 import PetpionDomain
 
+enum ReportCompletedViewState {
+    case blocked
+    case duplicated
+    case error
+}
+
 protocol ReportCompletedViewModelProtocol {
-    var reportType: ReportBlockType { get }
+    var reportBlockType: ReportBlockType { get }
+    var blockUseCase: BlockUseCase { get }
     var user: User? { get set }
     var feed: PetpionFeed? { get set }
+    var reportCompletedViewStateSubject: PassthroughSubject<ReportCompletedViewState, Never> { get }
+    
+    func block()
 }
 
 final class ReportCompletedViewModel: ReportCompletedViewModelProtocol {
     
-    let reportType: ReportBlockType
+    let reportBlockType: ReportBlockType
+    let blockUseCase: BlockUseCase
+    
     var user: User?
     var feed: PetpionFeed?
     
+    let reportCompletedViewStateSubject: PassthroughSubject<ReportCompletedViewState, Never> = .init()
+    
     // MARK: - Initialize
-    init(reportType: ReportBlockType) {
-        self.reportType = reportType
+    init(reportBlockType: ReportBlockType,
+         blockUseCase: BlockUseCase) {
+        self.reportBlockType = reportBlockType
+        self.blockUseCase = blockUseCase
     }
     
+    func block() {
+        switch reportBlockType {
+        case .user:
+            if User.isBlockedUser(user: user) {
+                reportCompletedViewStateSubject.send(.duplicated)
+            } else {
+                blockUser()
+            }
+        case .feed:
+            if User.isBlockedFeed(feed: feed) {
+                reportCompletedViewStateSubject.send(.duplicated)
+            } else {
+                blockFeed()
+            }
+        }
+    }
+    
+    // MARK: - Private
+    private func blockUser() {
+        Task {
+            guard let user = user else { return }
+            let isBlocked = await blockUseCase.block(blocked: user)
+            await MainActor.run {
+                if isBlocked {
+                    User.blockedUserIDArray?.append(user.id)
+                    reportCompletedViewStateSubject.send(.blocked)
+                } else {
+                    reportCompletedViewStateSubject.send(.error)
+                }
+            }
+        }
+    }
+    
+    private func blockFeed() {
+        Task {
+            guard let feed = feed else { return }
+            let isBlocked = await blockUseCase.block(blocked: feed)
+            await MainActor.run {
+                if isBlocked {
+                    User.blockedFeedIDArray?.append(feed.id)
+                    reportCompletedViewStateSubject.send(.blocked)
+                } else {
+                    reportCompletedViewStateSubject.send(.error)
+                }
+            }
+        }
+    }
 }

@@ -133,6 +133,41 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func uploadBlockList<T>(blocked: T) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            guard let currentUser = User.currentUser else { return }
+            var collectionPath: String = .init()
+            var documentPath: String = .init()
+            var data = [String : Any]()
+            switch blocked {
+                
+            case let blockedUser as User:
+                collectionPath = "blockedUserList"
+                documentPath = blockedUser.id
+                data = BlockUserData.toKeyValueCollections(BlockUserData.init(blockedUser: blockedUser))
+            case let blockedFeed as PetpionFeed:
+                collectionPath = "blockedFeedList"
+                documentPath = blockedFeed.id
+                data = BlockFeedData.toKeyValueCollections(BlockFeedData.init(blockedFeed: blockedFeed))
+            default:
+                    fatalError("Undefined type")
+
+            }
+            
+            db
+                .document(FirestoreCollection.user.reference + "/\(currentUser.id)")
+                .collection(collectionPath)
+                .document(documentPath)
+                .setData(data) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
+    
     // MARK: - Private Create
     private func createDistributedCounter(to reference: DocumentReference) async -> Bool {
         let createDistributedCounterResult = await FirestoreDistributedCounter.createCounter(reference: reference, numberOfShards: numberOfShards)
@@ -286,26 +321,12 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    public func fetchReportedFeedArray() async -> [PetpionFeed] {
-        return await withCheckedContinuation { continuation in
-            
-        }
-    }
-    
-    public func getReportedArray(type: ReportBlockType) async -> [String]? {
+    public func getUserActionArray(action: UserActionType,
+                                 type: ReportBlockType) async -> [String]? {
         return await withCheckedContinuation { continuation in
             guard let userID = User.currentUser?.id else { return }
-            var collectionPath: String = .init()
-            var fieldName: String = .init()
-            switch type {
-            case .user:
-                collectionPath = "reportedUserList"
-                fieldName = "reportedUserID"
-            case .feed:
-                collectionPath = "reportedFeedList"
-                fieldName = "reportedFeedID"
-            }
-            
+            let collectionPath = "\(action.rawValue)\(type.rawValue)List"
+            let fieldName = "\(action.rawValue)\(type.rawValue)ID"
             db
                 .collection(FirestoreCollection.user.reference)
                 .document(userID)
@@ -702,19 +723,40 @@ extension DefaultFirestoreRepository {
     }
     
     private func getQuery(by option: SortingOption) -> Query {
+        let collection = db.collection(FirestoreCollection.feed.reference)
+        var resultQuery: Query?
+        if let blockedUserArray = User.blockedUserIDArray, blockedUserArray.count > 0 {
+            resultQuery = collection
+                .whereField("uploaderID", notIn: blockedUserArray)
+                .order(by: "uploaderID")
+        }
+//        if let blockedFeedArray = User.blockedFeedIDArray {
+//            resultQuery = resultQuery
+//                .whereField("feedID", notIn: blockedFeedArray)
+//                .order(by: "feedID")
+//        }
+        
         switch option {
         case .popular:
-            return db
-                .collection(FirestoreCollection.feed.reference)
-                .order(by: "likeCount", descending: true)
-                .limit(to: 20)
+            if let resultQuery = resultQuery {
+                return resultQuery
+                    .order(by: "likeCount", descending: true)
+                    .limit(to: 20)
+            } else {
+                return collection
+                    .order(by: "likeCount", descending: true)
+                    .limit(to: 20)
+            }
         case .latest:
-            return db
-                .collection(FirestoreCollection.feed.reference)
-            //                .whereField("uploaderID", notIn: ["123123"])
-            //                .order(by: "uploaderID")
-                .order(by: "uploadTimestamp", descending: true)
-                .limit(to: 20)
+            if let resultQuery = resultQuery {
+                return resultQuery
+                    .order(by: "uploadTimestamp", descending: true)
+                    .limit(to: 20)
+            } else {
+                return collection
+                    .order(by: "uploadTimestamp", descending: true)
+                    .limit(to: 20)
+            }
         }
     }
     
@@ -742,7 +784,7 @@ extension DefaultFirestoreRepository {
         
         let calendar = Calendar.current
         var currentDate = calendar.date(from: startDateComponents)!
-        var endDate = calendar.date(from: endDateComponents)!
+        let endDate = calendar.date(from: endDateComponents)!
         
         var yearMonthArray: [String] = []
         

@@ -79,7 +79,7 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         let reportFeedNavigationController = UINavigationController()
         reportCoordinator.navigationController = reportFeedNavigationController
         reportCoordinator.parentableNavigationController = navigationController
-        reportCoordinator.reportType = .feed
+        reportCoordinator.reportBlockType = .feed
         reportCoordinator.feed = feed
         reportCoordinator.start()
         navigationController.visibleViewController?.present(reportFeedNavigationController, animated: true)
@@ -91,22 +91,24 @@ private extension DetailFeedCoordinator {
     private func getPushableDetailFeedViewController() -> PushableDetailFeedViewController {
         guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let deleteFeedUseCase: DeleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self),
+              let blockUseCase: BlockUseCase = DIContainer.shared.resolve(BlockUseCase.self),
               let feed = feed,
               let detailFeedStyle = detailFeedStyle
         else {
             fatalError("getDetailFeedViewController occurred Error")
         }
-        let viewModel: DetailFeedViewModelProtocol = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
+        let viewModel: DetailFeedViewModelProtocol = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase, blockUseCase: blockUseCase)
         return PushableDetailFeedViewController(viewModel: viewModel)
     }
     
     private func getPresentableDetailFeedViewController(transitionDependency: FeedTransitionDependency) -> PresentableDetailFeedViewController {
         guard let fetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let deleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self),
+              let blockUseCase: BlockUseCase = DIContainer.shared.resolve(BlockUseCase.self),
               let feed = feed,
               let detailFeedStyle = detailFeedStyle
         else { fatalError("getDetailFeedViewController did occurred error") }
-        let detailFeedViewModel = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase)
+        let detailFeedViewModel = DetailFeedViewModel(feed: feed, detailFeedStyle: detailFeedStyle, fetchFeedUseCase: fetchFeedUseCase, deleteFeedUseCase: deleteFeedUseCase, blockUseCase: blockUseCase)
         return PresentableDetailFeedViewController(dependency: transitionDependency, viewModel: detailFeedViewModel)
     }
     

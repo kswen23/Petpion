@@ -5,7 +5,7 @@
 //  Created by 김성원 on 2023/02/19.
 //  Copyright © 2023 Petpion. All rights reserved.
 //
-
+import Combine
 import Foundation
 import UIKit
 
@@ -15,6 +15,7 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         self.coordinator as? ReportCoordinator
     }()
     
+    private var cancellables = Set<AnyCancellable>()
     let viewModel: ReportCompletedViewModelProtocol
     
     let completedImageView: UIImageView = {
@@ -67,8 +68,22 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
     }()
     
     @objc private func blockButtonDidTapped() {
-        print("차단")
+        viewModel.block()
     }
+    
+    private let toastAnimationLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.backgroundColor = .black
+        label.textAlignment = .center
+        label.textColor = .white
+        label.alpha = 0.9
+        label.isHidden = true
+        return label
+    }()
+    private let toastAnimationLabelHeightConstant: CGFloat = 40
+    private lazy var toastAnimationLabelTopAnchor: NSLayoutConstraint? = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
     
     // MARK: - Initialize
     init(viewModel: ReportCompletedViewModelProtocol) {
@@ -90,10 +105,16 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         super.viewDidLoad()
         layout()
         configureBlockButtonTitle()
+        bindReportCompletedViewStateSubject()
     }
     
     // MARK: - Layout
     private func layout() {
+        layoutDefaultView()
+        layoutToastAnimationLabel()
+    }
+    
+    private func layoutDefaultView() {
         [completedImageView, headerStackView, blockButton].forEach { view.addSubview($0) }
         NSLayoutConstraint.activate([
             completedImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
@@ -108,9 +129,21 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         ])
     }
     
+    private func layoutToastAnimationLabel() {
+        view.addSubview(toastAnimationLabel)
+        NSLayoutConstraint.activate([
+            toastAnimationLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toastAnimationLabel.widthAnchor.constraint(equalToConstant: view.frame.width*0.7),
+            toastAnimationLabel.heightAnchor.constraint(equalToConstant: toastAnimationLabelHeightConstant)
+        ])
+        toastAnimationLabelTopAnchor?.isActive = true
+        toastAnimationLabel.roundCorners(cornerRadius: 15)
+    }
+
+    
     // MARK: - Configure
     private func configureBlockButtonTitle() {
-        switch viewModel.reportType {
+        switch viewModel.reportBlockType {
             
         case .user:
             blockButton.setTitle("유저 차단하기", for: .normal)
@@ -119,5 +152,78 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         }
         
         blockButton.sizeToFit()
+    }
+    
+    // MARK: - Binding
+    private func bindReportCompletedViewStateSubject() {
+        viewModel.reportCompletedViewStateSubject.sink { [weak self] viewState in
+            self?.configureToastAnimationLabel(viewState: viewState)
+            self?.startToastLabelAnimation()
+        }.store(in: &cancellables)
+    }
+}
+
+private extension ReportCompletedViewController {
+    
+    private func configureToastAnimationLabel(viewState: ReportCompletedViewState) {
+        switch viewState {
+        case .blocked:
+            configureBlocked()
+        case .duplicated:
+            configureDuplicated()
+        case .error:
+            toastAnimationLabel.text = "에러가 발생했습니다."
+        }
+    }
+    
+    private func configureBlocked() {
+        switch viewModel.reportBlockType {
+        case .user:
+            guard let user = viewModel.user else { return }
+            toastAnimationLabel.text = "\(user.nickname) 님을 차단했습니다"
+        case .feed:
+            toastAnimationLabel.text = "피드를 차단했습니다."
+        }
+    }
+    
+    private func configureDuplicated() {
+        switch viewModel.reportBlockType {
+            
+        case .user:
+            toastAnimationLabel.text = "이미 차단한 유저입니다."
+        case .feed:
+            toastAnimationLabel.text = "이미 차단한 피드입니다."
+        }
+    }
+    
+    private func startToastLabelAnimation() {
+        toastAnimationLabel.isHidden = false
+        toastAnimationLabelTopAnchor?.isActive = false
+        toastAnimationLabelTopAnchor = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: -(toastAnimationLabelHeightConstant*2))
+        toastAnimationLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.popToastLabelAnimation()
+        })
+    }
+    
+    private func popToastLabelAnimation() {
+        toastAnimationLabelTopAnchor?.isActive = false
+        toastAnimationLabelTopAnchor = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
+        toastAnimationLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 2.0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.toastAnimationLabel.isHidden = true
+        })
     }
 }

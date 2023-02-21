@@ -17,7 +17,7 @@ final class ReportCoordinator: NSObject, Coordinator {
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     
-    var reportType: ReportBlockType!
+    var reportBlockType: ReportBlockType!
     var parentableNavigationController: UINavigationController?
     var feed: PetpionFeed?
     var user: User?
@@ -29,7 +29,7 @@ final class ReportCoordinator: NSObject, Coordinator {
     public func start() {
         var reportViewController: HasCoordinatorViewController = .init()
         
-        switch reportType {
+        switch reportBlockType {
             
         case .user:
             reportViewController = getReportUserViewController()
@@ -100,8 +100,8 @@ extension ReportCoordinator {
         else {
             fatalError("getReportFeedViewController occurred error")
         }
-        var viewModel: InputReportViewModelProtocol = InputReportViewModel(reportType: reportType, reportUseCase: reportUseCase)
-        switch reportType {
+        var viewModel: InputReportViewModelProtocol = InputReportViewModel(reportBlockType: reportBlockType, reportUseCase: reportUseCase)
+        switch reportBlockType {
         case .user:
             viewModel.user = user
         case .feed:
@@ -114,8 +114,11 @@ extension ReportCoordinator {
     }
     
     private func getReportCompletedViewController() -> ReportCompletedViewController {
-        var viewModel: ReportCompletedViewModelProtocol = ReportCompletedViewModel(reportType: reportType)
-        switch reportType {
+        guard let blockUseCase: BlockUseCase = DIContainer.shared.resolve(BlockUseCase.self) else {
+            fatalError("getReportCompletedViewController occurred error")
+        }
+        var viewModel: ReportCompletedViewModelProtocol = ReportCompletedViewModel(reportBlockType: reportBlockType, blockUseCase: blockUseCase)
+        switch reportBlockType {
         case .user:
             viewModel.user = user
         case .feed:

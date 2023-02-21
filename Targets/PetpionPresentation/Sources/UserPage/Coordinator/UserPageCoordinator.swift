@@ -55,7 +55,7 @@ public final class UserPageCoordinator: NSObject, Coordinator {
         let reportUserNavigationController = UINavigationController()
         reportCoordinator.navigationController = reportUserNavigationController
         reportCoordinator.parentableNavigationController = navigationController
-        reportCoordinator.reportType = .user
+        reportCoordinator.reportBlockType = .user
         reportCoordinator.user = user
         reportCoordinator.start()
         navigationController.present(reportUserNavigationController, animated: true)
@@ -65,12 +65,14 @@ public final class UserPageCoordinator: NSObject, Coordinator {
 private extension UserPageCoordinator {
     
     private func getUserPageViewController() -> UserPageViewController {
-        guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
-              let user = user,
-              let userPageStyle = userPageStyle else {
+        guard let user = user,
+              let userPageStyle = userPageStyle,
+              let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let blockUseCase: BlockUseCase = DIContainer.shared.resolve(BlockUseCase.self)
+               else {
             fatalError("getMyPageViewController did occurred error")
         }
-        let viewModel: UserPageViewModelProtocol = UserPageViewModel(userPageStyle: userPageStyle, user: user, fetchFeedUseCase: fetchFeedUseCase)
+        let viewModel: UserPageViewModelProtocol = UserPageViewModel(user: user, userPageStyle: userPageStyle, blockUseCase: blockUseCase, fetchFeedUseCase: fetchFeedUseCase)
         return UserPageViewController(viewModel: viewModel)
     }
     

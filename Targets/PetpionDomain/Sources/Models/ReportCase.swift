@@ -8,16 +8,15 @@
 
 import Foundation
 
-public enum ReportBlockType {
-    case user
-    case feed
+public enum ReportBlockType: String {
+    case user = "User"
+    case feed = "Feed"
 }
 
-public enum UserActionType {
-    case block
-    case report
+public enum UserActionType: String {
+    case block = "blocked"
+    case report = "reported"
 }
-
 
 public enum ReportCase: String {
     

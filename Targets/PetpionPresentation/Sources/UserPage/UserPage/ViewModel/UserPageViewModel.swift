@@ -13,10 +13,15 @@ import UIKit
 import PetpionCore
 import PetpionDomain
 
+enum BlockUserState {
+    case done
+    case error
+}
+
 protocol UserPageViewModelInput {
     func fetchUserTotalFeeds()
     func userDidUpdated(to updatedUser: User)
-    func isReportedUser() -> Bool
+    func blockUser()
 }
 
 protocol UserPageViewModelOutput {
@@ -25,18 +30,21 @@ protocol UserPageViewModelOutput {
 }
 
 protocol UserPageViewModelProtocol: UserPageViewModelInput, UserPageViewModelOutput {
-    var userPageStyle: UserPageStyle { get }
     var user: User { get }
+    var userPageStyle: UserPageStyle { get }
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var blockUseCase: BlockUseCase { get }
     var userFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
+    var blockUserStateSubject: PassthroughSubject<BlockUserState, Never> { get }
 }
 
 final class UserPageViewModel: UserPageViewModelProtocol {
     
-    var userPageStyle: UserPageStyle
     var user: User
+    var userPageStyle: UserPageStyle
     let fetchFeedUseCase: FetchFeedUseCase
+    let blockUseCase: BlockUseCase
     
     lazy var userFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = {
         var petpionArr = [PetpionFeed]()
@@ -55,12 +63,16 @@ final class UserPageViewModel: UserPageViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
     
+    let blockUserStateSubject: PassthroughSubject<BlockUserState, Never> = .init()
+    
     // MARK: - Initialize
-    init(userPageStyle: UserPageStyle,
-         user: User,
+    init(user: User,
+         userPageStyle: UserPageStyle,
+         blockUseCase: BlockUseCase,
          fetchFeedUseCase: FetchFeedUseCase) {
-        self.userPageStyle = userPageStyle
         self.user = user
+        self.userPageStyle = userPageStyle
+        self.blockUseCase = blockUseCase
         self.fetchFeedUseCase = fetchFeedUseCase
     }
     
@@ -82,11 +94,18 @@ final class UserPageViewModel: UserPageViewModelProtocol {
         self.user = updatedUser
     }
     
-    func isReportedUser() -> Bool {
-        guard let reportedUserIDArray = User.reportedUserIDArray else {
-            fatalError("User.reportedUserIDArray is Nil")
+    func blockUser() {
+        Task {
+            let isBlocked = await blockUseCase.block(blocked: user)
+            await MainActor.run {
+                if isBlocked {
+                    User.blockedUserIDArray?.append(user.id)
+                    blockUserStateSubject.send(.done)
+                } else {
+                    blockUserStateSubject.send(.error)
+                }
+            }
         }
-        return reportedUserIDArray.contains(user.id)
     }
     
     // MARK: - Output

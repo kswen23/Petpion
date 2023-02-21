@@ -53,10 +53,10 @@ final class MainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
-        if viewModel.isFirstFetching == false {
-            viewModel.updateCurrentFeeds()
+        if viewModel.isFirstFetching {
+            viewModel.initializeEssentialAppData()
         } else {
-            viewModel.fetchInit()
+            viewModel.updateCurrentFeeds()
         }
     }
     

@@ -14,7 +14,8 @@ import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
-    func fetchInit()
+    func initializeEssentialAppData()
+    func fetchInit() async
     func fetchNextFeed()
     func refreshCurrentFeed()
     func sortingOptionWillChange(with option: SortingOption)
@@ -36,6 +37,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
     var reportUseCase: ReportUseCase { get }
+    var blockUseCase: BlockUseCase { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -59,55 +61,54 @@ final class MainViewModel: MainViewModelProtocol {
     let fetchUserUseCase: FetchUserUseCase
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     let reportUseCase: ReportUseCase
+    let blockUseCase: BlockUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase,
          fetchUserUseCase: FetchUserUseCase,
          calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
-         reportUseCase: ReportUseCase) {
+         reportUseCase: ReportUseCase,
+         blockUseCase: BlockUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         self.reportUseCase = reportUseCase
-        initializeUserVoteChance()
+        self.blockUseCase = blockUseCase
     }
     
-    func fetchInit() {
-        Task {
-            let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
-            await MainActor.run {
-                latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
-                popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
-                isFirstFetching = false
-            }
+    func fetchInit() async {
+        let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
+        await MainActor.run {
+            latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
+            popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
+            isFirstFetching = false
         }
     }
     
-    private func initializeUserVoteChance() {
+    func initializeEssentialAppData() {
         Task {
-            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
+            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else {
+                return await fetchInit()
+            }
             let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
-            let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
             User.currentUser = fetchedUser
-            initializeReportedData()
-            
-            // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
-            if initUserInfoResult {
+            await initializeUserActionData()
+            await fetchInit()
+            if await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser) {
                 fetchUserUseCase.bindUser { fetchedUser in
-                    User.currentUser?.nickname = fetchedUser.nickname
-                    User.currentUser?.voteChanceCount = fetchedUser.voteChanceCount
-                    User.currentUser?.latestVoteTime = fetchedUser.latestVoteTime
+                    User.currentUser = fetchedUser
                 }
             }
+            // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
         }
     }
     
-    private func initializeReportedData() {
-        Task {
-            User.reportedUserIDArray = await reportUseCase.getReportedArray(type: .user)
-            User.reportedFeedIDArray = await reportUseCase.getReportedArray(type: .feed)
-        }
+    private func initializeUserActionData() async {
+        User.reportedUserIDArray = await reportUseCase.getReportedArray(type: .user)
+        User.reportedFeedIDArray = await reportUseCase.getReportedArray(type: .feed)
+        User.blockedUserIDArray = await blockUseCase.getBlockedArray(type: .user)
+        User.blockedFeedIDArray = await blockUseCase.getBlockedArray(type: .feed)
     }
-
+    
     // MARK: - Input
     func refreshCurrentFeed() {
         let currentOption = sortingOptionSubject.value
@@ -191,7 +192,7 @@ final class MainViewModel: MainViewModelProtocol {
         default: break
         }
     }
-     
+    
     func updateCurrentFeeds() {
         Task {
             let popularFeeds = await fetchFeedUseCase.updateFeeds(origin: popularFeedSubject.value)

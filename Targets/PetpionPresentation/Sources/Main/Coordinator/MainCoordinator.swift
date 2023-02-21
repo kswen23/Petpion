@@ -105,11 +105,12 @@ private extension MainCoordinator {
         guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let fetchUserUseCase: FetchUserUseCase = DIContainer.shared.resolve(FetchUserUseCase.self),
               let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
-              let reportUseCase: ReportUseCase = DIContainer.shared.resolve(ReportUseCase.self)
+              let reportUseCase: ReportUseCase = DIContainer.shared.resolve(ReportUseCase.self),
+              let blockUseCase: BlockUseCase = DIContainer.shared.resolve(BlockUseCase.self)
         else {
             fatalError("getMainViewController did occurred error")
         }
-        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, reportUseCase: reportUseCase)
+        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, reportUseCase: reportUseCase, blockUseCase: blockUseCase)
         return MainViewController(viewModel: viewModel)
     }
 }

@@ -73,6 +73,10 @@ public struct DomainDIContainer: Containable {
         container.register(ReportUseCase.self) { _ in
             DefaultReportUseCase(firestoreRepository: firestoreRepository)
         }
+        
+        container.register(BlockUseCase.self) { _ in
+            DefaultBlockUseCase(firestoreRepository: firestoreRepository)
+        }
+        
     }
-    
 }

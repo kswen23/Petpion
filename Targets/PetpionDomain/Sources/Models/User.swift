@@ -36,10 +36,48 @@ public extension User {
     static var currentUser: Self?
     static var reportedUserIDArray: [String]?
     static var reportedFeedIDArray: [String]?
+    static var blockedUserIDArray: [String]?
+    static var blockedFeedIDArray: [String]?
     
     static let isLogin: Bool = {
         currentUser != nil
     }()
+    
+    static func isReportedUser(user: User?) -> Bool {
+        guard let reportedUserIDArray = User.reportedUserIDArray,
+              let user = user
+        else {
+            fatalError("User.isReportedUser occurred error")
+        }
+        return reportedUserIDArray.contains(user.id)
+    }
+    
+    static func isBlockedUser(user: User?) -> Bool {
+        guard let blockedUserIDArray = User.blockedUserIDArray,
+              let user = user
+        else {
+            fatalError("User.isBlockedUser occurred error")
+        }
+        return blockedUserIDArray.contains(user.id)
+    }
+    
+    static func isReportedFeed(feed: PetpionFeed?) -> Bool {
+        guard let reportedFeedIDArray = User.reportedFeedIDArray,
+              let feed = feed
+        else {
+            fatalError("User.isReportedFeed occurred error")
+        }
+        return reportedFeedIDArray.contains(feed.id)
+    }
+    
+    static func isBlockedFeed(feed: PetpionFeed?) -> Bool {
+        guard let blockedFeedIDArray = User.blockedFeedIDArray,
+              let feed = feed
+        else {
+            fatalError("User.isBlockedFeed occurred error")
+        }
+        return blockedFeedIDArray.contains(feed.id)
+    }
     
     static let voteMaxCountPolicy: Int = 5
     

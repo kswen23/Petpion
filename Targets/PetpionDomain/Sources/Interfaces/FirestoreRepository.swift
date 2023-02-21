@@ -16,6 +16,7 @@ public protocol FirestoreRepository {
     func uploadNewUser(_ user: User)
     func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool
     func uploadReportList<T>(reported: T, reason: String) async -> Bool
+    func uploadBlockList<T>(blocked: T) async -> Bool
     
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed]
@@ -27,7 +28,7 @@ public protocol FirestoreRepository {
     func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed]
     func fetchFeedWithFeedID(with feed: PetpionFeed) async -> PetpionFeed
     func checkDuplicatedNickname(with nickname: String) async -> Bool
-    func getReportedArray(type: ReportBlockType) async -> [String]?
+    func getUserActionArray(action: UserActionType, type: ReportBlockType) async -> [String]?
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool

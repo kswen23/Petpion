@@ -102,7 +102,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return UIBarButtonItem(customView: indicatorView)
     }()
     
-    private let duplicatedToastLabel: UILabel = {
+    private let toastAnimationLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 16, weight: .medium)
@@ -113,8 +113,8 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         label.isHidden = true
         return label
     }()
-    private let duplicatedToastLabelHeightConstant: CGFloat = 40
-    private lazy var duplicatedToastLabelTopAnchor: NSLayoutConstraint? = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
+    private let toastAnimationLabelHeightConstant: CGFloat = 40
+    private lazy var toastAnimationLabelTopAnchor: NSLayoutConstraint? = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
     
     // MARK: - Initialize
     init(viewModel: DetailFeedViewModelProtocol) {
@@ -129,7 +129,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationItem.title = "피드"
+        self.navigationItem.title = "게시글"
     }
     
     override func viewDidLoad() {
@@ -211,15 +211,15 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         ])
     }
     
-    private func layoutDuplicatedToastLabel() {
-        view.addSubview(duplicatedToastLabel)
+    private func layoutToastAnimationLabel() {
+        view.addSubview(toastAnimationLabel)
         NSLayoutConstraint.activate([
-            duplicatedToastLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            duplicatedToastLabel.widthAnchor.constraint(equalToConstant: view.frame.width*0.6),
-            duplicatedToastLabel.heightAnchor.constraint(equalToConstant: duplicatedToastLabelHeightConstant)
+            toastAnimationLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toastAnimationLabel.widthAnchor.constraint(equalToConstant: view.frame.width*0.6),
+            toastAnimationLabel.heightAnchor.constraint(equalToConstant: toastAnimationLabelHeightConstant)
         ])
-        duplicatedToastLabelTopAnchor?.isActive = true
-        duplicatedToastLabel.roundCorners(cornerRadius: 15)
+        toastAnimationLabelTopAnchor?.isActive = true
+        toastAnimationLabel.roundCorners(cornerRadius: 15)
     }
 
     
@@ -242,7 +242,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         case .uneditableUserDetailFeed:
             self.navigationItem.rightBarButtonItem = nil
         case .otherUserDetailFeed:
-            layoutDuplicatedToastLabel()
+            layoutToastAnimationLabel()
             configureEllipsisBarButton()
             configureDetailFeedAlertViewController()
         }
@@ -279,13 +279,20 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     private func configureDetailFeedAlertViewController() {
         detailFeedAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         if let detailFeedAlertController = detailFeedAlertController {
-            let blockFeed = UIAlertAction(title: "피드 차단", style: .destructive, handler: { [weak self] _ in
-                //                self?.viewModel.editFeed()
-            })
-            let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
+            let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
                 guard let strongSelf = self else { return }
-                if strongSelf.viewModel.isReportedFeed() {
-                    self?.startDuplicatedLabelToastAnimation(actionType: .report)
+                if User.isBlockedFeed(feed: strongSelf.viewModel.feed) {
+                    self?.configureToastAnimationLabel(actionType: .block)
+                    self?.startToastLabelAnimation()
+                } else {
+                    
+                }
+            })
+            let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
+                guard let strongSelf = self else { return }
+                if User.isReportedFeed(feed: strongSelf.viewModel.feed) {
+                    self?.configureToastAnimationLabel(actionType: .report)
+                    self?.startToastLabelAnimation()
                 } else {
                     self?.detailFeedCoordinator?.presentReportFeedViewController()
                 }
@@ -296,17 +303,20 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         }
     }
     
-    private func startDuplicatedLabelToastAnimation(actionType: UserActionType) {
+    private func configureToastAnimationLabel(actionType: UserActionType) {
         switch actionType {
         case .block:
-            duplicatedToastLabel.text = "이미 차단한 피드입니다."
+            toastAnimationLabel.text = "이미 차단한 게시글입니다."
         case .report:
-            duplicatedToastLabel.text = "이미 신고한 피드입니다."
+            toastAnimationLabel.text = "이미 신고한 게시글입니다."
         }
-        duplicatedToastLabel.isHidden = false
-        duplicatedToastLabelTopAnchor?.isActive = false
-        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: -(duplicatedToastLabelHeightConstant*2))
-        duplicatedToastLabelTopAnchor?.isActive = true
+    }
+    
+    private func startToastLabelAnimation() {
+        toastAnimationLabel.isHidden = false
+        toastAnimationLabelTopAnchor?.isActive = false
+        toastAnimationLabelTopAnchor = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: -(toastAnimationLabelHeightConstant*2))
+        toastAnimationLabelTopAnchor?.isActive = true
         UIView.animate(withDuration: 0.5,
                        delay: 0,
                        usingSpringWithDamping: 0.5,
@@ -319,9 +329,9 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }
     
     private func popDuplicatedLabelToastAnimation() {
-        duplicatedToastLabelTopAnchor?.isActive = false
-        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
-        duplicatedToastLabelTopAnchor?.isActive = true
+        toastAnimationLabelTopAnchor?.isActive = false
+        toastAnimationLabelTopAnchor = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
+        toastAnimationLabelTopAnchor?.isActive = true
         UIView.animate(withDuration: 0.5,
                        delay: 2.0,
                        usingSpringWithDamping: 0.5,
@@ -329,7 +339,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
                        options: .curveEaseInOut, animations: { [weak self] in
             self?.view.layoutIfNeeded()
         }, completion: { [weak self] _ in
-            self?.duplicatedToastLabel.isHidden = true
+            self?.toastAnimationLabel.isHidden = true
         })
     }
     
@@ -424,14 +434,14 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         case .uneditableUserDetailFeed:
             return
         case .otherUserDetailFeed:
-            return
+            bindBlockFeedStateSubject()
         }
     }
     
     private func bindFeedManagingSubject() {
-        viewModel.feedManagingSubject.sink { [weak self] state in
+        viewModel.feedManagingSubject.sink { [weak self] managingState in
             guard let strongSelf = self else { return }
-            switch state {
+            switch managingState {
             case .delete:
                 self?.navigationItem.rightBarButtonItem = strongSelf.indicatorBarButton
             case .edit:
@@ -440,6 +450,19 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
                 self?.navigationItem.rightBarButtonItem = strongSelf.settingBarButton
                 self?.detailFeedCoordinator?.popDetailFeedView()
             }
+        }.store(in: &cancellables)
+    }
+    
+    private func bindBlockFeedStateSubject() {
+        viewModel.blockFeedStateSubject.sink { [weak self] blockState in
+            guard let strongSelf = self else { return }
+            switch blockState {
+            case .done:
+                self?.configureToastAnimationLabel(actionType: .block)
+            case .error:
+                strongSelf.toastAnimationLabel.text = "에러가 발생했습니다."
+            }
+            self?.startToastLabelAnimation()
         }.store(in: &cancellables)
     }
     

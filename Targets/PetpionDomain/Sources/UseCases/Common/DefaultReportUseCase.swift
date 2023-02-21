@@ -33,7 +33,7 @@ public final class DefaultReportUseCase: ReportUseCase {
     }
     
     public func getReportedArray(type: ReportBlockType) async -> [String]? {
-        await firestoreRepository.getReportedArray(type: type)
+        await firestoreRepository.getUserActionArray(action: .report, type: type)
     }
     
     // MARK: - Private

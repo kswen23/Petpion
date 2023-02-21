@@ -18,9 +18,9 @@ enum FeedManagingState {
     case finish
 }
 
-enum DetailFeedAlertAction {
-    case block
-    case report
+enum BlockFeedState {
+    case done
+    case error
 }
 
 protocol DetailFeedViewModelInput {
@@ -29,7 +29,7 @@ protocol DetailFeedViewModelInput {
     func collectionViewDidScrolled()
     func editFeed()
     func deleteFeed()
-    func isReportedFeed() -> Bool
+    func blockFeed()
 }
 
 protocol DetailFeedViewModelOutput {
@@ -40,9 +40,11 @@ protocol DetailFeedViewModelOutput {
 
 protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var blockUseCase: BlockUseCase { get }
     var feed: PetpionFeed { get }
     var detailFeedStyle: DetailFeedStyle { get }
     var feedManagingSubject: PassthroughSubject<FeedManagingState, Never> { get }
+    var blockFeedStateSubject: PassthroughSubject<BlockFeedState,Never> { get }
     var urlSubject: CurrentValueSubject<[URL], Never> { get }
     var currentPageSubject: CurrentValueSubject<Int, Never> { get }
     var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, URL>,Publishers.Map<PassthroughSubject<[URL], Never>,NSDiffableDataSourceSnapshot<Int, URL>>.Failure> { get }
@@ -52,10 +54,12 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
     let fetchFeedUseCase: FetchFeedUseCase
     let deleteFeedUseCase: DeleteFeedUseCase
+    let blockUseCase: BlockUseCase
     var feed: PetpionFeed
     let detailFeedStyle: DetailFeedStyle
     
-    let feedManagingSubject: PassthroughSubject<FeedManagingState, Never> = .init()
+    lazy var feedManagingSubject: PassthroughSubject<FeedManagingState, Never> = .init()
+    lazy var blockFeedStateSubject: PassthroughSubject<BlockFeedState,Never> = .init()
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
     // no data일시 
 //    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
@@ -73,11 +77,13 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     init(feed: PetpionFeed,
          detailFeedStyle: DetailFeedStyle,
          fetchFeedUseCase: FetchFeedUseCase,
-         deleteFeedUseCase: DeleteFeedUseCase) {
+         deleteFeedUseCase: DeleteFeedUseCase,
+         blockUseCase: BlockUseCase) {
         self.feed = feed
         self.detailFeedStyle = detailFeedStyle
         self.fetchFeedUseCase = fetchFeedUseCase
         self.deleteFeedUseCase = deleteFeedUseCase
+        self.blockUseCase = blockUseCase
         fetchFeedImages()
     }
     
@@ -118,13 +124,19 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         }
     }
     
-    func isReportedFeed() -> Bool {
-        guard let reportedFeedIDArray = User.reportedFeedIDArray else {
-            fatalError("User.reportedFeedIDArray is Nil")
+    func blockFeed() {
+        Task {
+            let isBlocked = await blockUseCase.block(blocked: feed)
+            await MainActor.run {
+                if isBlocked {
+                    User.blockedFeedIDArray?.append(feed.id)
+                    blockFeedStateSubject.send(.done)
+                } else {
+                    blockFeedStateSubject.send(.error)
+                }
+            }
         }
-        return reportedFeedIDArray.contains(feed.id)
     }
-
     
     // MARK: - Output
     func configureDetailFeedImageCollectionViewLayout() -> UICollectionViewLayout {

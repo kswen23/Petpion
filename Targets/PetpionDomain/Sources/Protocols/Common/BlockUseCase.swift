@@ -12,7 +12,7 @@ public protocol BlockUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
     
-    func block<T>(blocked: T, type: ReportCase, description: String?) async -> Bool
-    func getReportedArray(type: ReportBlockType) async -> [String]?
+    func block<T>(blocked: T) async -> Bool
+    func getBlockedArray(type: ReportBlockType) async -> [String]?
 
 }
