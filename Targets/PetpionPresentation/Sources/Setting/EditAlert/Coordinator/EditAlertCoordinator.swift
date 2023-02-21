@@ -12,16 +12,16 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
-public final class EditAlertCoordinator: NSObject, Coordinator {
+final class EditAlertCoordinator: NSObject, Coordinator {
     
-    public var childCoordinators: [Coordinator] = []
-    public var navigationController: UINavigationController
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
     
-    public init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
-    public func start() {
+    func start() {
         let editAlertViewController = getEditAlertViewController()
         editAlertViewController.coordinator = self
         navigationController.pushViewController(editAlertViewController, animated: true)
@@ -29,7 +29,7 @@ public final class EditAlertCoordinator: NSObject, Coordinator {
 }
 
 extension EditAlertCoordinator {
-    func getEditAlertViewController() -> EditAlertViewController {
+    private func getEditAlertViewController() -> EditAlertViewController {
         guard let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self) else {
             fatalError("getEditAlertViewController did occurred error")
         }

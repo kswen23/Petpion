@@ -12,29 +12,29 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
-public final class SignOutCoordinator: NSObject, Coordinator {
+final class SignOutCoordinator: NSObject, Coordinator {
     
-    public var childCoordinators: [Coordinator] = []
-    public var navigationController: UINavigationController
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
     
-    public init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
-    public func start() {
+    func start() {
         let signOutViewController = getSignOutViewController()
         signOutViewController.coordinator = self
         navigationController.pushViewController(signOutViewController, animated: true)
     }
     
-    public func popViewController() {
+    func popViewController() {
         navigationController.popViewController(animated: true)
     }
     
 }
 
 extension SignOutCoordinator {
-    func getSignOutViewController() -> SignOutViewController {
+    private func getSignOutViewController() -> SignOutViewController {
         guard let user = User.currentUser,
               let deleteFeedUseCase: DeleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self)
         else {

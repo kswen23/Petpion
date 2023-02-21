@@ -12,16 +12,16 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
-public final class SettingCoordinator: NSObject, Coordinator {
+final class SettingCoordinator: NSObject, Coordinator {
     
-    public var childCoordinators: [Coordinator] = []
-    public var navigationController: UINavigationController
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
     
-    public init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
-    public func start() {
+    func start() {
         if User.isLogin == true {
             let settingViewController = getLoggedInSettingViewController()
             settingViewController.coordinator = self

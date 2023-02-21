@@ -12,33 +12,33 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
-public final class EditProfileCoordinator: NSObject, Coordinator {
+final class EditProfileCoordinator: NSObject, Coordinator {
     
-    public var childCoordinators: [Coordinator] = []
-    public var navigationController: UINavigationController
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
     
-    public init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
     
-    public func start() {
+    func start() {
         let editProfileViewController = getEditProfileViewController()
         editProfileViewController.coordinator = self
         navigationController.pushViewController(editProfileViewController, animated: true)
     }
     
-    public func presentProfileImagePickerViewController(parentableViewController: ProfileImagePickerViewControllerDelegate) {
+    func presentProfileImagePickerViewController(parentableViewController: ProfileImagePickerViewControllerDelegate) {
         let profileImagePickerViewController = getProfileImagePickerViewController()
         profileImagePickerViewController.coordinator = self
         profileImagePickerViewController.profileImagePickerViewControllerListener = parentableViewController
         navigationController.present(profileImagePickerViewController, animated: true)
     }
     
-    public func popEditProfileViewController() {
+    func popEditProfileViewController() {
         navigationController.popViewController(animated: true)
     }
     
-    public func dismissProfileImagePickerViewController() {
+    func dismissProfileImagePickerViewController() {
         navigationController.dismiss(animated: true)
     }
 }
