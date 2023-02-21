@@ -52,7 +52,7 @@ final class ReportUserViewController: HasCoordinatorViewController {
     }()
     
     private lazy var detailStackView: ReportTypeStackView = {
-        let stackView = ReportTypeStackView(typeArray: ReportType.user)
+        let stackView = ReportTypeStackView(typeArray: ReportCase.user)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.settingCategoryStackViewListener = self
         return stackView
@@ -135,7 +135,7 @@ extension ReportUserViewController: UIViewControllerTransitioningDelegate {
 
 extension ReportUserViewController: ReportTypeStackViewDelegate {
     
-    func reportActionViewDidTapped(type: ReportType) {
+    func reportActionViewDidTapped(type: ReportCase) {
         viewModel.reportUser(type: type)
     }
 }

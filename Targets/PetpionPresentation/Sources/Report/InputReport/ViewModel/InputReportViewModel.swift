@@ -12,15 +12,14 @@ import Foundation
 import PetpionDomain
 
 protocol InputReportViewModelProtocol {
-    var reportType: ReportSceneType { get }
+    var reportType: ReportType { get }
     var reportUseCase: ReportUseCase { get }
-    var currentType: ReportSceneType { get }
     var inputReportViewStateSubject: PassthroughSubject<InputReportViewState, Never> { get }
     var textViewPlaceHolder: String { get }
     var user: User? { get set }
     var feed: PetpionFeed? { get set }
     
-    func reportUser(description: String)
+    func report(description: String)
 }
 enum InputReportViewState {
     case startReporting
@@ -30,25 +29,31 @@ enum InputReportViewState {
 
 final class InputReportViewModel: InputReportViewModelProtocol {
     
-    let reportType: ReportSceneType
+    let reportType: ReportType
     let reportUseCase: ReportUseCase
-    let currentType: ReportSceneType
     let inputReportViewStateSubject: PassthroughSubject<InputReportViewState, Never> = .init()
-    let textViewPlaceHolder: String = "신고하는 이유를 상세히 적어주세요. 🐶"
+    let textViewPlaceHolder: String = "신고하는 이유를 상세히 적어주세요 🐶"
     
     var user: User?
     var feed: PetpionFeed?
     
     // MARK: - Initialize
-    init(reportType: ReportSceneType,
-         reportUseCase: ReportUseCase,
-         currentType: ReportSceneType) {
+    init(reportType: ReportType,
+         reportUseCase: ReportUseCase) {
         self.reportType = reportType
         self.reportUseCase = reportUseCase
-        self.currentType = currentType
     }
     
-    func reportUser(description: String) {
+    func report(description: String) {
+        switch reportType {
+        case .user:
+            reportUser(description: description)
+        case .feed:
+            reportFeed(description: description)
+        }
+    }
+    
+    private func reportUser(description: String) {
         Task {
             guard let user = user else { return }
             
@@ -56,7 +61,26 @@ final class InputReportViewModel: InputReportViewModelProtocol {
                 inputReportViewStateSubject.send(.startReporting)
             }
             
-            let reportCompleted = await reportUseCase.reportUser(reportedUser: user, type: .other, description: description)
+            let reportCompleted = await reportUseCase.report(reported: user, type: .other, description: description)
+            await MainActor.run {
+                if reportCompleted {
+                    inputReportViewStateSubject.send(.done)
+                } else {
+                    inputReportViewStateSubject.send(.error)
+                }
+            }
+        }
+    }
+    
+    private func reportFeed(description: String) {
+        Task {
+            guard let feed = feed else { return }
+            
+            await MainActor.run {
+                inputReportViewStateSubject.send(.startReporting)
+            }
+            
+            let reportCompleted = await reportUseCase.report(reported: feed, type: .other, description: description)
             await MainActor.run {
                 if reportCompleted {
                     inputReportViewStateSubject.send(.done)

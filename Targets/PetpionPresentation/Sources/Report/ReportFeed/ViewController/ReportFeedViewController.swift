@@ -52,7 +52,7 @@ final class ReportFeedViewController: HasCoordinatorViewController {
     }()
     
     private lazy var detailStackView: ReportTypeStackView = {
-        let stackView = ReportTypeStackView(typeArray: ReportType.feed)
+        let stackView = ReportTypeStackView(typeArray: ReportCase.feed)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.settingCategoryStackViewListener = self
         return stackView
@@ -134,7 +134,7 @@ extension ReportFeedViewController: UIViewControllerTransitioningDelegate {
 
 extension ReportFeedViewController: ReportTypeStackViewDelegate {
     
-    func reportActionViewDidTapped(type: ReportType) {
+    func reportActionViewDidTapped(type: ReportCase) {
         viewModel.reportFeed(type: type)
     }
 }

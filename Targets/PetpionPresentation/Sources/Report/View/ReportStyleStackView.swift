@@ -12,14 +12,14 @@ import UIKit
 import PetpionDomain
 
 protocol ReportTypeStackViewDelegate: AnyObject {
-    func reportActionViewDidTapped(type: ReportType)
+    func reportActionViewDidTapped(type: ReportCase)
 }
 
 final class ReportTypeStackView: UIStackView {
     
     weak var settingCategoryStackViewListener: ReportTypeStackViewDelegate?
     
-    private var typeArray = [ReportType]()
+    private var typeArray = [ReportCase]()
     private var typeIndex = 0
     private let widthPadding: CGFloat = 15
     
@@ -42,7 +42,7 @@ final class ReportTypeStackView: UIStackView {
     private var chevronImageViewArray = [UIImageView]()
     
     // MARK: - Initialize
-    init(typeArray: [ReportType]) {
+    init(typeArray: [ReportCase]) {
         self.typeArray = typeArray
         super.init(frame: .zero)
         self.axis = .vertical
@@ -69,7 +69,7 @@ final class ReportTypeStackView: UIStackView {
             .forEach { self.addArrangedSubview($0) }
     }
     
-    private func makeReportDetailView(with type: ReportType) -> UIView {
+    private func makeReportDetailView(with type: ReportCase) -> UIView {
         let baseButton: UIButton = {
             let button = UIButton()
             button.translatesAutoresizingMaskIntoConstraints = false

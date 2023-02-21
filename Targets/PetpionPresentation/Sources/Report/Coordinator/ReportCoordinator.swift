@@ -12,17 +12,12 @@ import UIKit
 import PetpionDomain
 import PetpionCore
 
-enum ReportSceneType {
-    case user
-    case feed
-}
-
 final class ReportCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     
-    var reportType: ReportSceneType!
+    var reportType: ReportType!
     var parentableNavigationController: UINavigationController?
     var feed: PetpionFeed?
     var user: User?
@@ -105,7 +100,7 @@ extension ReportCoordinator {
         else {
             fatalError("getReportFeedViewController occurred error")
         }
-        var viewModel: InputReportViewModelProtocol = InputReportViewModel(reportType: reportType, reportUseCase: reportUseCase, currentType: reportType)
+        var viewModel: InputReportViewModelProtocol = InputReportViewModel(reportType: reportType, reportUseCase: reportUseCase)
         switch reportType {
         case .user:
             viewModel.user = user
