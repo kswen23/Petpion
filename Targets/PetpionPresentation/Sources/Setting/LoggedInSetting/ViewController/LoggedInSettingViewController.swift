@@ -150,8 +150,6 @@ extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, Setti
     func settingActionViewDidTapped(action: SettingModel.SettingAction) {
         if action == .logout {
             self.present(logOutAlertController, animated: true)
-        } else if action == .signOut {
-            loggedInSettingCoordinator?.startSettingActionScene(with: action, user: viewModel.user)
         } else {
             loggedInSettingCoordinator?.startSettingActionScene(with: action)
         }
@@ -159,7 +157,7 @@ extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, Setti
     
     // SettingProfileDelegate
     func profileViewDidTapped() {
-        loggedInSettingCoordinator?.startSettingActionScene(with: .profile, user: viewModel.user)
+        loggedInSettingCoordinator?.startSettingActionScene(with: .profile)
     }
 
 }

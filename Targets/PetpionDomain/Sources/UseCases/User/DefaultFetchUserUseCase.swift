@@ -33,7 +33,10 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
     
     public func bindUser(completion: @escaping ((User) -> Void)) {
         firestoreRepository.addUserListener { user in
-            completion(user)
+            var userResult = user
+            userResult.imageURL = User.currentUser?.imageURL
+            userResult.profileImage = User.currentUser?.profileImage
+            completion(userResult)
         }
     }
     

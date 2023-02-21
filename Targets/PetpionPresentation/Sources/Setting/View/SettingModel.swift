@@ -23,7 +23,7 @@ struct SettingModel {
         case termsOfService = "서비스 이용약관"
         case openLicense = "오픈라이센스"
         // 계정
-        case manageBlockedUser = "차단 사용자 관리"
+        case manageBlockedUser = "차단 유저 관리"
         case logout = "로그아웃"
         case signOut = "탈퇴하기"
         
@@ -40,7 +40,7 @@ struct SettingModel {
             case .openLicense:
                 return "EditProfileCoordinator"
             case .manageBlockedUser:
-                return "EditProfileCoordinator"
+                return "ManageBlockedUserCoordinator"
             case .logout:
                 return ""
             case .signOut:

@@ -33,7 +33,7 @@ final class SettingCoordinator: NSObject, Coordinator {
         }
     }
     
-    func startSettingActionScene(with action: SettingModel.SettingAction, user: User? = nil) {
+    func startSettingActionScene(with action: SettingModel.SettingAction) {
         guard let settingActionCoordinator: Coordinator = DIContainer.shared.resolve(Coordinator.self, name: action.coordinatorString) else { return }
         childCoordinators.append(settingActionCoordinator)
         settingActionCoordinator.start()
