@@ -296,7 +296,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         }
     }
     
-    private func startDuplicatedLabelToastAnimation(actionType: ReportActionType) {
+    private func startDuplicatedLabelToastAnimation(actionType: UserActionType) {
         switch actionType {
         case .block:
             duplicatedToastLabel.text = "이미 차단한 피드입니다."

@@ -12,7 +12,7 @@ import Foundation
 import PetpionDomain
 
 protocol InputReportViewModelProtocol {
-    var reportType: ReportType { get }
+    var reportType: ReportBlockType { get }
     var reportUseCase: ReportUseCase { get }
     var inputReportViewStateSubject: PassthroughSubject<InputReportViewState, Never> { get }
     var textViewPlaceHolder: String { get }
@@ -29,7 +29,7 @@ enum InputReportViewState {
 
 final class InputReportViewModel: InputReportViewModelProtocol {
     
-    let reportType: ReportType
+    let reportType: ReportBlockType
     let reportUseCase: ReportUseCase
     let inputReportViewStateSubject: PassthroughSubject<InputReportViewState, Never> = .init()
     let textViewPlaceHolder: String = "신고하는 이유를 상세히 적어주세요 🐶"
@@ -38,7 +38,7 @@ final class InputReportViewModel: InputReportViewModelProtocol {
     var feed: PetpionFeed?
     
     // MARK: - Initialize
-    init(reportType: ReportType,
+    init(reportType: ReportBlockType,
          reportUseCase: ReportUseCase) {
         self.reportType = reportType
         self.reportUseCase = reportUseCase

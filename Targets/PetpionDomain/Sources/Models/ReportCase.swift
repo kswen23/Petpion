@@ -8,12 +8,12 @@
 
 import Foundation
 
-public enum ReportType {
+public enum ReportBlockType {
     case user
     case feed
 }
 
-public enum ReportActionType {
+public enum UserActionType {
     case block
     case report
 }

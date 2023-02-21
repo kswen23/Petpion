@@ -11,19 +11,19 @@ import Foundation
 import PetpionDomain
 
 protocol ReportCompletedViewModelProtocol {
-    var reportType: ReportType { get }
+    var reportType: ReportBlockType { get }
     var user: User? { get set }
     var feed: PetpionFeed? { get set }
 }
 
 final class ReportCompletedViewModel: ReportCompletedViewModelProtocol {
     
-    let reportType: ReportType
+    let reportType: ReportBlockType
     var user: User?
     var feed: PetpionFeed?
     
     // MARK: - Initialize
-    init(reportType: ReportType) {
+    init(reportType: ReportBlockType) {
         self.reportType = reportType
     }
     

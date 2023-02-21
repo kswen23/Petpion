@@ -216,7 +216,7 @@ final class UserPageViewController: HasCoordinatorViewController {
             let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
                 guard let strongSelf = self else { return }
                 if strongSelf.viewModel.isReportedUser() {
-                    self?.startDuplicatedLabelToastAnimation(ationType: .report)
+                    self?.startDuplicatedLabelToastAnimation(actionType: .report)
                 } else {
                     self?.userPageCoordinator?.presentReportUserViewController()
                 }
@@ -232,8 +232,8 @@ final class UserPageViewController: HasCoordinatorViewController {
         headerView.configureUserCardView(with: user)
     }
     
-    private func startDuplicatedLabelToastAnimation(ationType: ReportActionType) {
-        switch ationType {
+    private func startDuplicatedLabelToastAnimation(actionType: UserActionType) {
+        switch actionType {
         case .block:
             duplicatedToastLabel.text = "이미 차단한 유저입니다."
         case .report:

@@ -292,7 +292,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    public func getReportedArray(type: ReportType) async -> [String]? {
+    public func getReportedArray(type: ReportBlockType) async -> [String]? {
         return await withCheckedContinuation { continuation in
             guard let userID = User.currentUser?.id else { return }
             var collectionPath: String = .init()

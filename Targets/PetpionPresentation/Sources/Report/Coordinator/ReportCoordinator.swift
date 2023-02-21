@@ -17,7 +17,7 @@ final class ReportCoordinator: NSObject, Coordinator {
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
     
-    var reportType: ReportType!
+    var reportType: ReportBlockType!
     var parentableNavigationController: UINavigationController?
     var feed: PetpionFeed?
     var user: User?

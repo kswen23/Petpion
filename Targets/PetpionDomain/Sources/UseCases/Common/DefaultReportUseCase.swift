@@ -32,7 +32,7 @@ public final class DefaultReportUseCase: ReportUseCase {
         return uploadReportListResult && uploadPersonalReportListResult
     }
     
-    public func getReportedArray(type: ReportType) async -> [String]? {
+    public func getReportedArray(type: ReportBlockType) async -> [String]? {
         await firestoreRepository.getReportedArray(type: type)
     }
     

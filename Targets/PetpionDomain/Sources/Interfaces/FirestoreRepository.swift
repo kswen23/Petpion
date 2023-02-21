@@ -27,7 +27,7 @@ public protocol FirestoreRepository {
     func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed]
     func fetchFeedWithFeedID(with feed: PetpionFeed) async -> PetpionFeed
     func checkDuplicatedNickname(with nickname: String) async -> Bool
-    func getReportedArray(type: ReportType) async -> [String]?
+    func getReportedArray(type: ReportBlockType) async -> [String]?
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool
