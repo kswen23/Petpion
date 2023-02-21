@@ -85,11 +85,11 @@ public final class MainCoordinator: NSObject, Coordinator {
 extension MainCoordinator: UINavigationControllerDelegate {
     
     public func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
-
+        
         guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from), !navigationController.viewControllers.contains(fromViewController) else {
-                    return
-                }
-       
+            return
+        }
+        
         if let hasCoordinatorViewController = fromViewController as? CoordinatorWrapper {
             if let parentsCoordinatorWrapper = viewController as? CoordinatorWrapper {
                 parentsCoordinatorWrapper.coordinator?.childDidFinish(hasCoordinatorViewController.coordinator)
@@ -104,11 +104,12 @@ private extension MainCoordinator {
     private func getMainViewController() -> MainViewController {
         guard let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
               let fetchUserUseCase: FetchUserUseCase = DIContainer.shared.resolve(FetchUserUseCase.self),
-              let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self)
+              let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
+              let reportUseCase: ReportUseCase = DIContainer.shared.resolve(ReportUseCase.self)
         else {
             fatalError("getMainViewController did occurred error")
         }
-        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase)
+        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, reportUseCase: reportUseCase)
         return MainViewController(viewModel: viewModel)
     }
 }

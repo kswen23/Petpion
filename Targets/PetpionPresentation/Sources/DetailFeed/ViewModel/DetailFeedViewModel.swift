@@ -18,12 +18,18 @@ enum FeedManagingState {
     case finish
 }
 
+enum DetailFeedAlertAction {
+    case block
+    case report
+}
+
 protocol DetailFeedViewModelInput {
     var currentPageChangedByPageControl: Bool { get }
     func pageControlValueChanged(_ count: Int)
     func collectionViewDidScrolled()
     func editFeed()
     func deleteFeed()
+    func isReportedFeed() -> Bool
 }
 
 protocol DetailFeedViewModelOutput {
@@ -111,6 +117,14 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
             }
         }
     }
+    
+    func isReportedFeed() -> Bool {
+        guard let reportedFeedIDArray = User.reportedFeedIDArray else {
+            fatalError("User.reportedFeedIDArray is Nil")
+        }
+        return reportedFeedIDArray.contains(feed.id)
+    }
+
     
     // MARK: - Output
     func configureDetailFeedImageCollectionViewLayout() -> UICollectionViewLayout {

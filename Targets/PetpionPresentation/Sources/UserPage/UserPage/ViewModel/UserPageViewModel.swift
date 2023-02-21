@@ -16,6 +16,7 @@ import PetpionDomain
 protocol UserPageViewModelInput {
     func fetchUserTotalFeeds()
     func userDidUpdated(to updatedUser: User)
+    func isReportedUser() -> Bool
 }
 
 protocol UserPageViewModelOutput {
@@ -79,6 +80,13 @@ final class UserPageViewModel: UserPageViewModelProtocol {
     // MARK: - Input
     func userDidUpdated(to updatedUser: User) {
         self.user = updatedUser
+    }
+    
+    func isReportedUser() -> Bool {
+        guard let reportedUserIDArray = User.reportedUserIDArray else {
+            fatalError("User.reportedUserIDArray is Nil")
+        }
+        return reportedUserIDArray.contains(user.id)
     }
     
     // MARK: - Output

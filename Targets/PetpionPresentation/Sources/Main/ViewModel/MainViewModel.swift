@@ -35,6 +35,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
+    var reportUseCase: ReportUseCase { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -57,13 +58,16 @@ final class MainViewModel: MainViewModelProtocol {
     let fetchFeedUseCase: FetchFeedUseCase
     let fetchUserUseCase: FetchUserUseCase
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
+    let reportUseCase: ReportUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase,
          fetchUserUseCase: FetchUserUseCase,
-         calculateVoteChanceUseCase: CalculateVoteChanceUseCase) {
+         calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
+         reportUseCase: ReportUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
+        self.reportUseCase = reportUseCase
         initializeUserVoteChance()
     }
     
@@ -84,6 +88,7 @@ final class MainViewModel: MainViewModelProtocol {
             let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
             let initUserInfoResult = await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser)
             User.currentUser = fetchedUser
+            initializeReportedData()
             
             // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
             if initUserInfoResult {
@@ -93,6 +98,13 @@ final class MainViewModel: MainViewModelProtocol {
                     User.currentUser?.latestVoteTime = fetchedUser.latestVoteTime
                 }
             }
+        }
+    }
+    
+    private func initializeReportedData() {
+        Task {
+            User.reportedUserIDArray = await reportUseCase.getReportedArray(type: .user)
+            User.reportedFeedIDArray = await reportUseCase.getReportedArray(type: .feed)
         }
     }
 

@@ -62,6 +62,20 @@ final class UserPageViewController: HasCoordinatorViewController {
         return label
     }()
     
+    private let duplicatedToastLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.backgroundColor = .black
+        label.textAlignment = .center
+        label.textColor = .white
+        label.alpha = 0.9
+        label.isHidden = true
+        return label
+    }()
+    private let duplicatedToastLabelHeightConstant: CGFloat = 40
+    private lazy var duplicatedToastLabelTopAnchor: NSLayoutConstraint? = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
+    
     // MARK: - Initialize
     init(viewModel: UserPageViewModelProtocol) {
         self.viewModel = viewModel
@@ -132,6 +146,17 @@ final class UserPageViewController: HasCoordinatorViewController {
         lazyCatAnimationView.isHidden = true
     }
     
+    private func layoutDuplicatedToastLabel() {
+        userFeedsCollectionView.addSubview(duplicatedToastLabel)
+        NSLayoutConstraint.activate([
+            duplicatedToastLabel.centerXAnchor.constraint(equalTo: userFeedsCollectionView.centerXAnchor),
+            duplicatedToastLabel.widthAnchor.constraint(equalToConstant: view.frame.width*0.6),
+            duplicatedToastLabel.heightAnchor.constraint(equalToConstant: duplicatedToastLabelHeightConstant)
+        ])
+        duplicatedToastLabelTopAnchor?.isActive = true
+        duplicatedToastLabel.roundCorners(cornerRadius: 15)
+    }
+    
     // MARK: - Configure
     private func configureNavigationTitle() {
         switch viewModel.userPageStyle {
@@ -150,6 +175,7 @@ final class UserPageViewController: HasCoordinatorViewController {
         case .myPageWithOutSettings:
             navigationItem.rightBarButtonItem = nil
         case .otherUserPage:
+            layoutDuplicatedToastLabel()
             configureEllipsisBarButton()
             configureUserAlertViewController()
         }
@@ -188,8 +214,12 @@ final class UserPageViewController: HasCoordinatorViewController {
                 //                self?.viewModel.editFeed()
             })
             let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
-                // 중복신고인지 체크 후 (구현필요)
-                self?.userPageCoordinator?.presentReportUserViewController()
+                guard let strongSelf = self else { return }
+                if strongSelf.viewModel.isReportedUser() {
+                    self?.startDuplicatedLabelToastAnimation(ationType: .report)
+                } else {
+                    self?.userPageCoordinator?.presentReportUserViewController()
+                }
             })
             let cancel = UIAlertAction(title: "취소", style: .cancel)
             
@@ -200,6 +230,43 @@ final class UserPageViewController: HasCoordinatorViewController {
     private func configureUserFeedsCollectionViewHeader(with user: User) {
         guard let headerView = userFeedsCollectionView.supplementaryView(forElementKind: UserCardCollectionReusableView.identifier, at: IndexPath.init(item: 0, section: 0)) as? UserCardCollectionReusableView else { return }
         headerView.configureUserCardView(with: user)
+    }
+    
+    private func startDuplicatedLabelToastAnimation(ationType: ReportActionType) {
+        switch ationType {
+        case .block:
+            duplicatedToastLabel.text = "이미 차단한 유저입니다."
+        case .report:
+            duplicatedToastLabel.text = "이미 신고한 유저입니다."
+        }
+        duplicatedToastLabel.isHidden = false
+        duplicatedToastLabelTopAnchor?.isActive = false
+        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: -(duplicatedToastLabelHeightConstant*2))
+        duplicatedToastLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.popDuplicatedLabelToastAnimation()
+        })
+    }
+    
+    private func popDuplicatedLabelToastAnimation() {
+        duplicatedToastLabelTopAnchor?.isActive = false
+        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
+        duplicatedToastLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 2.0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.duplicatedToastLabel.isHidden = true
+        })
     }
     
     // MARK: - Binding

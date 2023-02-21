@@ -34,6 +34,8 @@ public struct User: Identifiable {
 
 public extension User {
     static var currentUser: Self?
+    static var reportedUserIDArray: [String]?
+    static var reportedFeedIDArray: [String]?
     
     static let isLogin: Bool = {
         currentUser != nil

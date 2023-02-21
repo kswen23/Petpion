@@ -102,6 +102,20 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return UIBarButtonItem(customView: indicatorView)
     }()
     
+    private let duplicatedToastLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.backgroundColor = .black
+        label.textAlignment = .center
+        label.textColor = .white
+        label.alpha = 0.9
+        label.isHidden = true
+        return label
+    }()
+    private let duplicatedToastLabelHeightConstant: CGFloat = 40
+    private lazy var duplicatedToastLabelTopAnchor: NSLayoutConstraint? = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
+    
     // MARK: - Initialize
     init(viewModel: DetailFeedViewModelProtocol) {
         self.viewModel = viewModel
@@ -197,6 +211,18 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         ])
     }
     
+    private func layoutDuplicatedToastLabel() {
+        view.addSubview(duplicatedToastLabel)
+        NSLayoutConstraint.activate([
+            duplicatedToastLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            duplicatedToastLabel.widthAnchor.constraint(equalToConstant: view.frame.width*0.6),
+            duplicatedToastLabel.heightAnchor.constraint(equalToConstant: duplicatedToastLabelHeightConstant)
+        ])
+        duplicatedToastLabelTopAnchor?.isActive = true
+        duplicatedToastLabel.roundCorners(cornerRadius: 15)
+    }
+
+    
     // MARK: - Configure
     private func configure() {
         configureNavigationItem()
@@ -216,6 +242,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         case .uneditableUserDetailFeed:
             self.navigationItem.rightBarButtonItem = nil
         case .otherUserDetailFeed:
+            layoutDuplicatedToastLabel()
             configureEllipsisBarButton()
             configureDetailFeedAlertViewController()
         }
@@ -256,12 +283,54 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
                 //                self?.viewModel.editFeed()
             })
             let reportFeed = UIAlertAction(title: "피드 신고", style: .destructive, handler: { [weak self] _ in
-                self?.detailFeedCoordinator?.presentReportFeedViewController()
+                guard let strongSelf = self else { return }
+                if strongSelf.viewModel.isReportedFeed() {
+                    self?.startDuplicatedLabelToastAnimation(actionType: .report)
+                } else {
+                    self?.detailFeedCoordinator?.presentReportFeedViewController()
+                }
             })
             let cancel = UIAlertAction(title: "취소", style: .cancel)
             
             [blockFeed, reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
         }
+    }
+    
+    private func startDuplicatedLabelToastAnimation(actionType: ReportActionType) {
+        switch actionType {
+        case .block:
+            duplicatedToastLabel.text = "이미 차단한 피드입니다."
+        case .report:
+            duplicatedToastLabel.text = "이미 신고한 피드입니다."
+        }
+        duplicatedToastLabel.isHidden = false
+        duplicatedToastLabelTopAnchor?.isActive = false
+        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: -(duplicatedToastLabelHeightConstant*2))
+        duplicatedToastLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.popDuplicatedLabelToastAnimation()
+        })
+    }
+    
+    private func popDuplicatedLabelToastAnimation() {
+        duplicatedToastLabelTopAnchor?.isActive = false
+        duplicatedToastLabelTopAnchor = duplicatedToastLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: duplicatedToastLabelHeightConstant)
+        duplicatedToastLabelTopAnchor?.isActive = true
+        UIView.animate(withDuration: 0.5,
+                       delay: 2.0,
+                       usingSpringWithDamping: 0.5,
+                       initialSpringVelocity: 0.5,
+                       options: .curveEaseInOut, animations: { [weak self] in
+            self?.view.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.duplicatedToastLabel.isHidden = true
+        })
     }
     
     private func configureDetailFeedImageCollectionView() {
