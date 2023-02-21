@@ -62,14 +62,34 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             }
     }
     
-    public func uploadCurrentUserReportList(reportedUser: User, reason: String) async -> Bool {
+    public func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool {
         return await withCheckedContinuation { continuation in
             guard let currentUser = User.currentUser else { return }
+            var collectionPath: String = .init()
+            var documentPath: String = .init()
+            var data = [String : Any]()
+            switch reported {
+                
+            case let reportedUser as User:
+                collectionPath = "reportedUserList"
+                documentPath = reportedUser.id
+                data = ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))
+                
+            case let reportedFeed as PetpionFeed:
+                collectionPath = "reportedFeedList"
+                documentPath = reportedFeed.id
+                data = ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))
+                
+            default:
+                    fatalError("Undefined type")
+
+            }
+            
             db
                 .document(FirestoreCollection.user.reference + "/\(currentUser.id)")
-                .collection("reportedUserList")
-                .document(reportedUser.id)
-                .setData(ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))) { error in
+                .collection(collectionPath)
+                .document(documentPath)
+                .setData(data) { error in
                     if let error = error {
                         print(error.localizedDescription)
                         continuation.resume(returning: false)
@@ -79,55 +99,39 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    public func uploadUserReported(reportedUser: User, reason: String) async -> Bool {
+    public func uploadReportList<T>(reported: T, reason: String) async -> Bool {
         return await withCheckedContinuation { continuation in
             guard let currentUser = User.currentUser else { return }
-            db
-                .collection(FirestoreCollection.reportUser.reference)
-                .document()
-                .setData(ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))) { error in
-                    if let error = error {
-                        print(error.localizedDescription)
-                        continuation.resume(returning: false)
-                    }
-                    continuation.resume(returning: true)
-                }
-        }
-    }
+            var collectionPath: String = .init()
+            var data = [String : Any]()
+            switch reported {
+                
+            case let reportedUser as User:
+                collectionPath = FirestoreCollection.reportUser.reference
+                data = ReportUserData.toKeyValueCollections(ReportUserData(reporter: currentUser, reportedUser: reportedUser, reason: reason))
+                
+            case let reportedFeed as PetpionFeed:
+                collectionPath = FirestoreCollection.reportFeed.reference
+                data = ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))
+                
+            default:
+                    fatalError("Undefined type")
 
-    public func uploadCurrentFeedReportList(reportedFeed: PetpionFeed, reason: String) async -> Bool {
-        return await withCheckedContinuation { continuation in
-            guard let currentUser = User.currentUser else { return }
+            }
+            
             db
-                .document(FirestoreCollection.user.reference + "/\(currentUser.id)")
-                .collection("reportedFeedList")
-                .document(reportedFeed.id)
-                .setData(ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))) { error in
-                    if let error = error {
-                        print(error.localizedDescription)
-                        continuation.resume(returning: false)
-                    }
-                    continuation.resume(returning: true)
-                }
-        }
-    }
-    
-    public func uploadFeedReported(reportedFeed: PetpionFeed, reason: String) async -> Bool {
-        return await withCheckedContinuation { continuation in
-            guard let currentUser = User.currentUser else { return }
-            db
-                .collection(FirestoreCollection.reportFeed.reference)
+                .collection(collectionPath)
                 .document()
-                .setData(ReportFeedData.toKeyValueCollections(ReportFeedData(reporter: currentUser, reportedFeed: reportedFeed, reason: reason))) { error in
+                .setData(data) { error in
                     if let error = error {
                         print(error.localizedDescription)
                         continuation.resume(returning: false)
                     }
                     continuation.resume(returning: true)
                 }
+
         }
     }
-
     
     // MARK: - Private Create
     private func createDistributedCounter(to reference: DocumentReference) async -> Bool {
@@ -273,12 +277,55 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     await self.fetchMonthlyFeedsWithUserID(with: user, collectionPath: path)
                 }
             }
-
+            
             var resultFeedArray = [PetpionFeed]()
             for await feedArray in taskGroup {
                 resultFeedArray += feedArray
             }
             return resultFeedArray
+        }
+    }
+    
+    public func fetchReportedFeedArray() async -> [PetpionFeed] {
+        return await withCheckedContinuation { continuation in
+            
+        }
+    }
+    
+    public func getReportedArray(type: ReportType) async -> [String]? {
+        return await withCheckedContinuation { continuation in
+            guard let userID = User.currentUser?.id else { return }
+            var collectionPath: String = .init()
+            var fieldName: String = .init()
+            switch type {
+            case .user:
+                collectionPath = "reportedUserList"
+                fieldName = "reportedUserID"
+            case .feed:
+                collectionPath = "reportedFeedList"
+                fieldName = "reportedFeedID"
+            }
+            
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(userID)
+                .collection(collectionPath)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: nil)
+                    }
+                    
+                    if let snapshot = snapshot {
+                        var reportedArray: [String] = []
+                        for document in snapshot.documents {
+                            if let reportedValue = document.data()[fieldName] as? String {
+                                reportedArray.append(reportedValue)
+                            }
+                        }
+                        continuation.resume(returning: reportedArray)
+                    }
+                }
         }
     }
     
@@ -664,8 +711,8 @@ extension DefaultFirestoreRepository {
         case .latest:
             return db
                 .collection(FirestoreCollection.feed.reference)
-//                .whereField("uploaderID", notIn: ["123123"])
-//                .order(by: "uploaderID")
+            //                .whereField("uploaderID", notIn: ["123123"])
+            //                .order(by: "uploaderID")
                 .order(by: "uploadTimestamp", descending: true)
                 .limit(to: 20)
         }
@@ -692,13 +739,13 @@ extension DefaultFirestoreRepository {
     private func getTotalYearMonthCollectionPath() -> [String] {
         let startDateComponents = DateComponents(year: 2023, month: 1, day: 1)
         let endDateComponents = DateComponents.currentDateTimeComponents()
-
+        
         let calendar = Calendar.current
         var currentDate = calendar.date(from: startDateComponents)!
         var endDate = calendar.date(from: endDateComponents)!
-
+        
         var yearMonthArray: [String] = []
-
+        
         while currentDate <= endDate {
             let yearMonth = calendar.dateComponents([.year, .month], from: currentDate)
             let year = yearMonth.year!
@@ -706,7 +753,7 @@ extension DefaultFirestoreRepository {
             yearMonthArray.append("feeds/\(year)/\(month)")
             currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate)!
         }
-
+        
         return yearMonthArray
     }
     

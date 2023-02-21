@@ -12,7 +12,7 @@ import Foundation
 import PetpionDomain
 
 protocol ReportFeedViewModelInput {
-    func reportFeed(type: ReportType)
+    func reportFeed(type: ReportCase)
 }
 
 protocol ReportFeedViewModelOutput {
@@ -39,14 +39,14 @@ final class ReportFeedViewModel: ReportFeedViewModelProtocol {
     }
     
     // MARK: - Input
-    func reportFeed(type: ReportType) {
+    func reportFeed(type: ReportCase) {
         Task {
             if type == .other {
                 await MainActor.run {
                     reportFeedViewStateSubject.send(.inputMode)
                 }
             } else {
-                let reportCompleted = await reportUseCase.reportFeed(feed: feed, type: type, description: nil)
+                let reportCompleted = await reportUseCase.report(reported: feed, type: type, description: nil)
                 await MainActor.run {
                     if reportCompleted {
                         reportFeedViewStateSubject.send(.done)

@@ -12,6 +12,7 @@ public protocol ReportUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
     
-    func reportUser(reportedUser: User, type: ReportType, description: String?) async -> Bool
-    func reportFeed(feed: PetpionFeed, type: ReportType, description: String?) async -> Bool
+    func report<T>(reported: T, type: ReportCase, description: String?) async -> Bool
+    func getReportedArray(type: ReportType) async -> [String]?
+
 }

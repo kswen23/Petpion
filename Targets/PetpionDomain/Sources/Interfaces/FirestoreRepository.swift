@@ -14,12 +14,8 @@ public protocol FirestoreRepository {
     func uploadNewFeed(_ feed: PetpionFeed) async -> Bool
     func createCounters(_ feed: PetpionFeed) async -> Bool
     func uploadNewUser(_ user: User)
-    
-    // 신고내용생성
-    func uploadCurrentUserReportList(reportedUser: User, reason: String) async -> Bool
-    func uploadUserReported(reportedUser: User, reason: String) async -> Bool
-    func uploadCurrentFeedReportList(reportedFeed: PetpionFeed, reason: String) async -> Bool
-    func uploadFeedReported(reportedFeed: PetpionFeed, reason: String) async -> Bool
+    func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool
+    func uploadReportList<T>(reported: T, reason: String) async -> Bool
     
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed]
@@ -31,6 +27,7 @@ public protocol FirestoreRepository {
     func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed]
     func fetchFeedWithFeedID(with feed: PetpionFeed) async -> PetpionFeed
     func checkDuplicatedNickname(with nickname: String) async -> Bool
+    func getReportedArray(type: ReportType) async -> [String]?
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool

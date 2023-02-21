@@ -18,26 +18,33 @@ public final class DefaultReportUseCase: ReportUseCase {
     }
     
     // MARK: - Public
-    public func reportUser(reportedUser: User, type: ReportType, description: String? = nil) async -> Bool {
+    public func report<T>(reported: T, type: ReportCase, description: String? = nil) async -> Bool {
         var reason = type.rawValue
         if let description = description {
             reason = "\(type.rawValue) - \(description)"
         }
-        let uploadReportResult = await firestoreRepository.uploadUserReported(reportedUser: reportedUser, reason: reason)
-        let uploadCurrentUserReportListResult = await firestoreRepository.uploadCurrentUserReportList(reportedUser: reportedUser, reason: reason)
+        let uploadReportListResult = await firestoreRepository.uploadReportList(reported: reported, reason: reason)
+        let uploadPersonalReportListResult = await firestoreRepository.uploadPersonalReportList(reported: reported, reason: reason)
         
-        return uploadReportResult && uploadCurrentUserReportListResult
-    }
-    
-    public func reportFeed(feed: PetpionFeed, type: ReportType, description: String? = nil) async -> Bool {
-        var reason = type.rawValue
-        if let description = description {
-            reason = "\(type.rawValue) - \(description)"
+        if uploadReportListResult && uploadPersonalReportListResult {
+            updateReportedArray(reported: reported)
         }
-        let uploadReportResult = await firestoreRepository.uploadFeedReported(reportedFeed: feed, reason: reason)
-        let uploadCurrentUserReportListResult = await firestoreRepository.uploadCurrentFeedReportList(reportedFeed: feed, reason: reason)
-        
-        return uploadReportResult && uploadCurrentUserReportListResult
+        return uploadReportListResult && uploadPersonalReportListResult
     }
     
+    public func getReportedArray(type: ReportType) async -> [String]? {
+        await firestoreRepository.getReportedArray(type: type)
+    }
+    
+    // MARK: - Private
+    private func updateReportedArray<T>(reported: T) {
+        switch reported {
+        case let user as User:
+            User.reportedUserIDArray?.append(user.id)
+        case let feed as PetpionFeed:
+            User.reportedFeedIDArray?.append(feed.id)
+        default:
+            fatalError()
+        }
+    }
 }

@@ -28,14 +28,7 @@ final class InputReportViewController: HasCoordinatorViewController {
     
     @objc private func reportButtonDidTapped() {
         guard let description = textView.text else { return }
-        switch viewModel.reportType {
-            
-        case .user:
-            viewModel.reportUser(description: description)
-        case .feed:
-            reportCoordinator?.pushReportCompletedView()
-        }
-        
+        viewModel.report(description: description)
     }
     
     private lazy var indicatorBarButton: UIBarButtonItem = {
