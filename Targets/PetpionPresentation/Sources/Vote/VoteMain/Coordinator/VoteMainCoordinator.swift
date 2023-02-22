@@ -20,10 +20,6 @@ public final class VoteMainCoordinator: NSObject, Coordinator {
         self.navigationController = navigationController
     }
     
-    deinit {
-        print("deinit VoteMainCoordinator")
-    }
-    
     public func start() {
         let voteMainViewController = getVoteMainViewController()
         voteMainViewController.coordinator = self
@@ -45,13 +41,15 @@ private extension VoteMainCoordinator {
         guard let calculateVoteChanceUseCase: CalculateVoteChanceUseCase = DIContainer.shared.resolve(CalculateVoteChanceUseCase.self),
               let makeVoteListUseCase: MakeVoteListUseCase = DIContainer.shared.resolve(MakeVoteListUseCase.self),
               let fetchFeedUseCase: FetchFeedUseCase = DIContainer.shared.resolve(FetchFeedUseCase.self),
+              let fetchUserUseCase: FetchUserUseCase = DIContainer.shared.resolve(FetchUserUseCase.self),
               let uploadUserUseCase: UploadUserUseCase = DIContainer.shared.resolve(UploadUserUseCase.self),
-              let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self)
+              let makeNotificationUseCase: MakeNotificationUseCase = DIContainer.shared.resolve(MakeNotificationUseCase.self),
+              let user = User.currentUser
         else {
             fatalError("GetVoteMainViewController did occurred error")
         }
         
-        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, uploadUserUseCase: uploadUserUseCase, makeNotificationUseCase: makeNotificationUseCase)
+        let viewModel: VoteMainViewModelProtocol = VoteMainViewModel(calculateVoteChanceUseCase: calculateVoteChanceUseCase, makeVoteListUseCase: makeVoteListUseCase, fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, uploadUserUseCase: uploadUserUseCase, makeNotificationUseCase: makeNotificationUseCase, user: user)
         return VoteMainViewController(viewModel: viewModel)
     }
 

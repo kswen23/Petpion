@@ -32,8 +32,16 @@ public struct PresentationDIContainer: Containable {
             MainCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "NeedLoginCoordinator") { _ in
+            NeedLoginCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "FeedImagePickerCoordinator") { _ in
+            FeedImagePickerCoordinator(navigationController: FeedImagePickerViewController())
+        }
+        
         container.register(Coordinator.self, name: "FeedUploadCoordinator") { _ in
-            FeedUploadCoordinator()
+            FeedUploadCoordinator(navigationController: navigationController)
         }
         
         container.register(Coordinator.self, name: "VoteMainCoordinator") { _ in
@@ -43,5 +51,50 @@ public struct PresentationDIContainer: Containable {
         container.register(Coordinator.self, name: "VotePetpionCoordinator") { _ in
             VotePetpionCoordinator(navigationController: navigationController)
         }
+        
+        container.register(Coordinator.self, name: "UserPageCoordinator") { _ in
+            UserPageCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "ReportCoordinator") { _ in
+            ReportCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "SettingCoordinator") { _ in
+            SettingCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "DetailFeedCoordinator") { _ in
+            DetailFeedCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "EditFeedCoordinator") { _ in
+            EditFeedCoordinator(navigationController: navigationController)
+        }
+        
+        SettingModel.SettingAction.allCases.forEach { settingAction in
+            container.register(Coordinator.self, name: settingAction.coordinatorString) { _ in
+                switch settingAction {
+                case .profile:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .alert:
+                    return EditAlertCoordinator(navigationController: navigationController)
+                case .version:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .termsOfService:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .openLicense:
+                    return EditProfileCoordinator(navigationController: navigationController)
+                case .manageBlockedUser:
+                    return ManageBlockedUserCoordinator(navigationController: navigationController)
+                case .logout:
+                    fatalError()
+                case .signOut:
+                    return SignOutCoordinator(navigationController: navigationController)
+                }
+                
+            }
+        }
+        
     }
 }

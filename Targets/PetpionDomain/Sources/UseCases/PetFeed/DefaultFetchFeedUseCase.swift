@@ -8,6 +8,8 @@
 
 import Foundation
 
+import PetpionCore
+
 public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
@@ -39,23 +41,16 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     }
     
     public func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed] {
+        var feedDataFromFirestore: [PetpionFeed] = .init()
         
-        var feedDataFromFirestore: Result<[PetpionFeed], Error> = .success([])
         if isFirst {
             feedDataFromFirestore = await firestoreRepository.fetchFirstFeedArray(by: option)
         } else {
             feedDataFromFirestore = await firestoreRepository.fetchFeedArray(by: option)
         }
-        var sortedResultFeeds: [PetpionFeed] = []
-        switch feedDataFromFirestore {
-        case .success(let feedWithoutImageURL):
-            let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: feedWithoutImageURL)
-            sortedResultFeeds = sortResultFeeds(sortBy: option, with: updatedFeed)
-            //            sortedResultFeeds = sortResultFeeds(sortBy: option, with: feedWithoutImageURL)
-        case .failure(let failure):
-            print(failure)
-        }
-        return sortedResultFeeds
+        
+        let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: feedDataFromFirestore)
+        return sortResultFeeds(sortBy: option, with: updatedFeed)
     }
     
     public func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL] {
@@ -82,19 +77,15 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return result
     }
     
-    // MARK: - Private
-    private func updateDetailInformation(feeds: [PetpionFeed]) async -> [PetpionFeed] {
-        let result = await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
-            for feed in feeds {
+    public func fetchUserTotalFeeds(user: User) async -> [PetpionFeed] {
+        let fetchedFeeds = await firestoreRepository.fetchFeedsWithUserID(with: user)
+        
+        return await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in fetchedFeeds {
                 taskGroup.addTask {
-                    let countUpdated = await self.firestoreRepository.fetchFeedCounts(feed)
-                    let urlArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
-                    var user = await self.firestoreRepository.fetchUser(uid: feed.uploaderID)
-                    user.imageURL = await self.firebaseStorageRepository.fetchUserProfileImageURL(user)
-                    var resultFeed = countUpdated
+                    var resultFeed = await self.firestoreRepository.fetchFeedCounts(feed)
                     resultFeed.uploader = user
-                    resultFeed.imageURLArr = urlArr
-                    return resultFeed
+                    return await self.addThumbnailImage(with: resultFeed)
                 }
             }
             var resultFeedArr = [PetpionFeed]()
@@ -103,7 +94,103 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             }
             return resultFeedArr
         }
-        return result
+    }
+    
+    public func updateFeeds(origin: [PetpionFeed]) async -> [PetpionFeed] {
+        await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in origin {
+                taskGroup.addTask {
+                    let fetchedFeedWithFeedID = await self.firestoreRepository.fetchFeedWithFeedID(with: feed)
+                    let countUpdatedFeed = await self.firestoreRepository.fetchFeedCounts(fetchedFeedWithFeedID)
+                    let profileUpdatedFeed = await self.addUserProfile(with: countUpdatedFeed)
+                    
+                    var resultFeed = profileUpdatedFeed
+                    resultFeed.imageURLArr = feed.imageURLArr
+                    
+                    if let image = feed.image {
+                        print("이미지있음")
+                        resultFeed.image = image
+                    }
+                    
+                    return resultFeed
+                }
+            }
+            var result = origin
+            for await value in taskGroup {
+                for i in 0 ..< result.count {
+                    if value.id == result[i].id {
+                        result[i] = value
+                    }
+                }
+            }
+            
+            return result
+        }
+    }
+    
+    public func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed] {
+        await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in origin {
+                taskGroup.addTask {
+                    var resultFeed = feed
+                    resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
+                    return resultFeed
+                }
+            }
+            var result = origin
+            for await value in taskGroup {
+                for i in 0 ..< result.count {
+                    if value.id == result[i].id {
+                        result[i] = value
+                    }
+                }
+            }
+            
+            return result
+        }
+    }
+    
+    // MARK: - Private
+    private func updateDetailInformation(feeds: [PetpionFeed]) async -> [PetpionFeed] {
+        await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
+            for feed in feeds {
+                taskGroup.addTask {
+                    let countUpdatedFeed = await self.firestoreRepository.fetchFeedCounts(feed)
+                    let profileUpdatedFeed = await self.addUserProfile(with: countUpdatedFeed)
+                    let thumbnailUpdatedFeed = await self.addThumbnailImage(with: profileUpdatedFeed)
+                    return thumbnailUpdatedFeed
+                }
+            }
+            var resultFeedArr = [PetpionFeed]()
+            for await value in taskGroup {
+                resultFeedArr.append(value)
+            }
+            return resultFeedArr
+        }
+    }
+    
+    private func addThumbnailImage(with feed: PetpionFeed) async -> PetpionFeed {
+        var resultFeed = feed
+        resultFeed.imageURLArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
+        return resultFeed
+    }
+    
+    private func addRealImage(with feed: PetpionFeed) async -> PetpionFeed {
+        var resultFeed = feed
+        resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
+        return resultFeed
+    }
+    
+    private func addUserProfile(with feed: PetpionFeed) async -> PetpionFeed {
+        var user = await self.firestoreRepository.fetchUser(uid: feed.uploaderID)
+        user.imageURL = await self.firebaseStorageRepository.fetchUserProfileImageURL(user)
+        if let profileImageURL = user.imageURL {
+            user.profileImage = await ImageCache.shared.loadImage(url: profileImageURL as NSURL)
+        }
+        var resultFeed = feed
+        resultFeed.uploader = user
+        return resultFeed
+        
     }
     
     private func sortResultFeeds(sortBy option: SortingOption,
@@ -111,7 +198,12 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         var resultFeeds = feeds
         switch option {
         case .popular:
-            resultFeeds.sort { $0.likeCount > $1.likeCount }
+            resultFeeds.sort { feed1, feed2 in
+                if feed1.likeCount == feed2.likeCount {
+                    return feed1.uploadDate < feed2.uploadDate
+                }
+                return feed1.likeCount > feed2.likeCount
+            }
         case .latest:
             resultFeeds.sort { $0.uploadDate > $1.uploadDate }
         }

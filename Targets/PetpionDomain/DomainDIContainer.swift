@@ -34,6 +34,11 @@ public struct DomainDIContainer: Containable {
                                     firebaseStorageRepository: firebaseStorageRepository)
         }
         
+        container.register(DeleteFeedUseCase.self) { _ in
+            DefaultDeleteFeedUseCase(firestoreRepository: firestoreRepository,
+                                     firebaseStorageRepository: firebaseStorageRepository)
+        }
+        
         container.register(UploadFeedUseCase.self) { _ in
             DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
                                             firebaseStorageRepository: firebaseStorageRepository)
@@ -53,7 +58,8 @@ public struct DomainDIContainer: Containable {
         }
         
         container.register(UploadUserUseCase.self) { _ in
-            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository)
+            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository,
+                                     firebaseStorageRepository: firebaseStorageRepository)
         }
         
         container.register(CalculateVoteChanceUseCase.self) { _ in
@@ -63,6 +69,14 @@ public struct DomainDIContainer: Containable {
         container.register(MakeNotificationUseCase.self) { _ in
             DefaultMakeNotificationUseCase()
         }
+        
+        container.register(ReportUseCase.self) { _ in
+            DefaultReportUseCase(firestoreRepository: firestoreRepository)
+        }
+        
+        container.register(BlockUseCase.self) { _ in
+            DefaultBlockUseCase(firestoreRepository: firestoreRepository)
+        }
+        
     }
-    
 }

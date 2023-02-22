@@ -19,16 +19,20 @@ protocol BaseViewModelInput {
 }
 
 protocol BaseViewModelOutput {
-    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
-    var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     func makeWaterfallLayoutConfiguration() -> UICollectionLayoutWaterfallConfiguration
-    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView, listener: UICollectionViewCell) -> UICollectionViewDiffableDataSource<Int, PetpionFeed>
     func getSelectedFeed(index: IndexPath) -> PetpionFeed
 }
-protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput { }
+
+protocol BaseViewModelProtocol: BaseViewModelInput, BaseViewModelOutput {
+    var snapshotSubject: AnyPublisher<NSDiffableDataSourceSnapshot<Int, PetpionFeed>,Publishers.Map<PassthroughSubject<[PetpionFeed], Never>,NSDiffableDataSourceSnapshot<Int, PetpionFeed>>.Failure> { get }
+    var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
+    var isFirstFetching: Bool { get set }
+}
 
 final class BaseViewModel: BaseViewModelProtocol {
     
+    weak var petFeedCollectionViewCellListener: PetFeedCollectionViewCellListener?
     private var cancellables = Set<AnyCancellable>()
     var petpionFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     lazy var snapshotSubject = petpionFeedSubject.map { items -> NSDiffableDataSourceSnapshot<Int, PetpionFeed> in
@@ -37,6 +41,8 @@ final class BaseViewModel: BaseViewModelProtocol {
         snapshot.appendItems(items, toSection: 0)
         return snapshot
     }.eraseToAnyPublisher()
+    
+    var isFirstFetching: Bool = true
 
     // MARK: - Input
     
@@ -50,8 +56,8 @@ final class BaseViewModel: BaseViewModelProtocol {
             }
     }
 
-    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
-        let registration = makePetFeedCollectionViewCellRegistration()
+    func makePetFeedCollectionViewDataSource(collectionView: UICollectionView, listener: UICollectionViewCell) -> UICollectionViewDiffableDataSource<Int, PetpionFeed> {
+        let registration = makePetFeedCollectionViewCellRegistration(listener: listener)
         return UICollectionViewDiffableDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
                 using: registration,
@@ -61,14 +67,16 @@ final class BaseViewModel: BaseViewModelProtocol {
         }
     }
 
-    func makePetFeedCollectionViewCellRegistration() -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
-        UICollectionView.CellRegistration { cell, indexPath, item in
-            let viewModel = self.makeViewModel(for: item)
+    func makePetFeedCollectionViewCellRegistration(listener: UICollectionViewCell) -> UICollectionView.CellRegistration<PetFeedCollectionViewCell, PetpionFeed> {
+        UICollectionView.CellRegistration { [weak self] cell, indexPath, item in
+            guard let viewModel = self?.makeViewModel(for: item) else { return }
+            cell.listener = self?.petFeedCollectionViewCellListener
             cell.configure(with: viewModel)
+            cell.listener = listener as? any PetFeedCollectionViewCellListener
         }
     }
 
-    func makeViewModel(for item:  PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
+    func makeViewModel(for item: PetpionFeed) -> PetFeedCollectionViewCell.ViewModel {
         return PetFeedCollectionViewCell.ViewModel(petpionFeed: item)
     }
     

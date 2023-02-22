@@ -14,4 +14,5 @@ public protocol UploadFeedUseCase {
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
     func uploadNewFeed(feed: PetpionFeed, imageDatas: [Data]) async -> Bool
+    func updateFeed(feed: PetpionFeed) async -> Bool
 }

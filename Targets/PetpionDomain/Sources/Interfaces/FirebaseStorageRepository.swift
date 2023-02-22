@@ -13,11 +13,13 @@ public protocol FirebaseStorageRepository {
     // MARK: - Create
     func uploadPetFeedImages(feed: PetpionFeed,
                                     imageDatas: [Data]) async -> Bool
-    func uploadProfileImage(_ user: User)
+    func uploadProfileImage(_ user: User) async -> Bool
     
     // MARK: - Read
     func fetchFeedThumbnailImageURL(_ feed: PetpionFeed) async -> [URL]
     func fetchFeedTotalImageURL(_ feed: PetpionFeed) async -> [URL]
     func fetchUserProfileImageURL(_ user: User) async -> URL?
     
+    // MARK: - Delete
+    func deleteFeedImages(_ feed: PetpionFeed) async -> Bool
 }

@@ -9,10 +9,13 @@
 public final class DefaultUploadUserUseCase: UploadUserUseCase {
     
     public var firestoreRepository: FirestoreRepository
+    public var firebaseStorageRepository: FirebaseStorageRepository
     
     // MARK: - Initialize
-    init(firestoreRepository: FirestoreRepository) {
+    init(firestoreRepository: FirestoreRepository,
+         firebaseStorageRepository: FirebaseStorageRepository) {
         self.firestoreRepository = firestoreRepository
+        self.firebaseStorageRepository = firebaseStorageRepository
     }
     
     // MARK: - Public
@@ -20,8 +23,16 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
         firestoreRepository.uploadNewUser(user)
     }
     
+    public func uploadUserProfileImage(_ user: User) async -> Bool {
+        await firebaseStorageRepository.uploadProfileImage(user)
+    }
+    
     public func updateVoteChanceCount(_ count: Int) async -> Bool {
         await firestoreRepository.updateUserHeart(count)
+    }
+    
+    public func updateUserNickname(_ nickname: String) async -> Bool {
+        await firestoreRepository.updateUserNickname(nickname)
     }
     
     public func plusUserVoteChance() {
@@ -34,5 +45,9 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
     
     public func updateLatestVoteTime() {
         firestoreRepository.updateUserLatestVoteTime()
+    }
+    
+    public func checkUserNicknameDuplication(with nickname: String) async -> Bool {
+        await firestoreRepository.checkDuplicatedNickname(with: nickname)
     }
 }

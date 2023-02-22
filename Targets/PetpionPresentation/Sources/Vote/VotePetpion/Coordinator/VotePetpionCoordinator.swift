@@ -22,10 +22,6 @@ public final class VotePetpionCoordinator: NSObject, Coordinator {
         self.navigationController = navigationController
     }
     
-    deinit {
-        print("deinit VotePetpionCoordinator")
-    }
-    
     public func start() {
         guard let voteList = voteList else { return }
         let votePetpionViewController = getVotePetpionViewController(with: voteList)

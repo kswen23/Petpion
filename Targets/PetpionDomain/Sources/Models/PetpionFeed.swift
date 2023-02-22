@@ -7,12 +7,13 @@
 //
 
 import Foundation
+import UIKit
 
 public struct PetpionFeed: Identifiable {
     
     public typealias Identifier = String
     
-    public let id: Identifier
+    public var id: Identifier
     public var uploader: User = .empty
     public let uploaderID: User.ID
     public let uploadDate: Date
@@ -21,6 +22,7 @@ public struct PetpionFeed: Identifiable {
     public var imageCount: Int
     public var message: String
     public var imageURLArr: [URL]?
+    public var image: UIImage? = nil
     public var feedSize: CGSize
     public var imageRatio: Double
     
@@ -49,6 +51,16 @@ public struct PetpionFeed: Identifiable {
 }
 
 public extension PetpionFeed {
+    static let empty: Self = .init(id: "",
+                                   uploader: User.empty,
+                                   uploaderID: "",
+                                   uploadDate: .init(),
+                                   battleCount: 0,
+                                   likeCount: 0,
+                                   imageCount: 0,
+                                   message: "",
+                                   feedSize: .init(),
+                                   imageRatio: 0)
     
     static func getImageReference(_ feed: Self) -> String {
         "\(feed.uploaderID)/\(feed.id)"

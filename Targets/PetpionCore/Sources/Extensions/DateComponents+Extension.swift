@@ -33,4 +33,13 @@ public extension DateComponents {
         afterHourDateComponents.hour = afterHourDateComponents.hour! + hour
         return afterHourDateComponents
     }
+    
+    static func dateToDateComponents(_ date: Date) -> DateComponents {
+        let requestedComponents: Set<Calendar.Component> = [
+            .year,
+            .month,
+            .day
+        ]
+        return userCalendar.dateComponents(requestedComponents, from: date)
+    }
 }

@@ -13,9 +13,17 @@ import Lottie
 import PetpionCore
 import PetpionDomain
 
-final class MainViewController: UIViewController {
+enum NavigationItemType: String, CaseIterable {
+    case myPage = "person"
+    case uploadFeed = "camera"
+    case vote = "crown"
+}
+
+final class MainViewController: HasCoordinatorViewController {
         
-    weak var coordinator: MainCoordinator?
+    lazy var mainCoordinator: MainCoordinator? = {
+        return coordinator as? MainCoordinator
+    }()
     private let viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -29,6 +37,11 @@ final class MainViewController: UIViewController {
     init(viewModel: MainViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        addObserver()
+    }
+    
+    deinit {
+        removeObserver()
     }
     
     required init?(coder: NSCoder) {
@@ -39,6 +52,12 @@ final class MainViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
+        configureNavigationItem()
+        if viewModel.isFirstFetching {
+            viewModel.initializeEssentialAppData()
+        } else {
+            viewModel.updateCurrentFeeds()
+        }
     }
     
     override func viewDidLoad() {
@@ -68,24 +87,14 @@ final class MainViewController: UIViewController {
     
     // MARK: - Configure
     private func configure() {
-        configureNavigationItem()
         configureBaseCollectionView()
     }
     
     private func configureNavigationItem() {
         self.view.backgroundColor = .white
         self.navigationController?.navigationBar.tintColor = .black
-        navigationItem.leftBarButtonItems = [
-            popularBarButton,
-            latestBarButton
-        ]
-        
-        navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: #selector(personButtonDidTapped)),
-            UIBarButtonItem(image: UIImage(systemName: "camera"), style: .done, target: self, action: #selector(cameraButtonDidTapped)),
-            UIBarButtonItem(image: UIImage(systemName: "crown"), style: .done, target: self, action: #selector(crownButtonDidTapped))
-        ]
-        navigationController?.navigationBar.tintColor = .black
+        navigationItem.leftBarButtonItems = [latestBarButton, popularBarButton]
+        navigationItem.rightBarButtonItems = NavigationItemType.allCases.map { makeNavigationBarButtonItem(type: $0) }
     }
     
     private func configureBaseCollectionView() {
@@ -138,6 +147,19 @@ final class MainViewController: UIViewController {
         }
     }
     
+    private func makeNavigationBarButtonItem(type: NavigationItemType) -> UIBarButtonItem {
+        var barButton = UIBarButtonItem()
+        switch type {
+        case .vote:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(crownButtonDidTapped))
+        case .uploadFeed:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(cameraButtonDidTapped))
+        case .myPage:
+            barButton = UIBarButtonItem(image: UIImage(systemName: type.rawValue), style: .done, target: self, action: #selector(personButtonDidTapped))
+        }
+        return barButton
+    }
+    
     @objc private func popularDidTapped() {
         viewModel.sortingOptionWillChange(with: .popular)
     }
@@ -147,15 +169,16 @@ final class MainViewController: UIViewController {
     }
     
     @objc private func cameraButtonDidTapped() {
-        coordinator?.presentFeedImagePicker()
+        mainCoordinator?.presentFeedImagePicker()
     }
     
     @objc private func personButtonDidTapped() {
-        coordinator?.presentLoginView()
+        mainCoordinator?.pushUserPageView(user: User.currentUser,
+                                          userPageStyle: .myPageWithSettings)
     }
     
     @objc private func crownButtonDidTapped() {
-        coordinator?.pushVoteMainViewController()
+        mainCoordinator?.pushVoteMainView()
     }
     
     // MARK: - binding
@@ -184,13 +207,36 @@ extension MainViewController: BaseCollectionViewCellDelegation {
         let baseCellIndexPath: IndexPath = .init(row: viewModel.sortingOptionSubject.value.rawValue, section: 0)
         let transitionDependency: FeedTransitionDependency = .init(baseCellIndexPath: baseCellIndexPath,
                                                                    feedCellIndexPath: index)
-        coordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+        mainCoordinator?.presentDetailFeed(transitionDependency: transitionDependency, feed: feed)
+    }
+    
+    func refreshBaseCollectionView() {
+        viewModel.refreshCurrentFeed()
+    }
+    
+    func profileStackViewDidTapped(with user: User) {
+        if User.currentUser?.id == user.id {
+            mainCoordinator?.pushUserPageView(user: user, userPageStyle: .myPageWithOutSettings)
+        } else {
+            mainCoordinator?.pushUserPageView(user: user, userPageStyle: .otherUserPage)
+        }
+        
     }
 }
 
-extension MainViewController: UIViewControllerTransitioningDelegate {
+extension MainViewController: NotificationObservable {
     
-    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
-        LoginPresentationController(presentedViewController: presented, presenting: presenting)
+    func addObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidChange), name: Notification.Name(NotificationName.profileUpdated), object: nil)
     }
+    
+    func removeObserver() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.profileUpdated), object: nil)
+    }
+    
+    @objc func handleUserProfileDidChange(notification: Notification) {
+        guard let updatedUserProfile = notification.userInfo?["profile"] as? User else { return }
+        viewModel.userDidUpdated(to: updatedUserProfile)
+    }
+    
 }

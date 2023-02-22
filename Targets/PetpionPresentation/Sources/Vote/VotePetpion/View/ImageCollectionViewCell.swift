@@ -46,6 +46,7 @@ class ImageCollectionViewCell: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
+        imageView.contentMode = .scaleAspectFill
     }
     
     func configureImageView(with url: URL) {

@@ -27,11 +27,13 @@ protocol VoteMainViewModelProtocol: VoteMainViewModelInput, VoteMainViewModelOut
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
     var makeVoteListUseCase: MakeVoteListUseCase { get }
     var fetchFeedUseCase: FetchFeedUseCase { get }
+    var fetchUserUseCase: FetchUserUseCase { get }
     var uploadUserUseCase: UploadUserUseCase { get }
     var makeNotificationUseCase: MakeNotificationUseCase { get }
-    var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> { get }
-    var heartSubject: PassthroughSubject<[HeartType], Never> { get }
-    var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> { get }
+    var user: User { get }
+    var voteMainViewControllerStateSubject: CurrentValueSubject<VoteMainViewControllerState, Never> { get }
+    var heartSubject: CurrentValueSubject<[HeartType], Never> { get }
+    var remainingTimeSubject: CurrentValueSubject<TimeInterval, Never> { get }
     var maxTimeInterval: TimeInterval { get }
     
 }
@@ -53,42 +55,45 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     let makeVoteListUseCase: MakeVoteListUseCase
     let fetchFeedUseCase: FetchFeedUseCase
+    let fetchUserUseCase: FetchUserUseCase
     let uploadUserUseCase: UploadUserUseCase
     let makeNotificationUseCase: MakeNotificationUseCase
+    var user: User
     
-    lazy var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> = .init()
-    lazy var heartSubject: PassthroughSubject<[HeartType], Never> = .init()
-    lazy var remainingTimeSubject: PassthroughSubject<TimeInterval, Never> = .init()
+    lazy var voteMainViewControllerStateSubject: CurrentValueSubject<VoteMainViewControllerState, Never> = .init(getCurrentState(with: user.voteChanceCount))
+    lazy var heartSubject: CurrentValueSubject<[HeartType], Never> = .init(getUserVoteChance(with: user.voteChanceCount))
+    lazy var remainingTimeSubject: CurrentValueSubject<TimeInterval, Never> = .init(calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: user.latestVoteTime))
     var maxTimeInterval: TimeInterval = .infinity
     private var isFirstFetching: Bool = true
     lazy var fetchedVotePare: [PetpionVotePare] = .init()
     private var currentTimer: Timer?
-    private var currentHeart: Int?
-    private var latestVoteTime: Date?
     private var viewWillDisappeared: Bool = false
     
     // MARK: - Initialize
     init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
          makeVoteListUseCase: MakeVoteListUseCase,
          fetchFeedUseCase: FetchFeedUseCase,
+         fetchUserUseCase: FetchUserUseCase,
          uploadUserUseCase: UploadUserUseCase,
-         makeNotificationUseCase: MakeNotificationUseCase) {
+         makeNotificationUseCase: MakeNotificationUseCase,
+         user: User) {
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
         self.makeVoteListUseCase = makeVoteListUseCase
         self.fetchFeedUseCase = fetchFeedUseCase
+        self.fetchUserUseCase = fetchUserUseCase
         self.uploadUserUseCase = uploadUserUseCase
         self.makeNotificationUseCase = makeNotificationUseCase
+        self.user = user
         requestNotification()
         synchronizeWithServer()
     }
     
     deinit {
-        print("deinit VoteMainViewModel")
         invalidateCurrentTimer()
     }
     
     private func requestNotification() {
-        if UserDefaults.standard.bool(forKey: UserInfoKey.userNotificationsPermission) == false {
+        if UserDefaults.standard.bool(forKey: UserInfoKey.userNotificationsPermission.rawValue) == false {
             makeNotificationUseCase.requestAuthorization()
         }
     }
@@ -96,36 +101,32 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     // MARK: - Input
     func startVoting() {
         viewWillDisappeared = true
-        guard let currentHeart = currentHeart,
-              let latestVoteTime = latestVoteTime else { return }
-        if currentHeart - 1 == User.voteMaxCountPolicy - 1 {
+        if user.voteChanceCount - 1 == User.voteMaxCountPolicy - 1 {
             uploadUserUseCase.updateLatestVoteTime()
-            makeNotificationUseCase.createPetpionVoteNotification(heart: currentHeart-1,
+            makeNotificationUseCase.createPetpionVoteNotification(heart: user.voteChanceCount-1,
                                                                   latestVoteTime: .init())
         } else {
-            makeNotificationUseCase.createPetpionVoteNotification(heart: currentHeart-1,
-                                                                  latestVoteTime: latestVoteTime)
+            makeNotificationUseCase.createPetpionVoteNotification(heart: user.voteChanceCount-1,
+                                                                  latestVoteTime: user.latestVoteTime)
         }
         uploadUserUseCase.minusUserVoteChance()
         voteMainViewControllerStateSubject.send(.start)
     }
     
     func viewWillAppear() {
-        guard let currentHeart = currentHeart else { return }
         viewWillDisappeared = false
-        voteMainViewControllerStateSubject.send(getCurrentState(with: currentHeart))
+        voteMainViewControllerStateSubject.send(getCurrentState(with: user.voteChanceCount))
     }
     
     // MARK: - Output
     public func synchronizeWithServer() {
-        calculateVoteChanceUseCase.bindUser { [weak self] voteChance, latestVoteTime in
-            guard let chanceRemainingTime = self?.calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: latestVoteTime) else { return }
-            self?.currentHeart = voteChance
-            self?.latestVoteTime = latestVoteTime
-            self?.sendHeart(voteChance: voteChance)
-            self?.sendRemainingTime(voteChance: voteChance, timeInterval: chanceRemainingTime)
+        fetchUserUseCase.bindUser { [weak self] user in
+            guard let chanceRemainingTime = self?.calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: user.latestVoteTime) else { return }
+            self?.user = user
+            self?.sendHeart(voteChance: user.voteChanceCount)
+            self?.sendRemainingTime(voteChance: user.voteChanceCount, timeInterval: chanceRemainingTime)
             if self?.viewWillDisappeared == false {
-                self?.sendMainState(voteChance: voteChance)
+                self?.sendMainState(voteChance: user.voteChanceCount)
             }
         }
     }

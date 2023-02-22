@@ -9,7 +9,9 @@
 import Foundation
 import UIKit
 
-open class CustomPresentableViewController: UIViewController {
+open class CustomPresentableViewController: UIViewController, CoordinatorWrapper {
+    
+    weak var coordinator: Coordinator?
     
     var statusBarShouldBeHidden: Bool = false
     

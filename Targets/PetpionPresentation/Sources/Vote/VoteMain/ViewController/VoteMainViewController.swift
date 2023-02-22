@@ -12,15 +12,14 @@ import UIKit
 import Lottie
 import PetpionDomain
 
-protocol HasCoordinator: AnyObject {
-    var coordi: Coordinator { get }
-}
-
-final class VoteMainViewController: UIViewController {
+final class VoteMainViewController: HasCoordinatorViewController {
+    
+    lazy var voteMainCoordinator: VoteMainCoordinator? = {
+        return coordinator as? VoteMainCoordinator
+    }()
     
     private var cancellables = Set<AnyCancellable>()
     private let viewModel: VoteMainViewModelProtocol
-    weak var coordinator: VoteMainCoordinator?
     
     private let bottomSheetView: UIView = {
         let view = UIView()
@@ -96,11 +95,8 @@ final class VoteMainViewController: UIViewController {
     }()
     
     private lazy var startVoteButton: CustomShimmerButton = {
-        guard let petpionOrange: CGColor = UIColor.petpionOrange?.cgColor,
-              let petpionLightOrange: CGColor = UIColor.petpionLightOrange?.cgColor else {
-            return UIButton() as! CustomShimmerButton
-        }
-        let button = CustomShimmerButton(gradientColorOne: petpionOrange, gradientColorTwo: petpionLightOrange)
+        let button = CustomShimmerButton(gradientColorOne: UIColor.petpionOrange.cgColor,
+                                         gradientColorTwo: UIColor.petpionLightOrange.cgColor)
         button.setTitle("투표 시작", for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 30, weight: .bold)
         button.addTarget(self, action: #selector(startVoteButtonDidTapped), for: .touchUpInside)
@@ -129,14 +125,11 @@ final class VoteMainViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        print("deinit VoteMainVC")
-    }
-    
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .white
+        self.view.backgroundColor = .petpionIndigo
         self.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
         viewModel.viewWillAppear()
     }
@@ -144,7 +137,6 @@ final class VoteMainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()
-        configure()
         binding()
     }
     
@@ -274,17 +266,6 @@ final class VoteMainViewController: UIViewController {
         appearCatView.isHidden = true
     }
     
-    // MARK: - Configure
-    private func configure() {
-        configureBackground()
-    }
-    
-    private func configureBackground() {
-        view.backgroundColor = .petpionIndigo
-        self.navigationController?.navigationBar.topItem?.title = ""
-        self.navigationController?.navigationBar.tintColor = .white
-    }
-    
     // MARK: - Binding
     private func binding() {
         bindHeartSubject()
@@ -358,7 +339,7 @@ final class VoteMainViewController: UIViewController {
     }
     
     private func configureStart() {
-        coordinator?.pushVotePetpionViewController(with: viewModel.fetchedVotePare)
+        voteMainCoordinator?.pushVotePetpionViewController(with: viewModel.fetchedVotePare)
     }
     
     private func configureDisable() {

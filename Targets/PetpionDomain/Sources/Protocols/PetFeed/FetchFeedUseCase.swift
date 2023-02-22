@@ -17,10 +17,15 @@ public protocol FetchFeedUseCase {
     func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed]
     func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL]
     func fetchVotePareDetailImages(pare: PetpionVotePare) async -> PetpionVotePare
+    func fetchUserTotalFeeds(user: User) async -> [PetpionFeed]
+    
+    func updateFeeds(origin: [PetpionFeed]) async -> [PetpionFeed]
+    
+    func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed]
 }
 
 public enum SortingOption: Int, CaseIterable {
     
-    case popular = 0
-    case latest = 1
+    case latest = 0
+    case popular = 1
 }

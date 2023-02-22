@@ -11,7 +11,6 @@ import Foundation
 public protocol CalculateVoteChanceUseCase {
     
     var firestoreRepository: FirestoreRepository { get }
-    func initializeUserVoteChance() async -> Bool
-    func bindUser(completion: @escaping ((Int, Date)-> Void))
+    func initializeUserVoteChance(user: User) async -> Bool
     func getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: Date) -> TimeInterval
 }

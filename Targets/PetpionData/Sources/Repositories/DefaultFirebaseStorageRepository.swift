@@ -19,7 +19,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     private typealias DataAndReference = (Data, String)
     
     // MARK: - Private Method
-    private func makeDataAndReferenceArray(feed: PetpionFeed,
+    private func makeFeedDataAndReferenceArray(feed: PetpionFeed,
                                            imageDatas: [Data]) -> [DataAndReference] {
         var array: [DataAndReference] = []
         let imageRef: String = PetpionFeed.getImageReference(feed)
@@ -29,24 +29,34 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         return array
     }
     
+    private func makeUserDataAndReference(user: User) -> DataAndReference {
+        return (User.getProfileImageData(user: user), "\(user.id)/profile/profile")
+    }
+    
     // MARK: - Public Create
     public func uploadPetFeedImages(feed: PetpionFeed,
                                     imageDatas: [Data]) async -> Bool {
-        let dataAndRefArray: [DataAndReference] = makeDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
+        let dataAndRefArray: [DataAndReference] = makeFeedDataAndReferenceArray(feed: feed, imageDatas: imageDatas)
         let isCompleted = await uploadSeveralImages(dataAndRefArray)
         switch isCompleted {
         case .success(let success):
+            return success
+        case .failure(_):
+            return false
+        }
+    }
+    
+    public func uploadProfileImage(_ user: User) async -> Bool {
+        let dataAndRef = makeUserDataAndReference(user: user)
+        let isCompleted = await uploadSingleImage(dataAndRef)
+        switch isCompleted {
+        case .success(let success):
+            URLCache.shared.deleteURLCache(key: dataAndRef.1)
             return success
         case .failure(let failure):
             print(failure.localizedDescription)
             return false
         }
-    }
-    
-    public func uploadProfileImage(_ user: User) {
-        //        Task {
-        //            uploadSingleImage()
-        //        }
     }
     
     // MARK: - Private Create
@@ -66,7 +76,7 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                         successArr.append(success)
                     }
                 case .failure(let error):
-                    print(error)
+                    print(error.localizedDescription)
                     return Result.failure(error)
                 }
             }
@@ -138,13 +148,12 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
             .map{ $0.description }
             .sorted(by: <)
             .map{ URL(string: $0)! }
-        
         URLCache.shared.saveURLArrayCache(urls: sortedURLArr as NSArray, key: feed.id)
         return sortedURLArr
     }
     
     public func fetchUserProfileImageURL(_ user: User) async -> URL? {
-        let profileImageReference = "\(user.id)/profile/profile.png"
+        let profileImageReference = "\(user.id)/profile/profile"
         if let cachedURL = URLCache.shared.singleURL(id: profileImageReference) {
             return cachedURL
         }
@@ -183,13 +192,16 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
     }
     
     private func fetchSingleImageURL(from reference: String) async -> Result<URL, Error> {
-        
         return await withCheckedContinuation { continuation in
+            if let cachedURL = URLCache.shared.singleURL(id: reference) {
+                return continuation.resume(returning: .success(cachedURL))
+            }
             storage
                 .reference(forURL: defaultURL + reference)
                 .downloadURL { result in
                     switch result {
                     case .success(let url):
+                        URLCache.shared.saveURLCache(url: url, key: reference)
                         continuation.resume(returning: .success(url))
                     case .failure(let error):
                         print(error.localizedDescription)
@@ -199,4 +211,39 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         }
     }
     
+    // MARK: - Public Delete
+    public func deleteFeedImages(_ feed: PetpionFeed) async -> Bool {
+        return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
+            for i in 0 ..< feed.imageCount {
+                let ref = "\(PetpionFeed.getImageReference(feed))/\(i)"
+                taskGroup.addTask {
+                    await self.deleteImage(ref)
+                }
+            }
+            
+            for await task in taskGroup {
+                if task == false {
+                    return false
+                }
+            }
+            
+            return true
+        }
+    }
+    
+    // MARK: - Private Delete
+    private func deleteImage(_ reference: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            storage
+                .reference()
+                .child(reference)
+                .delete { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    }
+                    continuation.resume(returning: true)
+                }
+        }
+    }
 }
