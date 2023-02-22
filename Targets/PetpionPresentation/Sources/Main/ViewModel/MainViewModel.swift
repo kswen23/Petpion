@@ -38,6 +38,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
     var reportUseCase: ReportUseCase { get }
     var blockUseCase: BlockUseCase { get }
+    var firstFetchLoading: PassthroughSubject<Bool, Never> { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
@@ -51,6 +52,7 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     var baseCollectionViewNeedToScroll: Bool = true
+    let firstFetchLoading: PassthroughSubject<Bool, Never> = .init()
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
@@ -78,6 +80,9 @@ final class MainViewModel: MainViewModelProtocol {
     func fetchInit() async {
         let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
         await MainActor.run {
+            if isFirstFetching {
+                firstFetchLoading.send(true)
+            }
             latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
             isFirstFetching = false
@@ -99,7 +104,6 @@ final class MainViewModel: MainViewModelProtocol {
                     User.currentUser = fetchedUser
                 }
             }
-            // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
         }
     }
     
