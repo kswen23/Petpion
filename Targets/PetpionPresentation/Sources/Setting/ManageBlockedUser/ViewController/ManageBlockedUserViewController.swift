@@ -43,6 +43,17 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
     private let toastAnimationLabelHeightConstant: CGFloat = 40
     private lazy var toastAnimationLabelTopAnchor: NSLayoutConstraint? = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
     
+    private lazy var emptyLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "차단한 사용자가 없습니다."
+        label.font = .systemFont(ofSize: 18)
+        label.textColor = .lightGray
+        label.sizeToFit()
+        label.isHidden = true
+        return label
+    }()
+    
     // MARK: - Initialize
     init(viewModel: ManageBlockedUserViewModelProtocol) {
         self.viewModel = viewModel
@@ -70,6 +81,7 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
     private func layout() {
         layoutBlockedUserTableView()
         layoutToastAnimationLabel()
+        layoutEmptyLabel()
     }
     
     private func layoutBlockedUserTableView() {
@@ -93,6 +105,14 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
         toastAnimationLabel.roundCorners(cornerRadius: 15)
     }
     
+    private func layoutEmptyLabel() {
+        view.addSubview(emptyLabel)
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
     // MARK: - Configure
     private func configure() {
         configureBlockedUserTableView()
@@ -114,6 +134,13 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
     private func bindBlockedUserArraySubject() {
         viewModel.blockedUserArraySubject.sink { [weak self] items in
             guard let strongSelf = self else { return }
+            
+            if items.count == 0 {
+                strongSelf.emptyLabel.isHidden = false
+            } else {
+                strongSelf.emptyLabel.isHidden = true
+            }
+            
             var snapshot = NSDiffableDataSourceSnapshot<Int, User>()
             snapshot.appendSections([0])
             snapshot.appendItems(items)
