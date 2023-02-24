@@ -21,16 +21,20 @@ public struct DataDIContainer: Containable {
     }
     
     private func registerRepositories() {
-        container.register(FirestoreRepository.self) { resolver in
-            return DefaultFirestoreRepository()
+        container.register(FirestoreRepository.self) { _ in
+            DefaultFirestoreRepository()
         }
         
-        container.register(FirebaseStorageRepository.self) { resolver in
-            return DefaultFirebaseStorageRepository()
+        container.register(FirebaseStorageRepository.self) { _ in
+            DefaultFirebaseStorageRepository()
         }
         
-        container.register(FirebaseAuthRepository.self) { resolver in
-            return DefaultFirebaseAuthRepository()
+        container.register(FirebaseAuthRepository.self) { _ in
+            DefaultFirebaseAuthRepository()
+        }
+        
+        container.register(KakaoAuthRepository.self) { _ in
+            DefaultKakaoAuthRepository()
         }
     }
     

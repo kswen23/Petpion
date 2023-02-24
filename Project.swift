@@ -78,6 +78,7 @@ func makePetpionAppTarget(
                     ]
                 ]
             ],
+//            "CFBundleURLTypes": ["CFBundleTypeRole": "Editor", "CFBundleURLSchemes": ["kakao1dbd3642db36275e36ccaf9b6556752d"]],
             "KAKAO_API_KEY": "1dbd3642db36275e36ccaf9b6556752d",
             "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
             "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청"
@@ -160,7 +161,8 @@ let project: Project = .init(
                 .package(product: "FirebaseStorage"),
                 .package(product: "GTMSessionFetcherFull"),
                 .package(product: "KakaoSDKCommon"),
-                .package(product: "KakaoSDKAuth")
+                .package(product: "KakaoSDKAuth"),
+                .package(product: "KakaoSDKUser")
             ]),
         makePetpionFrameworkTargets(
             name: Layer.domain.layerName,

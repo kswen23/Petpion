@@ -1,6 +1,7 @@
 import AuthenticationServices
 import UIKit
 
+import KakaoSDKAuth
 import FirebaseCore
 
 @main

@@ -11,12 +11,17 @@ import Combine
 import CryptoKit
 import Foundation
 
+import KakaoSDKAuth
+import KakaoSDKUser
 import PetpionCore
 import PetpionDomain
 
+
 protocol LoginViewModelInput {
     func appleLoginButtonDidTapped(with viewController: UIViewController)
+    func kakaoLoginButtonDidTapped()
     func signIn(authorization: ASAuthorization)
+    func setUserDefaultsUserValue(_ firestoreUID: String?)
 }
 
 protocol LoginViewModelOutput {
@@ -24,17 +29,18 @@ protocol LoginViewModelOutput {
 }
 
 protocol LoginViewModelProtocol: LoginViewModelInput, LoginViewModelOutput {
+    
     var loginUseCase: LoginUseCase { get }
     var uploadUserUseCase: UploadUserUseCase { get }
     
-    var canDismissSubject: CurrentValueSubject<Bool, Never> { get }
+    var loginSubject: PassthroughSubject<(LoginType, String?), Never> { get }
 }
 
 final class LoginViewModel: LoginViewModelProtocol {
     
     let loginUseCase: LoginUseCase
     let uploadUserUseCase: UploadUserUseCase
-    let canDismissSubject: CurrentValueSubject<Bool, Never> = .init(false)
+    let loginSubject: PassthroughSubject<(LoginType, String?), Never> = .init()
     
     //MARK: - Initialize
     init(loginUseCase: LoginUseCase,
@@ -60,6 +66,16 @@ final class LoginViewModel: LoginViewModelProtocol {
         authorizationController.performRequests()
     }
     
+    func kakaoLoginButtonDidTapped() {
+        loginUseCase.getUserUIDWithKakao { [weak self] (FirestoreUIDIsExist, firestoreUID) in
+            if FirestoreUIDIsExist == true {
+                self?.loginSubject.send((.login, firestoreUID))
+            } else {
+                self?.loginSubject.send((.signInWithKakao, firestoreUID))
+            }
+        }
+    }
+    
     func signIn(authorization: ASAuthorization) {
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
             guard let nonce = currentNonce else {
@@ -74,10 +90,20 @@ final class LoginViewModel: LoginViewModelProtocol {
                 return
             }
             
-            getCurrentAppleUserState(appleUserID: appleIDCredential.user)
-            print(appleIDCredential.email)
-            print(appleIDCredential.fullName)
-            
+            Task {
+                
+                guard let userUID = await loginUseCase.signInToFirebaseAuth(providerID: "apple.com", idToken: idTokenString, rawNonce: nonce) else { return }
+                
+                let userIsValid = await loginUseCase.checkUserIsValid(userUID)
+                
+                await MainActor.run {
+                    if userIsValid == true {
+                        loginSubject.send((.login, userUID))
+                    } else {
+                        loginSubject.send((.signInWithApple, userUID))
+                    }
+                }
+            }
         }
     }
     
@@ -121,22 +147,8 @@ final class LoginViewModel: LoginViewModelProtocol {
         return hashString
     }
     
-    private func getCurrentAppleUserState(appleUserID: String) {
-        let appleIDProvider = ASAuthorizationAppleIDProvider()
-        appleIDProvider.getCredentialState(forUserID: appleUserID) { (credentialState, error) in
-            switch credentialState {
-            case .authorized:
-                // The Apple ID credential is valid.
-                print("해당 ID는 연동되어있습니다.")
-            case .revoked:
-                // The Apple ID credential is either revoked or was not found, so show the sign-in UI.
-                print("해당 ID는 연동되어있지않습니다.")
-            case .notFound:
-                // The Apple ID credential is either was not found, so show the sign-in UI.
-                print("해당 ID를 찾을 수 없습니다.")
-            default:
-                break
-            }
-        }
+    func setUserDefaultsUserValue(_ firestoreUID: String?) {
+        loginUseCase.setUserDefaults(firestoreUID: firestoreUID)
     }
 }
+

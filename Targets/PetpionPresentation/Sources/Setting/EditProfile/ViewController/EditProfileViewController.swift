@@ -31,12 +31,12 @@ final class EditProfileViewController: SettingCustomViewController {
         editProfileCoordinator?.presentProfileImagePickerViewController(parentableViewController: self)
     }
     
-    private let emailLabel: UILabel = {
+    private lazy var emailLabel: UILabel = {
         let emailLabel = UILabel()
         emailLabel.translatesAutoresizingMaskIntoConstraints = false
         emailLabel.font = UIFont.systemFont(ofSize: 14)
         emailLabel.textColor = .systemGray2
-        emailLabel.text = "kswen0203@gmail.com"
+        emailLabel.text = viewModel.user.email
         emailLabel.sizeToFit()
         return emailLabel
     }()
