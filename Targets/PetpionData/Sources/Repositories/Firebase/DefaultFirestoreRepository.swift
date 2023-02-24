@@ -51,15 +51,19 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    public func uploadNewUser(_ user: User) {
-        let userCollection: [String: Any] = UserData.toKeyValueCollections(.init(user: user))
-        db
-            .document(FirestoreCollection.user.reference + "/\(user.id)")
-            .setData(userCollection) { error in
-                if let error = error {
-                    print(error.localizedDescription)
+    public func uploadNewUser(_ user: User) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let userCollection: [String: Any] = UserData.toKeyValueCollections(.init(user: user))
+            db
+                .document(FirestoreCollection.user.reference + "/\(user.id)")
+                .setData(userCollection) { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        return continuation.resume(returning: false)
+                    }
+                    return continuation.resume(returning: true)
                 }
-            }
+        }
     }
     
     public func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool {
@@ -182,11 +186,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     // MARK: - Public Read
-    public func checkDuplicatedNickname(with nickname: String) async -> Bool {
+    public func checkDuplicatedFieldValue(with text: String, field: UserInformationField) async -> Bool {
         await withCheckedContinuation { continuation in
             db
                 .collection(FirestoreCollection.user.reference)
-                .whereField("userNickname", isEqualTo: nickname)
+                .whereField(field.rawValue, isEqualTo: text)
                 .getDocuments { (querySnapshot, error) in
                     if let error = error {
                         print("Error checking nickname: \(error)")
@@ -348,6 +352,44 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     }
                 }
         }
+    }
+    
+    public func getFirestoreUIDIsValid(_ firestoreUID: String) async -> Bool {
+        await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .whereField("userID", isEqualTo: firestoreUID)
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        return continuation.resume(returning: false)
+                    }
+                    if snapshot != nil {
+                        return continuation.resume(returning: true)
+                    }
+                    return continuation.resume(returning: false)
+                }
+        }
+    }
+    
+    public func getUserIDWithKakaoIdentifier(_ kakaoID: String, _ completion: @escaping ((String?) -> Void)) {
+        db
+            .collection(FirestoreCollection.user.reference)
+            .whereField("kakaoID", isEqualTo: kakaoID)
+            .getDocuments { (snapshot, error) in
+                if let error = error {
+                    print(error.localizedDescription)
+                    return completion(nil)
+                }
+                if let documents = snapshot?.documents {
+                    for document in documents {
+                        if let userIDValue = document.data()["userID"] as? String {
+                            return completion(userIDValue)
+                        }
+                    }
+                }
+                return completion(nil)
+            }
     }
     
     // MARK: - Private Read

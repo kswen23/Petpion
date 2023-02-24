@@ -19,8 +19,8 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
     }
     
     // MARK: - Public
-    public func uploadNewUser(_ user: User) {
-        firestoreRepository.uploadNewUser(user)
+    public func uploadNewUser(_ user: User) async -> Bool {
+        await firestoreRepository.uploadNewUser(user)
     }
     
     public func uploadUserProfileImage(_ user: User) async -> Bool {
@@ -47,7 +47,8 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
         firestoreRepository.updateUserLatestVoteTime()
     }
     
-    public func checkUserNicknameDuplication(with nickname: String) async -> Bool {
-        await firestoreRepository.checkDuplicatedNickname(with: nickname)
+    public func checkUserNicknameDuplication(with text: String,
+                                             field: UserInformationField) async -> Bool {
+        await firestoreRepository.checkDuplicatedFieldValue(with: text, field: field)
     }
 }

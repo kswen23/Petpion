@@ -8,17 +8,22 @@
 
 import UIKit
 
+public enum UserInformationField: String {
+    case email = "userEmail"
+    case nickname = "userNickname"
+}
+
 public protocol UploadUserUseCase {
     
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     var firestoreRepository: FirestoreRepository { get }
     
-    func uploadNewUser(_ user: User)
+    func uploadNewUser(_ user: User) async -> Bool
     func updateVoteChanceCount(_ count: Int) async -> Bool
     func updateUserNickname(_ nickname: String) async -> Bool
     func uploadUserProfileImage(_ user: User) async -> Bool
     func plusUserVoteChance()
     func minusUserVoteChance()
     func updateLatestVoteTime()
-    func checkUserNicknameDuplication(with nickname: String) async -> Bool
+    func checkUserNicknameDuplication(with text: String, field: UserInformationField) async -> Bool
 }

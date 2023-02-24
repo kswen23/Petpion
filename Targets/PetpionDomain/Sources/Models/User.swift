@@ -12,7 +12,8 @@ import UIKit
 public struct User: Identifiable {
     public typealias Identifier = String
     
-    public let id: Identifier
+    public var id: Identifier
+    public var email: String
     public var nickname: String
     public var latestVoteTime: Date
     public var voteChanceCount: Int
@@ -20,11 +21,13 @@ public struct User: Identifiable {
     public var profileImage: UIImage? = UIImage(systemName: "person.fill")
     
     public init(id: String,
+                email: String,
                 nickName: String,
                 latestVoteTime: Date,
                 voteChanceCount: Int,
                 imageURL: URL?) {
         self.id = id
+        self.email = email
         self.nickname = nickName
         self.latestVoteTime = latestVoteTime
         self.voteChanceCount = voteChanceCount
@@ -82,7 +85,7 @@ public extension User {
     
     static let voteMaxCountPolicy: Int = 5
     
-    static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
+    static let empty: Self = .init(id: "", email: "", nickName: "", latestVoteTime: .init(), voteChanceCount: voteMaxCountPolicy, imageURL: nil)
     
     static func getProfileImageData(user: Self) -> Data {
         guard let image = user.profileImage else { return .init() }

@@ -13,7 +13,7 @@ public protocol FirestoreRepository {
     // MARK: - Create
     func uploadNewFeed(_ feed: PetpionFeed) async -> Bool
     func createCounters(_ feed: PetpionFeed) async -> Bool
-    func uploadNewUser(_ user: User)
+    func uploadNewUser(_ user: User) async -> Bool
     func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool
     func uploadReportList<T>(reported: T, reason: String) async -> Bool
     func uploadBlockList<T>(blocked: T) async -> Bool
@@ -27,8 +27,10 @@ public protocol FirestoreRepository {
     func addUserListener(completion: @escaping ((User)-> Void))
     func fetchFeedsWithUserID(with user: User) async -> [PetpionFeed]
     func fetchFeedWithFeedID(with feed: PetpionFeed) async -> PetpionFeed
-    func checkDuplicatedNickname(with nickname: String) async -> Bool
+    func checkDuplicatedFieldValue(with text: String, field: UserInformationField) async -> Bool
     func getUserActionArray(action: UserActionType, type: ReportBlockType) async -> [String]?
+    func getUserIDWithKakaoIdentifier(_ kakaoID: String, _ completion: @escaping ((String?) -> Void))
+    func getFirestoreUIDIsValid(_ firestoreUID: String) async -> Bool
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool

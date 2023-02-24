@@ -77,6 +77,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     private func pushNeedLoginView(navigationItemType: NavigationItemType) {
         guard let needLoginCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "NeedLoginCoordinator") as? NeedLoginCoordinator else { return }
         needLoginCoordinator.navigationItemType = navigationItemType
+        needLoginCoordinator.mainCoordinatorDelegate = self
         childCoordinators.append(needLoginCoordinator)
         needLoginCoordinator.start()
     }
@@ -112,5 +113,13 @@ private extension MainCoordinator {
         }
         let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, reportUseCase: reportUseCase, blockUseCase: blockUseCase)
         return MainViewController(viewModel: viewModel)
+    }
+}
+
+extension MainCoordinator: MainCoordinatorDelegage {
+    
+    func restart() {
+        navigationController.popToRootViewController(animated: true)
+        start()
     }
 }

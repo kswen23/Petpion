@@ -11,9 +11,9 @@ import PetpionDomain
 
 final class DefaultFirebaseAuthRepository: FirebaseAuthRepository {
     
-    func signInFirebaseAuth(providerID: String,
+    func signInFirebaseAuthWithApple(providerID: String,
                             idToken: String,
-                            rawNonce: String?) async -> (Bool, String) {
+                            rawNonce: String?) async -> String? {
         return await withCheckedContinuation { continuation in
             let credential = OAuthProvider.credential(withProviderID: providerID,
                                                       idToken: idToken,
@@ -22,13 +22,27 @@ final class DefaultFirebaseAuthRepository: FirebaseAuthRepository {
             Auth.auth().signIn(with: credential) { (authResult, error) in
                 if let error = error {
                     print(error.localizedDescription)
-                    continuation.resume(returning: (false, "loginFailed"))
+                    continuation.resume(returning: nil)
                 }
                 if let user = authResult?.user {
-                    continuation.resume(returning: (true, user.uid))
+                    continuation.resume(returning: user.uid)
                 }
             }
         }
     }
     
+    func signInFirebaseAuthWithEmail(providerEmail: String,
+                                     providerID: String) async -> String? {
+        return await withCheckedContinuation { continuation in
+            Auth.auth().createUser(withEmail: providerEmail, password: providerID) { (authResult, error) in
+                if let error = error {
+                    print(error.localizedDescription)
+                    continuation.resume(returning: nil)
+                }
+                if let user = authResult?.user {
+                    continuation.resume(returning: user.uid)
+                }
+            }
+        }
+    }
 }
