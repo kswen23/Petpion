@@ -24,9 +24,11 @@ struct FeedData {
     public var message: String
     public var heightRatio: Double // width is 12
     public var imageRatio: Double
+    public var first: Bool
+    public var second: Bool
+    public var third: Bool
     
-    
-    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, battleCount: Double, likeCount: Double, imageCount: Double, message: String, heightRatio: Double, imageRatio: Double) {
+    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, battleCount: Double, likeCount: Double, imageCount: Double, message: String, heightRatio: Double, imageRatio: Double, first: Bool, second: Bool, third: Bool) {
         self.feedID = feedID
         self.uploaderID = uploaderID
         self.uploadTimestamp = uploadTimestamp
@@ -37,6 +39,9 @@ struct FeedData {
         self.heightRatio = heightRatio
         self.imageRatio = imageRatio
         self.imageReference = feedID + uploaderID
+        self.first = first
+        self.second = second
+        self.third = third
     }
     
     public init(feed: PetpionFeed) {
@@ -50,6 +55,9 @@ struct FeedData {
         self.imageReference = PetpionFeed.getImageReference(feed)
         self.heightRatio = feed.feedSize.height
         self.imageRatio = feed.imageRatio
+        self.first = feed.first
+        self.second = feed.second
+        self.third = feed.third
     }
 }
 
@@ -63,7 +71,10 @@ extension FeedData {
                                    imageCount: 0,
                                    message: "",
                                    heightRatio: 0,
-                                   imageRatio: 0)
+                                   imageRatio: 0,
+                                   first: false,
+                                   second: false,
+                                   third: false)
     
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
@@ -77,7 +88,10 @@ extension FeedData {
             "message": data.message,
             "heightRatio": data.heightRatio,
             "imageRatio": data.imageRatio,
-            "random": Int.random(in: 0..<Int.max)
+            "random": Int.random(in: 0..<Int.max),
+            "first": data.first,
+            "second": data.second,
+            "third": data.third
         ]
     }
     
@@ -95,6 +109,9 @@ extension FeedData {
             case "message": result.message = value as? String ?? ""
             case "heightRatio": result.heightRatio = value as? Double ?? 0
             case "imageRatio": result.imageRatio = value as? Double ?? 0
+            case "first": result.first = value as? Bool ?? false
+            case "second": result.second = value as? Bool ?? false
+            case "third": result.third = value as? Bool ?? false
             default:
                 break
             }
@@ -115,6 +132,9 @@ extension PetpionFeed {
               imageCount: Int(data.imageCount),
               message: data.message,
               feedSize: CGSize(width: 12, height: data.heightRatio),
-              imageRatio: data.imageRatio)
+              imageRatio: data.imageRatio,
+              first: data.first,
+              second: data.second,
+              third: data.third)
     }
 }

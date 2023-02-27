@@ -17,7 +17,7 @@ protocol MainViewModelInput {
     func initializeEssentialAppData()
     func fetchInit() async
     func fetchNextFeed()
-    func refreshCurrentFeed()
+    func refetchFeeds()
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
@@ -36,6 +36,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
+    var checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase { get }
     var reportUseCase: ReportUseCase { get }
     var blockUseCase: BlockUseCase { get }
     var firstFetchLoading: PassthroughSubject<Bool, Never> { get }
@@ -46,6 +47,8 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
 }
 
 final class MainViewModel: MainViewModelProtocol {
+    
+    
     
     enum Section {
         case base
@@ -62,17 +65,20 @@ final class MainViewModel: MainViewModelProtocol {
     let fetchFeedUseCase: FetchFeedUseCase
     let fetchUserUseCase: FetchUserUseCase
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
+    let checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase
     let reportUseCase: ReportUseCase
     let blockUseCase: BlockUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase,
          fetchUserUseCase: FetchUserUseCase,
          calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
+         checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase,
          reportUseCase: ReportUseCase,
          blockUseCase: BlockUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
+        self.checkPreviousMonthRanking = checkPreviousMonthRanking
         self.reportUseCase = reportUseCase
         self.blockUseCase = blockUseCase
     }
@@ -99,6 +105,7 @@ final class MainViewModel: MainViewModelProtocol {
             await initializeUserActionData()
             await fetchInit()
             await fetchBlockedUser()
+            await checkPreviousMonthRanking.checkPreviousMonthRankingDidUpdated()
             if await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser) {
                 fetchUserUseCase.bindUser { fetchedUser in
                     User.currentUser = fetchedUser
@@ -121,18 +128,13 @@ final class MainViewModel: MainViewModelProtocol {
     
     
     // MARK: - Input
-    func refreshCurrentFeed() {
-        let currentOption = sortingOptionSubject.value
+    func refetchFeeds() {
         Task {
-            // 새로고침을 두 option 다 해줘야됨
-            let refreshedFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: currentOption)
+            let refreshedLatestFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: .latest)
+            let refreshedPopularFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: .popular)
             await MainActor.run {
-                switch currentOption {
-                case .latest:
-                    latestFeedSubject.send(refreshedFeed)
-                case .popular:
-                    popularFeedSubject.send(refreshedFeed)
-                }
+                latestFeedSubject.send(refreshedLatestFeed)
+                popularFeedSubject.send(refreshedPopularFeed)
             }
         }
     }

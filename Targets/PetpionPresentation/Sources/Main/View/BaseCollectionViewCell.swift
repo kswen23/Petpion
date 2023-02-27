@@ -128,12 +128,10 @@ class BaseCollectionViewCell: UICollectionViewCell {
             }
             
             if isFirstFetching {
-                // viewWillAppear시 setCollectioniewLayout 계속 불리는 문제 해결, 하지만 collecionView 더 불릴시 문제있을듯
                 self?.configurePetCollectionView()
                 self?.viewModel?.isFirstFetching = false
             }
-//           shimmering을 처음에만 주자
-            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: true)
+            self?.petFeedDataSource?.apply(snapshot, animatingDifferences: false)
         }.store(in: &cancellables)
     }
       

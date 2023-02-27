@@ -19,13 +19,19 @@ struct UserData {
     public var nickname: String
     public var latestVoteTimestamp: Timestamp
     public var voteChanceCount: Double
+    public var first: Double
+    public var second: Double
+    public var third: Double
     
-    public init(userID: Identifier, email: String, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double) {
+    public init(userID: Identifier, email: String, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double, first: Double, second: Double, third: Double) {
         self.userID = userID
         self.email = email
         self.nickname = nickname
         self.latestVoteTimestamp = latestVoteTimestamp
         self.voteChanceCount = voteChanceCount
+        self.first = first
+        self.second = second
+        self.third = third
     }
     
     public init(user: User) {
@@ -34,6 +40,9 @@ struct UserData {
         self.nickname = user.nickname
         self.latestVoteTimestamp = Timestamp.init()
         self.voteChanceCount = Double(user.voteChanceCount)
+        self.first = Double(user.first)
+        self.second = Double(user.second)
+        self.third = Double(user.third)
     }
     
 }
@@ -44,7 +53,10 @@ extension UserData {
                                    email: "",
                                    nickname: "",
                                    latestVoteTimestamp: .init(),
-                                   voteChanceCount: .nan)
+                                   voteChanceCount: .nan,
+                                   first: 0,
+                                   second: 0,
+                                   third: 0)
     
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
@@ -52,7 +64,10 @@ extension UserData {
             "userEmail": data.email,
             "userNickname": data.nickname,
             "latestVoteTime": data.latestVoteTimestamp,
-            "voteChanceCount": data.voteChanceCount
+            "voteChanceCount": data.voteChanceCount,
+            "first": data.first,
+            "second": data.second,
+            "third": data.third
         ]
     }
     
@@ -65,6 +80,9 @@ extension UserData {
             case "userNickname": result.nickname = value as? String ?? ""
             case "latestVoteTime": result.latestVoteTimestamp = value as? Timestamp ?? Timestamp.init()
             case "voteChanceCount": result.voteChanceCount = value as? Double ?? 0
+            case "first": result.first = value as? Double ?? 0
+            case "second": result.second = value as? Double ?? 0
+            case "third": result.third = value as? Double ?? 0
             default:
                 break
             }
@@ -78,6 +96,9 @@ extension UserData {
               nickName: data.nickname,
               latestVoteTime: data.latestVoteTimestamp.dateValue(),
               voteChanceCount: Int(data.voteChanceCount),
-              imageURL: nil)
+              imageURL: nil,
+              first: Int(data.first),
+              second: Int(data.second),
+              third: Int(data.third))
     }
 }

@@ -70,6 +70,10 @@ public struct DomainDIContainer: Containable {
             DefaultCalculateVoteChanceUseCase(firestoreRepository: firestoreRepository)
         }
         
+        container.register(CheckPreviousMonthRankingUseCase.self) { _ in
+            DefaultCheckPreviousMonthRankingUseCase(firestoreRepository: firestoreRepository)
+        }
+        
         container.register(MakeNotificationUseCase.self) { _ in
             DefaultMakeNotificationUseCase()
         }

@@ -14,10 +14,19 @@ import PetpionCore
 class UserFeedsCollectionViewCell: UICollectionViewCell {
     
     private let thumbnailImageView: UIImageView = .init()
+    
+    private let rankingImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.isHidden = true
+        return imageView
+    }()
+    
     private let multipleImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "rectangle.fill.on.rectangle.fill")
         imageView.tintColor = .white
+        imageView.isHidden = true
         return imageView
     }()
     
@@ -25,6 +34,7 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         layoutThumbnailImageView()
+        layoutRankingImageView()
         layoutMultipleImageView()
     }
     
@@ -35,6 +45,7 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
     override public func prepareForReuse() {
         super.prepareForReuse()
         thumbnailImageView.image = nil
+        rankingImageView.isHidden = true
         multipleImageView.isHidden = true
     }
     
@@ -52,6 +63,17 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
         thumbnailImageView.contentMode = .scaleAspectFill
     }
     
+    private func layoutRankingImageView() {
+        thumbnailImageView.addSubview(rankingImageView)
+        rankingImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            rankingImageView.topAnchor.constraint(equalTo: thumbnailImageView.topAnchor, constant: 7),
+            rankingImageView.leadingAnchor.constraint(equalTo: thumbnailImageView.leadingAnchor, constant: 7),
+            rankingImageView.heightAnchor.constraint(equalToConstant: 30),
+            rankingImageView.widthAnchor.constraint(equalToConstant: 30)
+        ])
+    }
+    
     private func layoutMultipleImageView() {
         thumbnailImageView.addSubview(multipleImageView)
         multipleImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -61,24 +83,41 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
             multipleImageView.heightAnchor.constraint(equalToConstant: 20),
             multipleImageView.widthAnchor.constraint(equalToConstant: 20)
         ])
-        multipleImageView.isHidden = true
     }
 
     // MARK: - Configure
     func configureCell(with feed: PetpionFeed) {
         configureThumbnailImageView(feed)
+        configureRankingImageView(feed)
         configureMultipleImageView(feed)
     }
     
     private func configureThumbnailImageView(_ feed: PetpionFeed) {
-        Task {
-            guard let url = feed.imageURLArr?[0] else { return }
-            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                thumbnailImageView.image = thumbnailImage
+        guard let url = feed.imageURLArr?[0] else { return }
+        if let cachedImage = ImageCache.shared.image(url: url as NSURL) {
+            thumbnailImageView.image = cachedImage
+        } else {
+            Task {
+                let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
+                await MainActor.run {
+                    thumbnailImageView.image = thumbnailImage
+                }
             }
-        }
 
+        }
+    }
+    
+    private func configureRankingImageView(_ feed: PetpionFeed) {
+        if feed.first == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.first.description)
+        } else if feed.second == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.second.description)
+        } else if feed.third == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.third.description)
+        }
     }
     
     private  func configureMultipleImageView(_ feed: PetpionFeed) {

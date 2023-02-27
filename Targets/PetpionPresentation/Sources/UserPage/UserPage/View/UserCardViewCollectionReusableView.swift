@@ -30,32 +30,18 @@ class UserCardCollectionReusableView: UICollectionReusableView {
         return imageView
     }()
     
-    private let userNickNameLabel: UILabel = {
+    private let userNicknameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 25, weight: .bold)
+        label.font = .systemFont(ofSize: 20, weight: .bold)
         label.text = "사용자"
         label.textAlignment = .center
         label.sizeToFit()
         return label
     }()
     
-    private lazy var firstRankView: RankingView = {
-        let rankingView = RankingView()
-        rankingView.configureRankingView(ranking: .first, count: 3)
-        return rankingView
-    }()
-    
-    private lazy var secondRankView: RankingView = {
-        let rankingView = RankingView()
-        rankingView.configureRankingView(ranking: .second, count: 5)
-        return rankingView
-    }()
-    
-    private lazy var thirdRankView: RankingView = {
-        let rankingView = RankingView()
-        rankingView.configureRankingView(ranking: .third, count: 15)
-        return rankingView
-    }()
+    private let firstRankView = RankingView()
+    private let secondRankView = RankingView()
+    private let thirdRankView = RankingView()
     
     private lazy var userRankingStackView: UIStackView = {
         let stackView = UIStackView()
@@ -82,7 +68,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
     private func layout() {
         layoutUserCardView()
         layoutUserProfileImageView()
-        layoutUserNickNameLabel()
+        layoutUserNicknameLabel()
         layoutUserRankingStackView()
     }
     
@@ -118,15 +104,15 @@ class UserCardCollectionReusableView: UICollectionReusableView {
         userProfileImageView.bringSubviewToFront(userCardView)
     }
     
-    private func layoutUserNickNameLabel() {
-        userCardView.addSubview(userNickNameLabel)
-        userNickNameLabel.translatesAutoresizingMaskIntoConstraints = false
+    private func layoutUserNicknameLabel() {
+        userCardView.addSubview(userNicknameLabel)
+        userNicknameLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userNickNameLabel.centerYAnchor.constraint(equalTo: userCardView.topAnchor, constant: cardViewHeight/4),
-            userNickNameLabel.leadingAnchor.constraint(equalTo: userProfileImageView.trailingAnchor, constant: 20),
-            userNickNameLabel.trailingAnchor.constraint(equalTo: userCardView.trailingAnchor, constant: -20)
+            userNicknameLabel.centerYAnchor.constraint(equalTo: userCardView.topAnchor, constant: cardViewHeight/4),
+            userNicknameLabel.leadingAnchor.constraint(equalTo: userProfileImageView.trailingAnchor, constant: 20),
+            userNicknameLabel.trailingAnchor.constraint(equalTo: userCardView.trailingAnchor, constant: -20)
         ])
-        userNickNameLabel.bringSubviewToFront(userCardView)
+        userNicknameLabel.bringSubviewToFront(userCardView)
     }
     
     private func layoutUserRankingStackView() {
@@ -143,6 +129,9 @@ class UserCardCollectionReusableView: UICollectionReusableView {
 
     func configureUserCardView(with user: User) {
         userProfileImageView.image = user.profileImage
-        userNickNameLabel.text = user.nickname
+        userNicknameLabel.text = user.nickname
+        firstRankView.configureRankingView(ranking: .first, count: user.first)
+        secondRankView.configureRankingView(ranking: .second, count: user.second)
+        thirdRankView.configureRankingView(ranking: .third, count: user.third)
     }
 }

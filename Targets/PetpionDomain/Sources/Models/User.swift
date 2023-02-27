@@ -19,19 +19,28 @@ public struct User: Identifiable {
     public var voteChanceCount: Int
     public var imageURL: URL?
     public var profileImage: UIImage? = UIImage(systemName: "person.fill")
+    public var first: Int
+    public var second: Int
+    public var third: Int
     
     public init(id: String,
                 email: String,
                 nickName: String,
                 latestVoteTime: Date,
                 voteChanceCount: Int,
-                imageURL: URL?) {
+                imageURL: URL?,
+                first: Int = 0,
+                second: Int = 0,
+                third: Int = 0) {
         self.id = id
         self.email = email
         self.nickname = nickName
         self.latestVoteTime = latestVoteTime
         self.voteChanceCount = voteChanceCount
         self.imageURL = imageURL
+        self.first = first
+        self.second = second
+        self.third = third
     }
 }
 

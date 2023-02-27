@@ -25,7 +25,7 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFill
         return imageView
     }()
-    
+        
     let imageCountButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .gray
@@ -118,7 +118,6 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
         thumbnailImageView.image = nil
-        thumbnailImageView.stopShimmerAnimating()
         profileImageView.image = nil
         imageCountButton.isHidden = true
     }
@@ -163,7 +162,6 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
-        thumbnailImageView.startShimmerAnimating()
     }
     
     private func layoutImageCountButton() {
@@ -214,7 +212,6 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         configureCellHeight(viewModel.thumbnailRatio)
         configureImageCountButtonTitle(with: viewModel.imageCount)
         configureThumbnailImageView(viewModel.thumbnailImageURL)
-//        configureImage(viewModel)
         profileImageView.image = viewModel.profileImage
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
@@ -222,52 +219,21 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
     }
     
     func configureThumbnailImageView(_ url: URL?) {
-        Task {
-            guard let url = url else { return }
-            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                thumbnailImageView.stopShimmerAnimating()
-                thumbnailImageView.image = thumbnailImage
+        if let cachedImage = ImageCache.shared.image(url: url! as NSURL) {
+            thumbnailImageView.image = cachedImage
+        } else {
+            thumbnailImageView.startShimmerAnimating()
+            Task {
+                guard let url = url else { return }
+                let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
+                await MainActor.run {
+                    thumbnailImageView.stopShimmerAnimating()
+                    thumbnailImageView.image = thumbnailImage
+                }
+                
             }
         }
     }
-//    func configureThumbnailImageView(_ url: URL?) {
-//        guard let url = url else {
-//            thumbnailImageView.stopShimmerAnimating()
-//            thumbnailImageView.image = nil
-//            return
-//        }
-//
-//        // URL을 통해 이미지 다운로드
-//        let task = Task {
-//
-//            await MainActor.run {
-//                guard let data = try? Data(contentsOf: url),
-//                      let image = UIImage(data: data) else {
-//                    return
-//                }
-//                apply(image: image, to: thumbnailImageView)
-//            }
-//        }
-//
-//        // 이미지 로드 도중 셀이 재사용될 경우에 대비하여 취소 처리
-////        thumbnailImageView.taskIdentifier = task.id
-//    }
-    
-    func apply(image: UIImage, to thumbnailImageView: UIImageView) {
-        let fadeDuration = 0.2
-        let animator = UIViewPropertyAnimator(duration: fadeDuration, curve: .linear) {
-            thumbnailImageView.alpha = 0.0
-        }
-        animator.addCompletion { _ in
-            thumbnailImageView.image = image
-            UIViewPropertyAnimator.runningPropertyAnimator(withDuration: fadeDuration, delay: 0, options: .curveLinear) {
-                thumbnailImageView.alpha = 1.0
-            }
-        }
-        animator.startAnimation()
-    }
-
     
     private func configureCellHeight(_ thumbnailRatio: Double) {
         heightLayoutAnchor = thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*thumbnailRatio)

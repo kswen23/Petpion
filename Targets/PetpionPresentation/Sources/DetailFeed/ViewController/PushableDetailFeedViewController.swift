@@ -102,6 +102,13 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return UIBarButtonItem(customView: indicatorView)
     }()
     
+    private let rankingImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.isHidden = true
+        return imageView
+    }()
+    
     private let toastAnimationLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -142,6 +149,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     // MARK: - Layout
     private func layout() {
         layoutDetailFeedImageCollectionView()
+        layoutRankingImageView()
         layoutImageSlider()
         layoutProfileStackView()
         layoutBattleStackView()
@@ -160,6 +168,17 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             detailFeedImageCollectionView.heightAnchor.constraint(equalToConstant: imageHeight)
         ])
         detailFeedImageCollectionView.roundCorners(cornerRadius: 10)
+    }
+    
+    private func layoutRankingImageView() {
+        view.addSubview(rankingImageView)
+        rankingImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            rankingImageView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.topAnchor, constant: 15),
+            rankingImageView.leadingAnchor.constraint(equalTo: detailFeedImageCollectionView.leadingAnchor, constant: 15),
+            rankingImageView.widthAnchor.constraint(equalToConstant: 40),
+            rankingImageView.heightAnchor.constraint(equalToConstant: 40)
+        ])
     }
     
     private func layoutImageSlider() {
@@ -232,6 +251,20 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         imageSlider.numberOfPages = viewModel.feed.imageCount
         configureProfileStackView()
         configureCollectionViewShadowOn()
+        configureRankingImageView()
+    }
+    
+    private func configureRankingImageView() {
+        if viewModel.feed.first == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.first.description)
+        } else if viewModel.feed.second == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.second.description)
+        } else if viewModel.feed.third == true {
+            rankingImageView.isHidden = false
+            rankingImageView.image = UIImage(named: Ranking.third.description)
+        }
     }
     
     private func configureNavigationItem() {

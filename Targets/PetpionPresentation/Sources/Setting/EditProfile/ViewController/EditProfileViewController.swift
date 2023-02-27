@@ -52,6 +52,9 @@ final class EditProfileViewController: SettingCustomViewController {
     
     private lazy var nicknameTextField: UITextField = {
         let textField = UITextField()
+        textField.smartDashesType = .no
+        textField.smartQuotesType = .no
+        textField.autocorrectionType = .no
         textField.backgroundColor = .petpionLightGray
         textField.layer.borderWidth = 0.3
         textField.layer.borderColor = UIColor.lightGray.cgColor

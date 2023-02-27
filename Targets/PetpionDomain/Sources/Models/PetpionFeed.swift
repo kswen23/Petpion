@@ -25,6 +25,9 @@ public struct PetpionFeed: Identifiable {
     public var image: UIImage? = nil
     public var feedSize: CGSize
     public var imageRatio: Double
+    public var first: Bool = false
+    public var second: Bool = false
+    public var third: Bool = false
     
     public init(id: Identifier,
                 uploader: User,
@@ -35,7 +38,10 @@ public struct PetpionFeed: Identifiable {
                 imageCount: Int,
                 message: String,
                 feedSize: CGSize,
-                imageRatio: Double) {
+                imageRatio: Double,
+                first: Bool = false,
+                second: Bool = false,
+                third : Bool = false) {
         self.id = id
         self.uploader = uploader
         self.uploaderID = uploaderID
@@ -46,6 +52,9 @@ public struct PetpionFeed: Identifiable {
         self.message = message
         self.feedSize = feedSize
         self.imageRatio = imageRatio
+        self.first = first
+        self.second = second
+        self.third = third
     }
     
 }

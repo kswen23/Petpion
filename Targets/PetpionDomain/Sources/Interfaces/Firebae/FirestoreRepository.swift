@@ -17,6 +17,7 @@ public protocol FirestoreRepository {
     func uploadPersonalReportList<T>(reported: T, reason: String) async -> Bool
     func uploadReportList<T>(reported: T, reason: String) async -> Bool
     func uploadBlockList<T>(blocked: T) async -> Bool
+    func uploadRankingUpdated()
     
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed]
@@ -31,6 +32,7 @@ public protocol FirestoreRepository {
     func getUserActionArray(action: UserActionType, type: ReportBlockType) async -> [String]?
     func getUserIDWithKakaoIdentifier(_ kakaoID: String, _ completion: @escaping ((String?) -> Void))
     func getFirestoreUIDIsValid(_ firestoreUID: String) async -> Bool
+    func checkPreviousMonthRankingDidUpdated() async -> Bool
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool
@@ -40,6 +42,8 @@ public protocol FirestoreRepository {
     func plusUserHeart()
     func minusUserHeart()
     func updateUserLatestVoteTime()
+    func updatePreviousMonthTopFeeds() async -> (Bool, [String])
+    func updatePreviousMonthTopUsers(userIDArray: [String])
     
     // MARK: - Delete
     func deleteFeedDataWithFeed(_ feed: PetpionFeed) async -> Bool
