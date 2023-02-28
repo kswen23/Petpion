@@ -32,13 +32,38 @@ final class VoteMainViewController: HasCoordinatorViewController {
         view.layer.shadowOpacity = 0.3
         return view
     }()
+    
+    private lazy var backBarButton: UIBarButtonItem = {
+        let barButton = UIBarButtonItem()
+        barButton.title = ""
+        barButton.tintColor = .white
+        barButton.image = UIImage(systemName: "chevron.backward")
+        barButton.target = self
+        barButton.action = #selector(popViewController)
+        return barButton
+    }()
+    
+    @objc private func popViewController() {
+        voteMainCoordinator?.popViewController()
+    }
+    
+    private lazy var trophyBarButton: UIBarButtonItem = {
+        let barButton = UIBarButtonItem(image: UIImage(systemName: "trophy"), style: .done, target: self, action: #selector(trophyButtonDidTapped))
+        barButton.tintColor = .white
+        return barButton
+    }()
+    
+    @objc private func trophyButtonDidTapped() {
+        voteMainCoordinator?.pushPetpionHallViewController()
+    }
+    
     private lazy var userHeartStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .equalSpacing
         stackView.spacing = 5
         stackView.alignment = .center
-        stackView.layer.borderColor = UIColor.lightGray.cgColor
+        stackView.layer.borderColor = UIColor.white.cgColor
         stackView.layer.borderWidth = 3
         stackView.roundCorners(cornerRadius: 15)
         stackView.layoutMargins = UIEdgeInsets(top: 0, left: 15, bottom: 10, right: 15)
@@ -130,7 +155,6 @@ final class VoteMainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .white
         self.view.backgroundColor = .petpionIndigo
-        self.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
         viewModel.viewWillAppear()
     }
     
@@ -138,6 +162,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         super.viewDidLoad()
         layout()
         binding()
+        self.navigationItem.leftItemsSupplementBackButton = true
+        self.navigationItem.leftBarButtonItems = [trophyBarButton]
     }
     
     // MARK: - Layout
@@ -377,11 +403,10 @@ extension VoteMainViewController {
         
         return heartAnimatingView
     }
-
 }
 
 extension HeartType {
-        
+    
     func configureHeartImage(to view: UIImageView) {
         switch self {
         case .fill:

@@ -52,6 +52,10 @@ public struct PresentationDIContainer: Containable {
             VotePetpionCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "PetpionHallCoordinator") { _ in
+            PetpionHallCoordinator(navigationController: navigationController)
+        }
+        
         container.register(Coordinator.self, name: "UserPageCoordinator") { _ in
             UserPageCoordinator(navigationController: navigationController)
         }
