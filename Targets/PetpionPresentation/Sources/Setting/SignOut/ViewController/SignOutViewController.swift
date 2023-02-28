@@ -27,7 +27,8 @@ final class SignOutViewController: SettingCustomViewController {
     private lazy var signOutTitleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "\(viewModel.user.nickname)님, 정말 탈퇴하시는건가요..?"
+        label.text = "\(viewModel.user.nickname) 님, 정말 탈퇴하시는건가요..?"
+        label.textAlignment = .center
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 18)
         label.textColor = .black
@@ -39,6 +40,7 @@ final class SignOutViewController: SettingCustomViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = "탈퇴 시, 계정의 모든 정보는 삭제되며 재가입 시에도 복구되지 않습니다."
         label.numberOfLines = 0
+        label.textAlignment = .center
         label.font = .systemFont(ofSize: 13)
         label.textColor = .systemGray
         label.sizeToFit()
@@ -58,7 +60,7 @@ final class SignOutViewController: SettingCustomViewController {
         let button = UIButton()
         button.roundCorners(cornerRadius: 10)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 70).isActive = true
         button.setTitle("취소하기", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.layer.borderWidth = 1
@@ -75,10 +77,10 @@ final class SignOutViewController: SettingCustomViewController {
         let button = UIButton()
         button.roundCorners(cornerRadius: 10)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 70).isActive = true
         button.setTitle("탈퇴하기", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 20)
-        button.backgroundColor = .petpionRed
+        button.backgroundColor = .petpionRealRed
         button.addTarget(self, action: #selector(signOutButtonDidTapped), for: .touchUpInside)
         return button
     }()
@@ -111,7 +113,7 @@ final class SignOutViewController: SettingCustomViewController {
     // MARK: - Life Cycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationItem.title = "회원탈퇴"
+        self.navigationItem.title = "탈퇴하기"
     }
     
     override func viewDidLoad() {
@@ -130,7 +132,7 @@ final class SignOutViewController: SettingCustomViewController {
         view.addSubview(signOutImageView)
         NSLayoutConstraint.activate([
             signOutImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            signOutImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            signOutImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
             signOutImageView.widthAnchor.constraint(equalToConstant: 180),
             signOutImageView.heightAnchor.constraint(equalToConstant: 180)
         ])
@@ -139,7 +141,7 @@ final class SignOutViewController: SettingCustomViewController {
     private func layoutSignOutLabel() {
         view.addSubview(signOutStackView)
         NSLayoutConstraint.activate([
-            signOutStackView.topAnchor.constraint(equalTo: signOutImageView.bottomAnchor, constant: 20),
+            signOutStackView.topAnchor.constraint(equalTo: signOutImageView.bottomAnchor, constant: 40),
             signOutStackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             signOutStackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
         ])
@@ -148,7 +150,7 @@ final class SignOutViewController: SettingCustomViewController {
     private func layoutSignOutButton() {
         view.addSubview(buttonStackView)
         NSLayoutConstraint.activate([
-            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            buttonStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
             buttonStackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             buttonStackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20)
         ])

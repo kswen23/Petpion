@@ -24,6 +24,8 @@ extension UIColor {
     
     class var petpionYellow: UIColor { return UIColor(named: "petpionYellow") ?? UIColor.init() }
     
+    class var petpionRealRed: UIColor { return UIColor(named: "petpionRealRed") ?? UIColor.init() }
+    
     convenience init(hex: String) {
       var hexFormatted: String = hex.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
       
