@@ -21,7 +21,7 @@ public protocol FetchFeedUseCase {
     
     func updateFeeds(origin: [PetpionFeed]) async -> [PetpionFeed]
     
-    func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed]
+    func fetchTopPetpionFeedForLast3Months(since date: Date) async -> [TopPetpionFeed]
 }
 
 public enum SortingOption: Int, CaseIterable {

@@ -22,12 +22,9 @@ public struct PetpionFeed: Identifiable {
     public var imageCount: Int
     public var message: String
     public var imageURLArr: [URL]?
-    public var image: UIImage? = nil
     public var feedSize: CGSize
     public var imageRatio: Double
-    public var first: Bool = false
-    public var second: Bool = false
-    public var third: Bool = false
+    public var ranking: Int?
     
     public init(id: Identifier,
                 uploader: User,
@@ -39,9 +36,7 @@ public struct PetpionFeed: Identifiable {
                 message: String,
                 feedSize: CGSize,
                 imageRatio: Double,
-                first: Bool = false,
-                second: Bool = false,
-                third : Bool = false) {
+                ranking: Int? = nil) {
         self.id = id
         self.uploader = uploader
         self.uploaderID = uploaderID
@@ -52,15 +47,13 @@ public struct PetpionFeed: Identifiable {
         self.message = message
         self.feedSize = feedSize
         self.imageRatio = imageRatio
-        self.first = first
-        self.second = second
-        self.third = third
+        self.ranking = ranking
     }
     
 }
 
 public extension PetpionFeed {
-    static let empty: Self = .init(id: "",
+    static var empty: Self = .init(id: "",
                                    uploader: User.empty,
                                    uploaderID: "",
                                    uploadDate: .init(),

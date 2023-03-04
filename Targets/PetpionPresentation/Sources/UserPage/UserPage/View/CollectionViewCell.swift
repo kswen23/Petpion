@@ -108,16 +108,18 @@ class UserFeedsCollectionViewCell: UICollectionViewCell {
     }
     
     private func configureRankingImageView(_ feed: PetpionFeed) {
-        if feed.first == true {
-            rankingImageView.isHidden = false
+        guard let ranking = feed.ranking else { return }
+        switch ranking {
+        case 1:
             rankingImageView.image = UIImage(named: Ranking.first.description)
-        } else if feed.second == true {
-            rankingImageView.isHidden = false
+        case 2:
             rankingImageView.image = UIImage(named: Ranking.second.description)
-        } else if feed.third == true {
-            rankingImageView.isHidden = false
+        case 3:
             rankingImageView.image = UIImage(named: Ranking.third.description)
+        default:
+            break
         }
+        rankingImageView.isHidden = false
     }
     
     private  func configureMultipleImageView(_ feed: PetpionFeed) {

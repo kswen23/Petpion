@@ -255,7 +255,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     
     public func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed {
         var resultFeed = feed
-        let feedReference = db.collection(FirestoreCollection.feed.reference).document(feed.id)
+        let dateComponents: DateComponents = .dateToDateComponents(feed.uploadDate)
+        
+        let feedReference = db
+            .collection("feeds/\(dateComponents.year!)/\(dateComponents.month!)")
+            .document(feed.id)
         
         let likeCount = await fetchCounts(reference: feedReference, type: .like)
         let battleCount = await fetchCounts(reference: feedReference, type: .battle)
@@ -421,6 +425,46 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         return continuation.resume(returning: data["didUpdated"] as? Bool ?? false)
                     }
                     return continuation.resume(returning: false)
+                }
+        }
+    }
+    
+    public func fetchTop3FeedDataForThisMonth(when date: Date) async -> TopPetpionFeed {
+        await withTaskGroup(of: [PetpionFeed].self, body: { taskGroup -> TopPetpionFeed in
+            for i in 1...3 {
+                taskGroup.addTask {
+                    await self.fetchTopFeedData(date: date, ranking: i)
+                }
+            }
+            var resultTopFeed = [PetpionFeed]()
+            for await task in taskGroup {
+                resultTopFeed += task
+            }
+            
+            return TopPetpionFeed(date: date, feedArray: resultTopFeed)
+        })
+    }
+    
+    private func fetchTopFeedData(date: Date, ranking: Int) async -> [PetpionFeed] {
+        let dateComponents: DateComponents = .dateToDateComponents(date)
+        return await withCheckedContinuation { continuation in
+            db
+                .collection("feeds/\(dateComponents.year!)/\(dateComponents.month!)")
+                .whereField("ranking", isEqualTo: ranking)
+                .getDocuments { querySnapshot, error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        return continuation.resume(returning: [])
+                    }
+                    if let documents = querySnapshot?.documents {
+                        var resultTopFeed = [PetpionFeed]()
+                        for document in documents {
+                            let topFeed = PetpionFeed.toPetpionFeed(data: FeedData.toFeedData(document.data()))
+                            resultTopFeed.append(topFeed)
+                        }
+                        return continuation.resume(returning: resultTopFeed)
+                    }
+                    return continuation.resume(returning: [])
                 }
         }
     }
@@ -639,49 +683,50 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         
     }
     
-    public func updatePreviousMonthTopFeeds() async -> (Bool, [String]) {
+    public func updatePreviousMonthTopFeeds() async -> (Bool, [(Int, String)]) {
         let previousMonthDateComponents = DateComponents.getPreviousMonthDateComponents()
         let previousMonthCollectionPath = "feeds/\(previousMonthDateComponents.year!)/\(previousMonthDateComponents.month!)"
         return await withCheckedContinuation { continuation in
             db
                 .collection(previousMonthCollectionPath)
                 .order(by: "likeCount", descending: true)
-                .limit(to: 3)
+                .limit(to: 10)
                 .getDocuments { querySnapshot, error in
                     if let error = error {
                         print(error.localizedDescription)
                         continuation.resume(returning: (false, []))
                     }
                     guard let querySnapshot = querySnapshot else { return }
-                    var rank = 1
+                    var rank = 0
+                    var previousLikeCount: Int?
+                    var resultUploaderArr: [(Int, String)] = []
                     for document in querySnapshot.documents {
-                        
-                        switch rank {
-                        case 1:
-                            document.reference.updateData(["first": true])
-                        case 2:
-                            document.reference.updateData(["second": true])
-                        case 3:
-                            document.reference.updateData(["third": true])
-                        default:
-                            break
+                        let data = document.data()
+                        let likeCount = data["likeCount"] as! Int
+                        let userID = data["uploaderID"] as! String
+                        if let previousLikeCount = previousLikeCount, likeCount == previousLikeCount {
+                        } else {
+                            rank += 1
                         }
-                        rank += 1
+                        if rank > 3 {
+                            return continuation.resume(returning: (true, resultUploaderArr))
+                        }
+                        document.reference.updateData(["ranking": rank])
+                        resultUploaderArr.append((rank, userID))
+                        previousLikeCount = likeCount
                     }
-                    let userID = querySnapshot.documents.map { $0["uploaderID"] as! String }
-                    continuation.resume(returning: (true, userID))
+                    
                 }
         }
     }
     
-    public func updatePreviousMonthTopUsers(userIDArray: [String]) {
-        var ranking = 1
+    public func updatePreviousMonthTopUsers(userIDArray: [(Int, String)]) {
         for userID in userIDArray {
             let docuRef = db
                 .collection(FirestoreCollection.user.reference)
-                .document(userID)
-            switch ranking {
-            case 1: 
+                .document(userID.1)
+            switch userID.0 {
+            case 1:
                 docuRef.updateData([
                     "first": FieldValue.increment(Int64(1))
                 ])
@@ -696,19 +741,18 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             default:
                 break
             }
-            ranking += 1
         }
         
     }
     
     public func createRankingUpdated() {
-            let year = DateComponents.getPreviousMonthDateComponents().year!
-            let month = DateComponents.getPreviousMonthDateComponents().month!
-            let previousMonthCollectionPath = "feeds/\(year)/\(month)"
-            db
-                .collection(previousMonthCollectionPath)
-                .document("rankingUpdated")
-                .setData(["didUpdated": true])
+        let year = DateComponents.getPreviousMonthDateComponents().year!
+        let month = DateComponents.getPreviousMonthDateComponents().month!
+        let previousMonthCollectionPath = "feeds/\(year)/\(month)"
+        db
+            .collection(previousMonthCollectionPath)
+            .document("rankingUpdated")
+            .setData(["didUpdated": true])
     }
     
     // MARK: - Private Update
@@ -897,7 +941,7 @@ extension DefaultFirestoreRepository {
         case like
         case battle
     }
-
+    
     
     private func getFeedCountsReference(reference: DocumentReference, type: FeedCountsType) -> DocumentReference {
         

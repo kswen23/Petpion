@@ -33,6 +33,7 @@ public protocol FirestoreRepository {
     func getUserIDWithKakaoIdentifier(_ kakaoID: String, _ completion: @escaping ((String?) -> Void))
     func getFirestoreUIDIsValid(_ firestoreUID: String) async -> Bool
     func checkPreviousMonthRankingDidUpdated() async -> Bool
+    func fetchTop3FeedDataForThisMonth(when date: Date) async -> TopPetpionFeed
     
     // MARK: - Update
     func updateFeed(with feed: PetpionFeed) async -> Bool
@@ -42,8 +43,8 @@ public protocol FirestoreRepository {
     func plusUserHeart()
     func minusUserHeart()
     func updateUserLatestVoteTime()
-    func updatePreviousMonthTopFeeds() async -> (Bool, [String])
-    func updatePreviousMonthTopUsers(userIDArray: [String])
+    func updatePreviousMonthTopFeeds() async -> (Bool, [(Int, String)])
+    func updatePreviousMonthTopUsers(userIDArray: [(Int, String)])
     
     // MARK: - Delete
     func deleteFeedDataWithFeed(_ feed: PetpionFeed) async -> Bool

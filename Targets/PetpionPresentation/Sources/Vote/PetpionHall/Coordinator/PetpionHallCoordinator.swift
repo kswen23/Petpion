@@ -26,6 +26,20 @@ public final class PetpionHallCoordinator: NSObject, Coordinator {
         viewController.coordinator = self
         navigationController.pushViewController(viewController, animated: true)
     }
+    
+    func pushUserPageView(with user: User) {
+        guard let userPageCoordinator: UserPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
+        userPageCoordinator.user = user
+        userPageCoordinator.userPageStyle = .myPageWithOutSettings
+        userPageCoordinator.start()
+    }
+    
+    func pushPushableDetailFeedView(with feed: PetpionFeed) {
+        guard let detailFeedCoordinator: DetailFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "DetailFeedCoordinator") as? DetailFeedCoordinator else { return }
+        detailFeedCoordinator.feed = feed
+        detailFeedCoordinator.detailFeedStyle = .uneditableUserDetailFeed
+        detailFeedCoordinator.start()
+    }
 }
 
 private extension PetpionHallCoordinator {
