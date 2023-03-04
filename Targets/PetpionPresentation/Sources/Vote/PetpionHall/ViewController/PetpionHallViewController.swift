@@ -115,7 +115,7 @@ final class PetpionHallViewController: HasCoordinatorViewController {
                         snapshot.appendItems([topPetpionFeed.feedArray], toSection: topPetpionFeed.date)
                     }
                 }
-                strongSelf.dataSource.apply(snapshot, animatingDifferences: true)
+                strongSelf.dataSource.apply(snapshot, animatingDifferences: false)
             }
             .store(in: &cancellables)
     }
@@ -164,7 +164,8 @@ extension PetpionHallViewController: UITableViewDelegate {
 extension PetpionHallViewController: PetpionHallHeaderViewListener, PetpionHallTableViewCellListener {
     
     func totalButtonDidTapped(_ section: Int) {
-        print(viewModel.indexArray)
+        let targetDate = viewModel.topPetpionFeedArraySubject.value[section].date
+        petpionHallCoordinator?.pushFeedOfTheMonthView(with: targetDate)
     }
     
     func collectionViewDidScrolled(cell: UITableViewCell, index: Int) {

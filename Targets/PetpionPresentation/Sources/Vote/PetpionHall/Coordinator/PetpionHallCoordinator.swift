@@ -27,10 +27,18 @@ public final class PetpionHallCoordinator: NSObject, Coordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
     
+    func pushFeedOfTheMonthView(with date: Date) {
+        guard let feedOfTheMonthCoordinator: FeedOfTheMonthCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedOfTheMonthCoordinator") as? FeedOfTheMonthCoordinator else { return }
+        feedOfTheMonthCoordinator.date = date
+        childCoordinators.append(feedOfTheMonthCoordinator)
+        feedOfTheMonthCoordinator.start()
+    }
+    
     func pushUserPageView(with user: User) {
         guard let userPageCoordinator: UserPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
         userPageCoordinator.user = user
         userPageCoordinator.userPageStyle = .myPageWithOutSettings
+        childCoordinators.append(userPageCoordinator)
         userPageCoordinator.start()
     }
     
@@ -38,6 +46,7 @@ public final class PetpionHallCoordinator: NSObject, Coordinator {
         guard let detailFeedCoordinator: DetailFeedCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "DetailFeedCoordinator") as? DetailFeedCoordinator else { return }
         detailFeedCoordinator.feed = feed
         detailFeedCoordinator.detailFeedStyle = .uneditableUserDetailFeed
+        childCoordinators.append(detailFeedCoordinator)
         detailFeedCoordinator.start()
     }
 }

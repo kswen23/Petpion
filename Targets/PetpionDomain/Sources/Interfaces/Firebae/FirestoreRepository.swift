@@ -22,6 +22,7 @@ public protocol FirestoreRepository {
     // MARK: - Read
     func fetchFirstFeedArray(by option: SortingOption) async -> [PetpionFeed]
     func fetchFeedArray(by option: SortingOption) async -> [PetpionFeed]
+    func fetchSpecificMonthPopularFeedArray(with date: Date, isFirst: Bool) async -> [PetpionFeed]
     func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed]
     func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed
     func fetchUser(uid: String) async -> User

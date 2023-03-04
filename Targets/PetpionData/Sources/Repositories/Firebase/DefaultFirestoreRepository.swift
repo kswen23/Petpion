@@ -15,6 +15,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private let db = Firestore.firestore()
     private var popularCursor: DocumentSnapshot?
     private var latestCursor: DocumentSnapshot?
+    private var specificDatePopularCursor: DocumentSnapshot?
     
     private let numberOfShards = 10
     private let firestoreUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue)
@@ -232,6 +233,40 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             return convertCollectionToModel(collections)
         case .failure(_):
             return []
+        }
+    }
+    
+    public func fetchSpecificMonthPopularFeedArray(with date: Date, isFirst: Bool) async -> [PetpionFeed] {
+        if isFirst == false, specificDatePopularCursor == nil {
+            return []
+        }
+        
+        return await withCheckedContinuation { [weak self] continuation in
+            guard let strongSelf = self else { return }
+            var query = getSpecificMonthFamousQuery(date: date)
+            
+            if let specificDatePopularCursor = specificDatePopularCursor,
+               isFirst == false {
+                query = query.start(afterDocument: specificDatePopularCursor)
+            }
+            
+            query
+                .getDocuments { (snapshot, error) in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: [])
+                    } else {
+                        if let result = snapshot?.documents {
+                            strongSelf.specificDatePopularCursor = result.last
+                            
+                            let fetchedFeedArray = result
+                                .map { $0.data() }
+                                .map{ FeedData.toFeedData($0) }
+                                .map{ PetpionFeed.toPetpionFeed(data: $0) }
+                            continuation.resume(returning: fetchedFeedArray)
+                        }
+                    }
+                }
         }
     }
     
@@ -474,13 +509,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         return await withCheckedContinuation { [weak self] continuation in
             guard let cursor = getCursor(by: option) else { return }
             let query = getQuery(by: option)
-            
-            //            query.addSnapshotListener { (snapshot, error) in
-            //                guard snapshot != nil else {
-            //                    print("Error retreving feeds: \(error.debugDescription)")
-            //                    return
-            //                }
-            
             query
                 .start(afterDocument: cursor)
                 .getDocuments { (snapshot, error) in
@@ -495,7 +523,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         }
                     }
                 }
-            //            }
         }
     }
     
@@ -953,6 +980,14 @@ extension DefaultFirestoreRepository {
         }
     }
     
+    private func getSpecificMonthFamousQuery(date: Date) -> Query {
+        let dateComponents: DateComponents = .dateToDateComponents(date)
+        let collection = db.collection("feeds/\(dateComponents.year!)/\(dateComponents.month!)")
+        return collection
+            .order(by: "likeCount", descending: true)
+            .limit(to: 10)
+    }
+    
     private func getQuery(by option: SortingOption) -> Query {
         let collection = db.collection(FirestoreCollection.feed.reference)
         var resultQuery: Query?
@@ -966,21 +1001,21 @@ extension DefaultFirestoreRepository {
             if let resultQuery = resultQuery {
                 return resultQuery
                     .order(by: "likeCount", descending: true)
-                    .limit(to: 20)
+                    .limit(to: 10)
             } else {
                 return collection
                     .order(by: "likeCount", descending: true)
-                    .limit(to: 20)
+                    .limit(to: 10)
             }
         case .latest:
             if let resultQuery = resultQuery {
                 return resultQuery
                     .order(by: "uploadTimestamp", descending: true)
-                    .limit(to: 20)
+                    .limit(to: 10)
             } else {
                 return collection
                     .order(by: "uploadTimestamp", descending: true)
-                    .limit(to: 20)
+                    .limit(to: 10)
             }
         }
     }

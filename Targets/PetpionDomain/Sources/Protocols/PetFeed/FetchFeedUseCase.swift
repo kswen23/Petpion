@@ -15,6 +15,7 @@ public protocol FetchFeedUseCase {
     
     func fetchInitialFeedPerSortingOption() async -> [[PetpionFeed]]
     func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed]
+    func fetchSpecificMonthFeeds(with date: Date, isFirst: Bool) async -> [PetpionFeed]
     func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL]
     func fetchVotePareDetailImages(pare: PetpionVotePare) async -> PetpionVotePare
     func fetchUserTotalFeeds(user: User) async -> [PetpionFeed]

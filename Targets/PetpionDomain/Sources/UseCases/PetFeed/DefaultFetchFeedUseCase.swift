@@ -53,6 +53,12 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         return sortResultFeeds(sortBy: option, with: updatedFeed)
     }
     
+    public func fetchSpecificMonthFeeds(with date: Date, isFirst: Bool) async -> [PetpionFeed] {
+        let fetchedFeeds = await firestoreRepository.fetchSpecificMonthPopularFeedArray(with: date, isFirst: isFirst)
+        let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: fetchedFeeds)
+        return sortResultFeeds(sortBy: .popular, with: updatedFeed)
+    }
+    
     public func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL] {
         return await firebaseStorageRepository.fetchFeedTotalImageURL(feed)
     }
