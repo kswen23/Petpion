@@ -41,7 +41,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     private lazy var profileImageView: UIImageView = {
         let imageView = UIImageView()
-        let radius: CGFloat = 18
+        let radius: CGFloat = xValueRatio(18)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             imageView.heightAnchor.constraint(equalToConstant: radius*2),
@@ -57,9 +57,9 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return imageView
     }()
     
-    private let profileNameLabel: UILabel = {
+    private lazy var profileNameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
+        label.font = UIFont.systemFont(ofSize: xValueRatio(16))
         label.textColor = .black
         return label
     }()
@@ -109,10 +109,10 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         return imageView
     }()
     
-    private let toastAnimationLabel: UILabel = {
+    private lazy var toastAnimationLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.font = .systemFont(ofSize: xValueRatio(16), weight: .medium)
         label.backgroundColor = .black
         label.textAlignment = .center
         label.textColor = .white
@@ -120,7 +120,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         label.isHidden = true
         return label
     }()
-    private let toastAnimationLabelHeightConstant: CGFloat = 40
+    private lazy var toastAnimationLabelHeightConstant: CGFloat = xValueRatio(40)
     private lazy var toastAnimationLabelTopAnchor: NSLayoutConstraint? = toastAnimationLabel.topAnchor.constraint(equalTo: view.bottomAnchor, constant: toastAnimationLabelHeightConstant)
     
     // MARK: - Initialize
@@ -174,10 +174,10 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         view.addSubview(rankingImageView)
         rankingImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            rankingImageView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.topAnchor, constant: 15),
-            rankingImageView.leadingAnchor.constraint(equalTo: detailFeedImageCollectionView.leadingAnchor, constant: 15),
-            rankingImageView.widthAnchor.constraint(equalToConstant: 40),
-            rankingImageView.heightAnchor.constraint(equalToConstant: 40)
+            rankingImageView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.topAnchor, constant: yValueRatio(15)),
+            rankingImageView.leadingAnchor.constraint(equalTo: detailFeedImageCollectionView.leadingAnchor, constant: xValueRatio(15)),
+            rankingImageView.widthAnchor.constraint(equalToConstant: xValueRatio(40)),
+            rankingImageView.heightAnchor.constraint(equalToConstant: xValueRatio(40))
         ])
     }
     
@@ -188,7 +188,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             imageSlider.bottomAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor),
             imageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            imageSlider.heightAnchor.constraint(equalToConstant: 30)
+            imageSlider.heightAnchor.constraint(equalToConstant: yValueRatio(30))
         ])
     }
     
@@ -196,8 +196,8 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         view.addSubview(profileStackView)
         profileStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            profileStackView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor, constant: 10),
-            profileStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10)
+            profileStackView.topAnchor.constraint(equalTo: detailFeedImageCollectionView.bottomAnchor, constant: yValueRatio(10)),
+            profileStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(10))
         ])
     }
     
@@ -205,7 +205,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         view.addSubview(battleStackView)
         battleStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            battleStackView.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 10),
+            battleStackView.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: yValueRatio(10)),
             battleStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
@@ -214,9 +214,9 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         view.addSubview(commentLabel)
         commentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            commentLabel.topAnchor.constraint(equalTo: battleStackView.bottomAnchor, constant: 20),
-            commentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            commentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            commentLabel.topAnchor.constraint(equalTo: battleStackView.bottomAnchor, constant: yValueRatio(20)),
+            commentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(20)),
+            commentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: xValueRatio(-20))
         ])
     }
     
@@ -224,9 +224,9 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         view.addSubview(timeLogLabel)
         timeLogLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            timeLogLabel.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: 10),
-            timeLogLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            timeLogLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            timeLogLabel.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: yValueRatio(10)),
+            timeLogLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(20)),
+            timeLogLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: xValueRatio(-20))
         ])
     }
     
@@ -255,16 +255,18 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     }
     
     private func configureRankingImageView() {
-        if viewModel.feed.first == true {
-            rankingImageView.isHidden = false
+        guard let ranking = viewModel.feed.ranking else { return }
+        switch ranking {
+        case 1:
             rankingImageView.image = UIImage(named: Ranking.first.description)
-        } else if viewModel.feed.second == true {
-            rankingImageView.isHidden = false
+        case 2:
             rankingImageView.image = UIImage(named: Ranking.second.description)
-        } else if viewModel.feed.third == true {
-            rankingImageView.isHidden = false
+        case 3:
             rankingImageView.image = UIImage(named: Ranking.third.description)
+        default:
+            break
         }
+        rankingImageView.isHidden = false
     }
     
     private func configureNavigationItem() {
@@ -509,13 +511,13 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            imageView.heightAnchor.constraint(equalToConstant: 25),
-            imageView.widthAnchor.constraint(equalToConstant: 25)
+            imageView.heightAnchor.constraint(equalToConstant: xValueRatio(25)),
+            imageView.widthAnchor.constraint(equalToConstant: xValueRatio(25))
         ])
         
         let countLabel: UILabel = {
             let label = UILabel()
-            label.font = UIFont.systemFont(ofSize: 15)
+            label.font = UIFont.systemFont(ofSize: xValueRatio(15))
             label.textColor = .darkGray
             if let countInt = countInt {
                 label.text = String(countInt)

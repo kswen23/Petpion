@@ -1,5 +1,5 @@
 //
-//  DetailFeedImageCollectionCell.swift
+//  DetailFeedImageCollectionViewCell.swift
 //  PetpionPresentation
 //
 //  Created by 김성원 on 2022/12/13.
@@ -11,7 +11,7 @@ import UIKit
 
 import PetpionCore
 
-public final class DetailFeedImageCollection: UICollectionViewCell {
+public final class DetailFeedImageCollectionViewCell: UICollectionViewCell {
     private let imageView: CustomShimmerImageView = CustomShimmerImageView(gradientColorOne: UIColor.petpionLightGray.cgColor, gradientColorTwo: UIColor.white.cgColor)
     
     override init(frame: CGRect) {

@@ -51,17 +51,17 @@ final class MainLoadingView: UIView {
         NSLayoutConstraint.activate([
             petpionImageView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             petpionImageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            petpionImageView.widthAnchor.constraint(equalToConstant: 300),
-            petpionImageView.heightAnchor.constraint(equalToConstant: 430)
+            petpionImageView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            petpionImageView.heightAnchor.constraint(equalToConstant: yValueRatio(430))
         ])
     }
     
     private func layoutLaunchAnimationView() {
         NSLayoutConstraint.activate([
             launchAnimationView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
-            launchAnimationView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -30),
-            launchAnimationView.widthAnchor.constraint(equalToConstant: 150),
-            launchAnimationView.heightAnchor.constraint(equalToConstant: 200)
+            launchAnimationView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: yValueRatio(-30)),
+            launchAnimationView.widthAnchor.constraint(equalToConstant: xValueRatio(150)),
+            launchAnimationView.heightAnchor.constraint(equalToConstant: yValueRatio(200))
         ])
     }
     

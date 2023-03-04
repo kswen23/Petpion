@@ -1,22 +1,14 @@
 //
-//  UIView+Extension.swift
-//  PetpionCore
+//  UIViewController+Extenstion.swift
+//  PetpionPresentation
 //
-//  Created by 김성원 on 2022/11/23.
-//  Copyright © 2022 Petpion. All rights reserved.
+//  Created by 김성원 on 2023/02/28.
+//  Copyright © 2023 Petpion. All rights reserved.
 //
 
 import UIKit
 
-public extension UIView {
-    
-    func roundCorners(cornerRadius: CGFloat,
-                      maskedCorners: CACornerMask = [.layerMaxXMaxYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMinXMinYCorner]) {
-        clipsToBounds = true
-        layer.cornerRadius = cornerRadius
-        layer.maskedCorners = CACornerMask(arrayLiteral: maskedCorners)
-    }
-    
+extension UIViewController {
     func xValueRatio(_ value: CGFloat) -> CGFloat {
         return UIScreen.main.bounds.maxX*(value/390)
     }
@@ -40,5 +32,4 @@ public extension UIView {
     func calculateYMax() -> CGFloat {
         return UIScreen.main.bounds.maxY
     }
-
 }

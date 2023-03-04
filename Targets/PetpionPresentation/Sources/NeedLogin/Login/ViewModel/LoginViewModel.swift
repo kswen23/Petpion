@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  LoginViewModelInput.swift
 //  PetpionPresentation
 //
 //  Created by 김성원 on 2023/01/03.
@@ -11,11 +11,8 @@ import Combine
 import CryptoKit
 import Foundation
 
-import KakaoSDKAuth
-import KakaoSDKUser
 import PetpionCore
 import PetpionDomain
-
 
 protocol LoginViewModelInput {
     func appleLoginButtonDidTapped(with viewController: UIViewController)

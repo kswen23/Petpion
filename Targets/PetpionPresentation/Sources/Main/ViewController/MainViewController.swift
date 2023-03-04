@@ -59,6 +59,7 @@ final class MainViewController: HasCoordinatorViewController {
             viewModel.initializeEssentialAppData()
         } else {
             viewModel.updateCurrentFeeds()
+//            viewModel.refetchFeeds()
         }
     }
     
@@ -238,7 +239,7 @@ extension MainViewController: BaseCollectionViewCellDelegation {
     }
     
     func refreshBaseCollectionView() {
-        viewModel.refreshCurrentFeed()
+        viewModel.refetchFeeds()
     }
     
     func profileStackViewDidTapped(with user: User) {

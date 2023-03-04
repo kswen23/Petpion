@@ -262,8 +262,6 @@ extension PetFeedCollectionViewCell {
         let userNickname: String
         let comment: String
         let likeCount: Int
-        
-        var image: UIImage?
 
         init(petpionFeed: PetpionFeed) {
             self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
@@ -273,8 +271,6 @@ extension PetFeedCollectionViewCell {
             self.userNickname = petpionFeed.uploader.nickname
             self.comment = petpionFeed.message
             self.likeCount = petpionFeed.likeCount
-            
-            self.image = petpionFeed.image
         }
     }
 }

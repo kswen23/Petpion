@@ -78,8 +78,6 @@ final class UserPageViewModel: UserPageViewModelProtocol {
     
     func fetchUserTotalFeeds() {
         Task {
-            // 모든 유저피드를 불러온 뒤, 12장씩 썸네일 붙여서 보내주기..
-            
             var userFeeds = await fetchFeedUseCase.fetchUserTotalFeeds(user: user)
             userFeeds.sort { $0.uploadDate > $1.uploadDate }
             

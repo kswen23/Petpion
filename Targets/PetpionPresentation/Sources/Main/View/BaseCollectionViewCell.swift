@@ -96,11 +96,11 @@ class BaseCollectionViewCell: UICollectionViewCell {
     private func layoutEmptyView() {
         [lazyCatAnimationView ,emptyFeedLabel].forEach { petFeedCollectionView.addSubview($0) }
         NSLayoutConstraint.activate([
-            lazyCatAnimationView.centerYAnchor.constraint(equalTo: petFeedCollectionView.centerYAnchor, constant: -100),
+            lazyCatAnimationView.centerYAnchor.constraint(equalTo: petFeedCollectionView.centerYAnchor, constant: yValueRatio(-100)),
             lazyCatAnimationView.centerXAnchor.constraint(equalTo: petFeedCollectionView.centerXAnchor),
-            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: 300),
-            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: 300),
-            emptyFeedLabel.bottomAnchor.constraint(equalTo: lazyCatAnimationView.bottomAnchor, constant: 20),
+            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: xValueRatio(300)),
+            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            emptyFeedLabel.bottomAnchor.constraint(equalTo: lazyCatAnimationView.bottomAnchor, constant: yValueRatio(20)),
             emptyFeedLabel.centerXAnchor.constraint(equalTo: petFeedCollectionView.centerXAnchor)
         ])
     }

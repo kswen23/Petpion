@@ -52,7 +52,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
     }()
 
     let cardViewWidth: CGFloat = UIScreen.main.bounds.size.width - 40
-    let cardViewHeight: CGFloat = (UIScreen.main.bounds.size.width - 40) * 0.56
+    static let cardViewHeight: CGFloat = (UIScreen.main.bounds.size.width - 40) * 0.56
     
     // MARK: - Initialize
     override init(frame: CGRect) {
@@ -79,7 +79,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
             userCardView.topAnchor.constraint(equalTo: self.topAnchor, constant: 20),
             userCardView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             userCardView.widthAnchor.constraint(equalToConstant: cardViewWidth),
-            userCardView.heightAnchor.constraint(equalToConstant: cardViewHeight)
+            userCardView.heightAnchor.constraint(equalToConstant: UserCardCollectionReusableView.cardViewHeight)
         ])
         userCardView.roundCorners(cornerRadius: 15)
         userCardView.layer.masksToBounds = false
@@ -92,7 +92,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
     private func layoutUserProfileImageView() {
         userCardView.addSubview(userProfileImageView)
         userProfileImageView.translatesAutoresizingMaskIntoConstraints = false
-        let profileImageViewWidth: CGFloat = cardViewHeight * 0.75
+        let profileImageViewWidth: CGFloat = UserCardCollectionReusableView.cardViewHeight * 0.75
         NSLayoutConstraint.activate([
             userProfileImageView.centerYAnchor.constraint(equalTo: userCardView.centerYAnchor),
             userProfileImageView.leadingAnchor.constraint(equalTo: userCardView.leadingAnchor, constant: 10),
@@ -108,7 +108,7 @@ class UserCardCollectionReusableView: UICollectionReusableView {
         userCardView.addSubview(userNicknameLabel)
         userNicknameLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userNicknameLabel.centerYAnchor.constraint(equalTo: userCardView.topAnchor, constant: cardViewHeight/4),
+            userNicknameLabel.centerYAnchor.constraint(equalTo: userCardView.topAnchor, constant: UserCardCollectionReusableView.cardViewHeight/4),
             userNicknameLabel.leadingAnchor.constraint(equalTo: userProfileImageView.trailingAnchor, constant: 20),
             userNicknameLabel.trailingAnchor.constraint(equalTo: userCardView.trailingAnchor, constant: -20)
         ])

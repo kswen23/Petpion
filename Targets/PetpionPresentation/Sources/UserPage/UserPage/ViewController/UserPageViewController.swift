@@ -49,6 +49,7 @@ final class UserPageViewController: HasCoordinatorViewController {
     private let lazyCatAnimationView: LottieAnimationView = {
         let animationView = LottieAnimationView(name: LottieJson.lazyCat)
         animationView.loopMode = .loop
+        animationView.contentMode = .scaleAspectFill
         return animationView
     }()
     
@@ -108,8 +109,8 @@ final class UserPageViewController: HasCoordinatorViewController {
     // MARK: - Layout
     private func layout() {
         layoutUserFeedsCollectionView()
-        layoutEmptyFeedLabel()
         layoutLazyCatAnimationView()
+        layoutEmptyFeedLabel()
     }
     
     private func layoutUserFeedsCollectionView() {
@@ -123,27 +124,27 @@ final class UserPageViewController: HasCoordinatorViewController {
         ])
         userFeedsCollectionView.showsVerticalScrollIndicator = false
     }
+
+    private func layoutLazyCatAnimationView() {
+        userFeedsCollectionView.addSubview(lazyCatAnimationView)
+        lazyCatAnimationView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            lazyCatAnimationView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: UserCardCollectionReusableView.cardViewHeight + yValueRatio(50)),
+            lazyCatAnimationView.centerXAnchor.constraint(equalTo: userFeedsCollectionView.centerXAnchor),
+            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: xValueRatio(250)),
+            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: xValueRatio(250))
+        ])
+        lazyCatAnimationView.isHidden = true
+    }
     
     private func layoutEmptyFeedLabel() {
         userFeedsCollectionView.addSubview(emptyFeedLabel)
         emptyFeedLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            emptyFeedLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -200),
+            emptyFeedLabel.topAnchor.constraint(equalTo: lazyCatAnimationView.bottomAnchor),
             emptyFeedLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
         emptyFeedLabel.isHidden = true
-    }
-    
-    private func layoutLazyCatAnimationView() {
-        userFeedsCollectionView.addSubview(lazyCatAnimationView)
-        lazyCatAnimationView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            lazyCatAnimationView.bottomAnchor.constraint(equalTo: emptyFeedLabel.topAnchor),
-            lazyCatAnimationView.centerXAnchor.constraint(equalTo: userFeedsCollectionView.centerXAnchor),
-            lazyCatAnimationView.heightAnchor.constraint(equalToConstant: 300),
-            lazyCatAnimationView.widthAnchor.constraint(equalToConstant: 300)
-        ])
-        lazyCatAnimationView.isHidden = true
     }
     
     private func layoutToastAnimationLabel() {
