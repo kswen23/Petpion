@@ -11,6 +11,7 @@ import Foundation
 import UIKit
 
 import PetpionDomain
+import Lottie
 
 final class PetpionHallViewController: HasCoordinatorViewController {
     
@@ -27,6 +28,7 @@ final class PetpionHallViewController: HasCoordinatorViewController {
         tableView.backgroundColor = .white
         return tableView
     }()
+    
     private lazy var dataSource: UITableViewDiffableDataSource<Date, [PetpionFeed]> = makePetpionHallTableViewDataSource()
     
     private lazy var navigationBarBorder: CALayer = {
@@ -37,6 +39,15 @@ final class PetpionHallViewController: HasCoordinatorViewController {
         return border
     }()
     
+    private lazy var loadingAnimationView: LottieAnimationView = {
+        let animationView = LottieAnimationView.init(name: LottieJson.launchAnimation)
+        animationView.translatesAutoresizingMaskIntoConstraints = false
+        animationView.contentMode = .scaleAspectFill
+        animationView.loopMode = .loop
+        animationView.play()
+        return animationView
+    }()
+
     // MARK: - Initialize
     init(viewModel: PetpionHallViewModelProtocol) {
         self.viewModel = viewModel
@@ -73,6 +84,7 @@ final class PetpionHallViewController: HasCoordinatorViewController {
     // MARK: - Layout
     private func layout() {
         layoutPetpionHallTableView()
+        layoutLoadingView()
     }
     
     private func layoutPetpionHallTableView() {
@@ -82,6 +94,16 @@ final class PetpionHallViewController: HasCoordinatorViewController {
             petpionHallTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             petpionHallTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             petpionHallTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+    }
+    
+    private func layoutLoadingView() {
+        petpionHallTableView.addSubview(loadingAnimationView)
+        NSLayoutConstraint.activate([
+            loadingAnimationView.widthAnchor.constraint(equalToConstant: xValueRatio(200)),
+            loadingAnimationView.heightAnchor.constraint(equalToConstant: xValueRatio(300)),
+            loadingAnimationView.centerXAnchor.constraint(equalTo: petpionHallTableView.centerXAnchor),
+            loadingAnimationView.centerYAnchor.constraint(equalTo: petpionHallTableView.centerYAnchor)
         ])
     }
     
@@ -113,6 +135,7 @@ final class PetpionHallViewController: HasCoordinatorViewController {
                     snapshot.appendSections([topPetpionFeed.date])
                     if topPetpionFeed.feedArray.count != 0 {
                         snapshot.appendItems([topPetpionFeed.feedArray], toSection: topPetpionFeed.date)
+                        strongSelf.loadingAnimationView.isHidden = true
                     }
                 }
                 strongSelf.dataSource.apply(snapshot, animatingDifferences: false)

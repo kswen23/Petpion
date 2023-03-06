@@ -14,7 +14,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     public var firebaseStorageRepository: FirebaseStorageRepository
-    
+     
     // MARK: - Initialize
     init(firestoreRepository: FirestoreRepository,
          firebaseStorageRepository: FirebaseStorageRepository) {
@@ -132,22 +132,28 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     public func fetchTopPetpionFeedForLast3Months(since date: Date) async -> [TopPetpionFeed] {
         await withTaskGroup(of: TopPetpionFeed.self, body: { taskGroup -> [TopPetpionFeed] in
             let last3MonthsDateArray: [Date] = self.makeLast3MonthsDateArray(date: date)
+            var result = [TopPetpionFeed]()
             for month in last3MonthsDateArray {
-                taskGroup.addTask {
-                    var topPetpionFeed = await self.firestoreRepository.fetchTop3FeedDataForThisMonth(when: month)
-                    topPetpionFeed.feedArray = await self.updateDetailInformation(feeds: topPetpionFeed.feedArray)
-                    topPetpionFeed.feedArray.sort { $0.ranking! < $1.ranking! }
-                    return topPetpionFeed
+                if let cachedTopPetpionFeed = FeedCache.shared.topPetpionFeed(date: month as NSDate) as? TopPetpionFeed {
+                    result.append(cachedTopPetpionFeed)
+                } else {
+                    taskGroup.addTask {
+                        var topPetpionFeed = await self.firestoreRepository.fetchTop3FeedDataForThisMonth(when: month)
+                        topPetpionFeed.feedArray = await self.updateDetailInformation(feeds: topPetpionFeed.feedArray)
+                        topPetpionFeed.feedArray.sort { $0.ranking! < $1.ranking! }
+                        FeedCache.shared.saveTopPetpionFeed(value: topPetpionFeed as AnyObject, key: month as NSDate)
+                        return topPetpionFeed
+                    }
                 }
             }
-            var result = [TopPetpionFeed]()
+            
             for await taskResult in taskGroup {
                 result.append(taskResult)
             }
-            
-            return result.sorted { feed1, feed2 in
-                feed1.date > feed2.date
-            }
+                
+            return result
+                .filter { !$0.feedArray.isEmpty }
+                .sorted { $0.date > $1.date }
         })
         
     }
