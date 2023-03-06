@@ -60,7 +60,7 @@ public final class DefaultFetchUserUseCase: FetchUserUseCase {
     // MARK: - Private
     private func fetchUserProfileImage(user: User) async -> UIImage {
         guard let profileURL = user.imageURL else {
-            return UIImage(systemName: "person.fill")!
+            return User.defaultProfileImage
         }
         return await ImageCache.shared.loadImage(url: profileURL as NSURL)
     }

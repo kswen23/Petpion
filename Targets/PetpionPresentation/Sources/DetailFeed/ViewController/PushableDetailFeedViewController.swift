@@ -47,7 +47,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             imageView.heightAnchor.constraint(equalToConstant: radius*2),
             imageView.widthAnchor.constraint(equalToConstant: radius*2)
         ])
-        imageView.image = UIImage(systemName: "person.fill")
+        imageView.image = User.defaultProfileImage
         imageView.contentMode = .scaleAspectFill
         imageView.tintColor = .darkGray
         imageView.backgroundColor = .white
@@ -411,7 +411,8 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     
     private func configureProfileStackView() {
         profileNameLabel.text = viewModel.feed.uploader.nickname
-        profileImageView.image = viewModel.feed.uploader.profileImage
+        let profileImage = viewModel.feed.uploader.profileImage ?? User.defaultProfileImage
+        profileImageView.image = profileImage        
     }
     
     private func configureAlertController() {

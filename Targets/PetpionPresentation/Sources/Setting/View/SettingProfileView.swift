@@ -30,7 +30,7 @@ final class SettingProfileView: UIView {
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(systemName: "person.fill")
+        imageView.image = User.defaultProfileImage
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .petpionLightGray
         imageView.tintColor = .lightGray

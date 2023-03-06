@@ -208,7 +208,7 @@ final class EditProfileViewController: SettingCustomViewController {
     }
     
     private func configureProfileImage() {
-        guard let profileImage = viewModel.user.profileImage else { return }
+        let profileImage = viewModel.user.profileImage ?? User.defaultProfileImage
         editProfileButton.configureProfileImage(with: profileImage)
     }
     
