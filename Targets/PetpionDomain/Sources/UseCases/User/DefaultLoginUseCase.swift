@@ -74,4 +74,16 @@ public final class DefaultLoginUseCase: LoginUseCase {
         UserDefaults.standard.setValue(true, forKey: UserInfoKey.isLogin.rawValue)
         UserDefaults.standard.setValue(firestoreUID, forKey: UserInfoKey.firebaseUID.rawValue)
     }
+    
+    public func logoutUserDefaults() {
+        [UserInfoKey.isLogin.rawValue,
+         UserInfoKey.firebaseUID.rawValue].forEach {
+            UserDefaults.standard.removeObject(forKey: $0)
+        }
+        User.currentUser = nil
+    }
+    
+    public func unlinkFirebaseAuth() async -> Bool {
+        await firebaseAuthRepository.logOutUser()
+    }
 }

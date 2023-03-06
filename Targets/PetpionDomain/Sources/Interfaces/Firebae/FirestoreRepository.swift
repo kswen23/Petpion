@@ -49,6 +49,7 @@ public protocol FirestoreRepository {
     
     // MARK: - Delete
     func deleteFeedDataWithFeed(_ feed: PetpionFeed) async -> Bool
-    func deleteUserFeeds(_ user: User) async -> Bool
+    func deleteUserFeeds(_ user: User) async -> (Bool, [PetpionFeed])
     func deleteBlockedUser(_ user: User) async -> Bool
+    func deleteUser(_ user: User) async -> Bool
 }

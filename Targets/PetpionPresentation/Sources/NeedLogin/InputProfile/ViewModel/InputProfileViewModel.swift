@@ -87,6 +87,7 @@ final class InputProfileViewModel: InputProfileViewModelProtocol {
     
     func signInWithAppleID(firestoreUID: String) async {
         user.id = firestoreUID
+        user.signInType = .appleID
         await uploadUserData()
     }
     
@@ -94,6 +95,8 @@ final class InputProfileViewModel: InputProfileViewModelProtocol {
         let signInResult = await loginUseCase.signInToFirebaseAuthWithEmail(providerEmail: user.email, providerID: kakaoUserID)
         if let signInResult = signInResult {
             user.id = signInResult
+            user.kakaoID = kakaoUserID
+            user.signInType = .kakaoID
             await uploadUserData()
         } else {
             await MainActor.run {

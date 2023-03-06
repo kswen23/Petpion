@@ -231,6 +231,11 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
         }
     }
     
+    public func deleteUserImage(_ user: User) async -> Bool {
+        let userReference = "\(user.id)/profile/profile"
+        return await deleteImage(userReference)
+    }
+    
     // MARK: - Private Delete
     private func deleteImage(_ reference: String) async -> Bool {
         return await withCheckedContinuation { continuation in
@@ -240,7 +245,6 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                 .delete { error in
                     if let error = error {
                         print(error.localizedDescription)
-                        continuation.resume(returning: false)
                     }
                     continuation.resume(returning: true)
                 }

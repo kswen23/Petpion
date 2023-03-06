@@ -78,6 +78,7 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         layout()
         configureLogoutAlertController()
         settingCategoryStackViewArray.forEach { $0.settingCategoryStackViewListener = self }
+        bindLogoutResult()
     }
     
     // MARK: - Layout
@@ -137,10 +138,20 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     private func configureLogoutAlertController() {
         let yes = UIAlertAction(title: "네", style: .default) { [weak self] _ in
             self?.viewModel.logoutDidTapped()
-//            self?.coordinator?.returnToFirstStart()
         }
         let no = UIAlertAction(title: "아니오", style: .default)
         [yes, no].forEach { logOutAlertController.addAction($0) }
+    }
+    
+    private func bindLogoutResult() {
+        viewModel.logoutResultSubject.sink { [weak self] isLogout in
+            if isLogout {
+                self?.dismiss(animated: true)
+                self?.loggedInSettingCoordinator?.restart()
+            } else {
+                self?.dismiss(animated: true)
+            }
+        }.store(in: &cancellables)
     }
 }
 

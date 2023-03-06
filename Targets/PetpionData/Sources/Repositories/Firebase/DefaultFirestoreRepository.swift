@@ -662,8 +662,9 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                     if let error = error {
                         print(error.localizedDescription)
                         continuation.resume(returning: false)
+                    } else {
+                        continuation.resume(returning: true)
                     }
-                    continuation.resume(returning: true)
                 }
         }
     }
@@ -831,8 +832,8 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         return shardsDeleteResult && countsDeleteResult && feedDeleteResult
     }
     
-    public func deleteUserFeeds(_ user: User) async -> Bool {
-        return await withTaskGroup(of: Bool.self) { taskGroup -> Bool in
+    public func deleteUserFeeds(_ user: User) async -> (Bool, [PetpionFeed]) {
+        return await withTaskGroup(of: Bool.self) { taskGroup -> (Bool, [PetpionFeed]) in
             let feedArray = await fetchFeedsWithUserID(with: user)
             for feed in feedArray {
                 taskGroup.addTask {
@@ -842,10 +843,10 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             
             for await deleteResult in taskGroup {
                 if deleteResult == false {
-                    return false
+                    return (false, [])
                 }
             }
-            return true
+            return (true, feedArray)
         }
     }
     
@@ -870,6 +871,16 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func deleteUser(_ user: User) async -> Bool {
+        let userDocument = db
+            .collection(FirestoreCollection.user.reference)
+            .document(user.id)
+        
+        let userDocumentDeleteResult = await deleteUserData(user)
+        let blockedUserDeleteResult = await deleteMultipleSubCollection(documentReferences: [userDocument], collectionPath: "blockedUserList")
+        return userDocumentDeleteResult && blockedUserDeleteResult
+    }
+    
     // MARK: - Private Delete
     private func deleteFeedsWithUserID(collectionPath: String, uploader: User) async -> Bool {
         return await withCheckedContinuation { continuation in
@@ -889,6 +900,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 }
         }
     }
+    
     private func deleteFeedDocument(_ feed: PetpionFeed) async -> Bool {
         await withCheckedContinuation { continuation in
             db
@@ -931,6 +943,22 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         for document in snapshot!.documents {
                             document.reference.delete()
                         }
+                        continuation.resume(returning: true)
+                    }
+                }
+        }
+    }
+    
+    private func deleteUserData(_ user: User) async -> Bool {
+        await withCheckedContinuation { continuation in
+            db
+                .collection(FirestoreCollection.user.reference)
+                .document(user.id)
+                .delete { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        continuation.resume(returning: false)
+                    } else {
                         continuation.resume(returning: true)
                     }
                 }

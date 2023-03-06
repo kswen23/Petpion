@@ -22,4 +22,5 @@ public protocol FirebaseStorageRepository {
     
     // MARK: - Delete
     func deleteFeedImages(_ feed: PetpionFeed) async -> Bool
+    func deleteUserImage(_ user: User) async -> Bool
 }

@@ -13,6 +13,7 @@ public protocol LoginUseCase {
     
     // userDefaults
     func setUserDefaults(firestoreUID: String?)
+    func logoutUserDefaults()
     
     // apple
     func signInToFirebaseAuth(providerID: String,
@@ -29,4 +30,11 @@ public protocol LoginUseCase {
     func signInToFirebaseAuthWithEmail(providerEmail: String,
                                        providerID: String) async -> String?
     
+    // logout
+    func unlinkFirebaseAuth() async -> Bool
+}
+
+public enum SignInType: String {
+    case appleID = "Apple"
+    case kakaoID = "Kakako"
 }

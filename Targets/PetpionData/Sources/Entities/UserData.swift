@@ -19,16 +19,20 @@ struct UserData {
     public var nickname: String
     public var latestVoteTimestamp: Timestamp
     public var voteChanceCount: Double
+    public var signInType: String
+    public var kakaoID: String?
     public var first: Double
     public var second: Double
     public var third: Double
     
-    public init(userID: Identifier, email: String, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double, first: Double, second: Double, third: Double) {
+    public init(userID: Identifier, email: String, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double, signInType: String, kakaoID: String?, first: Double, second: Double, third: Double) {
         self.userID = userID
         self.email = email
         self.nickname = nickname
         self.latestVoteTimestamp = latestVoteTimestamp
         self.voteChanceCount = voteChanceCount
+        self.signInType = signInType
+        self.kakaoID = kakaoID
         self.first = first
         self.second = second
         self.third = third
@@ -40,6 +44,8 @@ struct UserData {
         self.nickname = user.nickname
         self.latestVoteTimestamp = Timestamp.init()
         self.voteChanceCount = Double(user.voteChanceCount)
+        self.signInType = user.signInType.rawValue
+        self.kakaoID = user.kakaoID
         self.first = Double(user.first)
         self.second = Double(user.second)
         self.third = Double(user.third)
@@ -54,6 +60,8 @@ extension UserData {
                                    nickname: "",
                                    latestVoteTimestamp: .init(),
                                    voteChanceCount: .nan,
+                                   signInType: "",
+                                   kakaoID: nil,
                                    first: 0,
                                    second: 0,
                                    third: 0)
@@ -65,6 +73,8 @@ extension UserData {
             "userNickname": data.nickname,
             "latestVoteTime": data.latestVoteTimestamp,
             "voteChanceCount": data.voteChanceCount,
+            "signInType": data.signInType,
+            "kakaoID": data.kakaoID ?? "",
             "first": data.first,
             "second": data.second,
             "third": data.third
@@ -80,6 +90,8 @@ extension UserData {
             case "userNickname": result.nickname = value as? String ?? ""
             case "latestVoteTime": result.latestVoteTimestamp = value as? Timestamp ?? Timestamp.init()
             case "voteChanceCount": result.voteChanceCount = value as? Double ?? 0
+            case "signInType": result.signInType = value as? String ?? ""
+            case "kakaoID": result.kakaoID = value as? String ?? ""
             case "first": result.first = value as? Double ?? 0
             case "second": result.second = value as? Double ?? 0
             case "third": result.third = value as? Double ?? 0
@@ -97,8 +109,19 @@ extension UserData {
               latestVoteTime: data.latestVoteTimestamp.dateValue(),
               voteChanceCount: Int(data.voteChanceCount),
               imageURL: nil,
+              signInType: configureSignInType(data.signInType),
+              kakaoID: data.kakaoID,
               first: Int(data.first),
               second: Int(data.second),
               third: Int(data.third))
+    }
+    
+    static func configureSignInType(_ signInType: String) -> SignInType {
+        if signInType == "Apple" {
+            return .appleID
+        } else {
+            return .kakaoID
+        }
+        
     }
 }

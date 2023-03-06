@@ -86,5 +86,9 @@ public struct DomainDIContainer: Containable {
             DefaultBlockUseCase(firestoreRepository: firestoreRepository)
         }
         
+        container.register(SignOutUseCase.self) { _ in
+            DefaultSignOutUseCase(firestoreRepository: firestoreRepository, firebaseStorageRepository: firebaseStorageRepository, firebaseAuthRepository: firebaseAuthRepository)
+        }
+        
     }
 }

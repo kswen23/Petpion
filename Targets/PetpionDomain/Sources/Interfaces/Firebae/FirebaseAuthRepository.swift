@@ -15,4 +15,7 @@ public protocol FirebaseAuthRepository {
     
     func signInFirebaseAuthWithEmail(providerEmail: String,
                                      providerID: String) async -> String?
+    
+    func logOutUser() async -> Bool
+    func deleteUser(_ user: User) async -> Bool
 }

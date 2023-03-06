@@ -25,14 +25,7 @@ final public class DefaultDeleteFeedUseCase: DeleteFeedUseCase {
         let imageDidDeleted: Bool = await firebaseStorageRepository.deleteFeedImages(feed)
         let dataDidDeleted: Bool = await firestoreRepository.deleteFeedDataWithFeed(feed)
 
-        if imageDidDeleted, dataDidDeleted {
-            return true
-        } else {
-            return false
-        }
+        return imageDidDeleted && dataDidDeleted
     }
     
-    public func deleteUserTotalFeeds(_ user: User) async -> Bool {
-        await firestoreRepository.deleteUserFeeds(user)
-    }
 }

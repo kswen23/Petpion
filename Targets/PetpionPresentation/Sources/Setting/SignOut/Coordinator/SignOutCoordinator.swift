@@ -16,6 +16,7 @@ final class SignOutCoordinator: NSObject, Coordinator {
     
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
+    weak var mainCoordinatorDelegate: MainCoordinatorDelegage?
     
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -31,16 +32,19 @@ final class SignOutCoordinator: NSObject, Coordinator {
         navigationController.popViewController(animated: true)
     }
     
+    func restart() {
+        mainCoordinatorDelegate?.restart()
+    }
 }
 
 extension SignOutCoordinator {
     private func getSignOutViewController() -> SignOutViewController {
         guard let user = User.currentUser,
-              let deleteFeedUseCase: DeleteFeedUseCase = DIContainer.shared.resolve(DeleteFeedUseCase.self)
+              let signOutUseCase: SignOutUseCase = DIContainer.shared.resolve(SignOutUseCase.self)
         else {
             fatalError("getSignOutViewController occurred error")
         }
-        let viewModel: SignOutViewModelProtocol = SignOutViewModel(user: user, deleteFeedUseCase: deleteFeedUseCase)
+        let viewModel: SignOutViewModelProtocol = SignOutViewModel(user: user, signOutUseCase: signOutUseCase)
         return SignOutViewController(viewModel: viewModel)
     }
 }

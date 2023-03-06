@@ -20,6 +20,14 @@ final class LoginViewController: HasCoordinatorViewController {
     var viewModel: LoginViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
+    private let petpionImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.image = .init(named: "petpionLogo")
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+    
     private lazy var appleLoginButton: UIButton = {
         let button = makeLoginButton(backgroundColor: .black, logoImage: .init(named: "login_apple_symbol"), title: "AppleID로 계속하기", titleColor: .white, titleFont: .systemFont(ofSize: 17))
         button.addTarget(self, action: #selector(appleLoginButtonDidTapped), for: .touchUpInside)
@@ -32,10 +40,10 @@ final class LoginViewController: HasCoordinatorViewController {
         return button
     }()
     
-    private let loginButtonStackView: UIStackView = {
+    private lazy var loginButtonStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 20
+        stackView.spacing = yValueRatio(20)
         return stackView
     }()
     
@@ -75,7 +83,18 @@ final class LoginViewController: HasCoordinatorViewController {
     
     // MARK: - Layout
     private func layout() {
+        layoutPetpionLogoImageView()
         layoutLoginButtonStackView()
+    }
+    
+    private func layoutPetpionLogoImageView() {
+        view.addSubview(petpionImageView)
+        NSLayoutConstraint.activate([
+            petpionImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: yValueRatio(20)),
+            petpionImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            petpionImageView.widthAnchor.constraint(equalToConstant: xValueRatio(190)),
+            petpionImageView.heightAnchor.constraint(equalToConstant: yValueRatio(170))
+        ])
     }
     
     private func layoutLoginButtonStackView() {
@@ -83,7 +102,7 @@ final class LoginViewController: HasCoordinatorViewController {
             button.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
                 button.widthAnchor.constraint(equalToConstant: view.frame.width * 0.8),
-                button.heightAnchor.constraint(equalToConstant: 50)
+                button.heightAnchor.constraint(equalToConstant: yValueRatio(45))
             ])
             loginButtonStackView.addArrangedSubview(button)
         }
@@ -92,7 +111,7 @@ final class LoginViewController: HasCoordinatorViewController {
         loginButtonStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             loginButtonStackView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            loginButtonStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100)
+            loginButtonStackView.topAnchor.constraint(equalTo: petpionImageView.bottomAnchor, constant: yValueRatio(10))
         ])
         
     }

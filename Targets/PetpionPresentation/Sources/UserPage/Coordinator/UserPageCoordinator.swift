@@ -22,6 +22,7 @@ public final class UserPageCoordinator: NSObject, Coordinator {
     
     public var childCoordinators: [Coordinator] = []
     public var navigationController: UINavigationController
+    weak var mainCoordinatorDelegate: MainCoordinatorDelegage?
     var user: User?
     var userPageStyle: UserPageStyle?
     
@@ -37,6 +38,7 @@ public final class UserPageCoordinator: NSObject, Coordinator {
     
     func pushSettingViewController() {
         guard let settingCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "SettingCoordinator") as? SettingCoordinator else { return }
+        settingCoordinator.mainCoordinatorDelegate = mainCoordinatorDelegate
         childCoordinators.append(settingCoordinator)
         settingCoordinator.start()
     }
