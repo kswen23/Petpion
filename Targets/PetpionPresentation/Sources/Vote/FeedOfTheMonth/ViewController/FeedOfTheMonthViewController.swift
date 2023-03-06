@@ -11,6 +11,7 @@ import Foundation
 import UIKit
 
 import PetpionDomain
+import Lottie
 
 final class FeedOfTheMonthViewController: HasCoordinatorViewController {
     
@@ -24,6 +25,15 @@ final class FeedOfTheMonthViewController: HasCoordinatorViewController {
     private lazy var feedCollectionView: UICollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     
     private lazy var feedDataSource: UICollectionViewDiffableDataSource<Int, PetpionFeed> = viewModel.makePetFeedCollectionViewDataSource(collectionView: feedCollectionView, listener: self)
+    
+    private lazy var loadingAnimationView: LottieAnimationView = {
+        let animationView = LottieAnimationView.init(name: LottieJson.launchAnimation)
+        animationView.translatesAutoresizingMaskIntoConstraints = false
+        animationView.contentMode = .scaleAspectFill
+        animationView.loopMode = .loop
+        animationView.play()
+        return animationView
+    }()
     
     // MARK: - Initialize
     init(viewModel: FeedOfTheMonthViewModelProtocol) {
@@ -61,6 +71,7 @@ final class FeedOfTheMonthViewController: HasCoordinatorViewController {
     // MARK: - Layout
     private func layout() {
         layoutFeedCollectionView()
+        layoutLoadingView()
     }
     
     private func layoutFeedCollectionView() {
@@ -74,6 +85,16 @@ final class FeedOfTheMonthViewController: HasCoordinatorViewController {
         ])
         feedCollectionView.backgroundColor = .white
         feedCollectionView.showsVerticalScrollIndicator = false
+    }
+    
+    private func layoutLoadingView() {
+        feedCollectionView.addSubview(loadingAnimationView)
+        NSLayoutConstraint.activate([
+            loadingAnimationView.widthAnchor.constraint(equalToConstant: xValueRatio(200)),
+            loadingAnimationView.heightAnchor.constraint(equalToConstant: xValueRatio(300)),
+            loadingAnimationView.centerXAnchor.constraint(equalTo: feedCollectionView.centerXAnchor),
+            loadingAnimationView.centerYAnchor.constraint(equalTo: feedCollectionView.centerYAnchor)
+        ])
     }
     
     // MARK: - Configure
@@ -102,6 +123,7 @@ final class FeedOfTheMonthViewController: HasCoordinatorViewController {
             var snapshot = NSDiffableDataSourceSnapshot<Int, PetpionFeed>()
             snapshot.appendSections([0])
             snapshot.appendItems(feedArray, toSection: 0)
+            strongSelf.loadingAnimationView.isHidden = true
             self?.feedDataSource.apply(snapshot, animatingDifferences: true)
         }.store(in: &cancellables)
     }

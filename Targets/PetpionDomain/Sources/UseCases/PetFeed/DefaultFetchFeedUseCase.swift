@@ -54,9 +54,19 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     }
     
     public func fetchSpecificMonthFeeds(with date: Date, isFirst: Bool) async -> [PetpionFeed] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy년 M월"
+        let specificMonthFeedsKey = "\(dateFormatter.string(from: date))"
+        if let cachedPetpionFeed = PetpionFeedCache.shared.cachedSpecificMonthFeeds(key: specificMonthFeedsKey as NSString) as? [PetpionFeed],
+            isFirst == true {
+           return cachedPetpionFeed
+        }
+        
         let fetchedFeeds = await firestoreRepository.fetchSpecificMonthPopularFeedArray(with: date, isFirst: isFirst)
         let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: fetchedFeeds)
-        return sortResultFeeds(sortBy: .popular, with: updatedFeed)
+        let sortedResultFeeds = sortResultFeeds(sortBy: .popular, with: updatedFeed)
+        PetpionFeedCache.shared.saveSpecificMonthFeeds(value: sortedResultFeeds as AnyObject, key: specificMonthFeedsKey as NSString)
+        return sortedResultFeeds
     }
     
     public func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL] {
@@ -134,14 +144,14 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             let last3MonthsDateArray: [Date] = self.makeLast3MonthsDateArray(date: date)
             var result = [TopPetpionFeed]()
             for month in last3MonthsDateArray {
-                if let cachedTopPetpionFeed = FeedCache.shared.topPetpionFeed(date: month as NSDate) as? TopPetpionFeed {
+                if let cachedTopPetpionFeed = PetpionFeedCache.shared.cachedTopPetpionFeed(date: month as NSDate) as? TopPetpionFeed {
                     result.append(cachedTopPetpionFeed)
                 } else {
                     taskGroup.addTask {
                         var topPetpionFeed = await self.firestoreRepository.fetchTop3FeedDataForThisMonth(when: month)
                         topPetpionFeed.feedArray = await self.updateDetailInformation(feeds: topPetpionFeed.feedArray)
                         topPetpionFeed.feedArray.sort { $0.ranking! < $1.ranking! }
-                        FeedCache.shared.saveTopPetpionFeed(value: topPetpionFeed as AnyObject, key: month as NSDate)
+                        PetpionFeedCache.shared.saveTopPetpionFeed(value: topPetpionFeed as AnyObject, key: month as NSDate)
                         return topPetpionFeed
                     }
                 }
