@@ -312,6 +312,7 @@ final class UserPageViewController: HasCoordinatorViewController {
             guard let userNickname = self?.viewModel.user.nickname else { return }
             switch blockState {
             case .done:
+                self?.postRefreshAction()
                 self?.toastAnimationLabel.text = "\(userNickname) 님을 차단했습니다."
                 self?.startToastLabelAnimation()
             case .error:

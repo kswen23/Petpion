@@ -23,4 +23,5 @@ public enum UserInfoKey: String, CaseIterable {
 
 public struct NotificationName {
     public static let profileUpdated = "ProfileUpdated"
+    public static let dataDidChange = "DataDidChange"
 }

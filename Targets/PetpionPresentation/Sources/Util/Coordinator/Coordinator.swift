@@ -44,4 +44,8 @@ class HasCoordinatorViewController: UIViewController, CoordinatorWrapper {
         self.navigationController?.navigationBar.tintColor = .black
         view.backgroundColor = .white
     }
+    
+    func postRefreshAction() {
+        NotificationCenter.default.post(name: Notification.Name(NotificationName.dataDidChange), object: nil, userInfo: ["action": "refresh"])
+    }
 }

@@ -483,6 +483,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             case .edit:
                 self?.detailFeedCoordinator?.pushEditFeedView(listener: strongSelf, snapshot: strongSelf.datasource.snapshot())
             case .finish:
+                self?.postRefreshAction()
                 self?.navigationItem.rightBarButtonItem = strongSelf.settingBarButton
                 self?.detailFeedCoordinator?.popDetailFeedView()
             }

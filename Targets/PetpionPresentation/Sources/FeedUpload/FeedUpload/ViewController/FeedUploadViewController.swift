@@ -11,6 +11,7 @@ import Foundation
 import UIKit
 
 import Mantis
+import PetpionCore
 
 
 final class FeedUploadViewController: HasCoordinatorViewController {
@@ -294,6 +295,7 @@ final class FeedUploadViewController: HasCoordinatorViewController {
             case .startUploading:
                 self?.present(strongSelf.loadingAlertController, animated: true)
             case .finishUploading:
+                self?.postRefreshAction()
                 self?.dismiss(animated: true)
                 self?.feedUploadCoordinator?.dismissViewController()
             }

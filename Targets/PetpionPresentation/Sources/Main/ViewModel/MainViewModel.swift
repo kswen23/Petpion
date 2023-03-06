@@ -44,6 +44,7 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var isFirstFetching: Bool { get set }
+    var willRefresh: Bool { get set }
 }
 
 final class MainViewModel: MainViewModelProtocol {
@@ -58,6 +59,7 @@ final class MainViewModel: MainViewModelProtocol {
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
     var isFirstFetching: Bool = true
+    var willRefresh: Bool = false
     
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
@@ -134,6 +136,7 @@ final class MainViewModel: MainViewModelProtocol {
                 latestFeedSubject.send(refreshedLatestFeed)
                 popularFeedSubject.send(refreshedPopularFeed)
             }
+            willRefresh = false
         }
     }
     

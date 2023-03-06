@@ -152,6 +152,7 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
         viewModel.toastAnimationSubject.sink { [weak self] unblockSuccess in
             guard let strongSelf = self else { return }
             if unblockSuccess == true {
+                self?.postRefreshAction()
                 self?.startToastLabelAnimation()
             } else {
                 strongSelf.toastAnimationLabel.text = "에러가 발생했습니다."

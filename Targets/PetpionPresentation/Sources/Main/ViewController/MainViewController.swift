@@ -24,7 +24,7 @@ final class MainViewController: HasCoordinatorViewController {
     lazy var mainCoordinator: MainCoordinator? = {
         return coordinator as? MainCoordinator
     }()
-    private let viewModel: MainViewModelProtocol
+    private var viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
     lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
@@ -55,11 +55,12 @@ final class MainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
-        if viewModel.isFirstFetching {
-            viewModel.initializeEssentialAppData()
-        } else {
-            viewModel.updateCurrentFeeds()
-//            viewModel.refetchFeeds()
+        if viewModel.willRefresh == false {
+            if viewModel.isFirstFetching {
+                viewModel.initializeEssentialAppData()
+            } else {
+                viewModel.updateCurrentFeeds()
+            }
         }
     }
     
@@ -256,10 +257,14 @@ extension MainViewController: NotificationObservable {
     
     func addObserver() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidChange), name: Notification.Name(NotificationName.profileUpdated), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(updateData), name: Notification.Name(NotificationName.dataDidChange), object: nil)
     }
     
     func removeObserver() {
         NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.profileUpdated), object: nil)
+        
+        NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.dataDidChange), object: nil)
     }
     
     @objc func handleUserProfileDidChange(notification: Notification) {
@@ -267,4 +272,18 @@ extension MainViewController: NotificationObservable {
         viewModel.userDidUpdated(to: updatedUserProfile)
     }
     
+    @objc func updateData(notification: Notification) {
+        guard let userInfo = notification.userInfo, let action = userInfo["action"] as? String else {
+            return
+        }
+        
+        switch action {
+        case "refresh":
+            viewModel.willRefresh = true
+            viewModel.refetchFeeds()
+        default:
+            break
+        }
+    }
+
 }

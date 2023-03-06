@@ -9,6 +9,8 @@
 import Foundation
 import UIKit
 
+import PetpionCore
+
 class SettingCustomViewController: UIViewController, CoordinatorWrapper {
     
     weak var coordinator: Coordinator?
@@ -33,6 +35,10 @@ class SettingCustomViewController: UIViewController, CoordinatorWrapper {
     override func viewWillDisappear(_ animated: Bool) {
         navigationBarBorder.removeFromSuperlayer()
         super.viewWillDisappear(animated)
+    }
+    
+    func postRefreshAction() {
+        NotificationCenter.default.post(name: Notification.Name(NotificationName.dataDidChange), object: nil, userInfo: ["action": "refresh"])
     }
 }
 
