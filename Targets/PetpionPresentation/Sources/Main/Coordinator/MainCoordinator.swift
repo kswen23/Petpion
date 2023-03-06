@@ -29,7 +29,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     func presentFeedImagePicker() {
-        if User.isLogin == true {
+        if User.isLogin() {
             guard let feedImagePickerCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "FeedImagePickerCoordinator") as? FeedImagePickerCoordinator else { return }
             feedImagePickerCoordinator.parentCoordinator = self
             childCoordinators.append(feedImagePickerCoordinator)
@@ -50,7 +50,7 @@ public final class MainCoordinator: NSObject, Coordinator {
     
     
     func pushVoteMainView() {
-        if User.isLogin == true {
+        if User.isLogin() {
             guard let voteMainCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "VoteMainCoordinator") as? VoteMainCoordinator else { return }
             childCoordinators.append(voteMainCoordinator)
             voteMainCoordinator.start()
@@ -60,14 +60,15 @@ public final class MainCoordinator: NSObject, Coordinator {
     }
     
     func pushUserPageView(user: User?, userPageStyle: UserPageStyle) {
-        if User.isLogin == false, userPageStyle == .myPageWithSettings {
+        if User.isLogin() == false, userPageStyle == .myPageWithSettings {
             return pushNeedLoginView(navigationItemType: .myPage)
         }
         guard let userPageCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "UserPageCoordinator") as? UserPageCoordinator else { return }
         childCoordinators.append(userPageCoordinator)
         userPageCoordinator.user = user
-        if User.isLogin == true {
+        if User.isLogin() == true {
             userPageCoordinator.userPageStyle = userPageStyle
+            userPageCoordinator.mainCoordinatorDelegate = self
         } else {
             userPageCoordinator.userPageStyle = .myPageWithOutSettings
         }
@@ -112,7 +113,8 @@ private extension MainCoordinator {
         else {
             fatalError("getMainViewController did occurred error")
         }
-        let viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, checkPreviousMonthRanking: checkPreviousMonthRankingUseCase, reportUseCase: reportUseCase, blockUseCase: blockUseCase)
+        var viewModel: MainViewModelProtocol = MainViewModel(fetchFeedUseCase: fetchFeedUseCase, fetchUserUseCase: fetchUserUseCase, calculateVoteChanceUseCase: calculateVoteChanceUseCase, checkPreviousMonthRanking: checkPreviousMonthRankingUseCase, reportUseCase: reportUseCase, blockUseCase: blockUseCase)
+        viewModel.isFirstFetching = true
         return MainViewController(viewModel: viewModel)
     }
 }

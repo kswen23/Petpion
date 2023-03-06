@@ -20,11 +20,14 @@ public final class DefaultUploadUserUseCase: UploadUserUseCase {
     
     // MARK: - Public
     public func uploadNewUser(_ user: User) async -> Bool {
-        await firestoreRepository.uploadNewUser(user)
+        let uploadUserProfileImageResult = await uploadUserProfileImage(user)
+        let uploadUserProfileResult = await firestoreRepository.uploadNewUser(user)
+        return uploadUserProfileResult && uploadUserProfileImageResult
     }
     
     public func uploadUserProfileImage(_ user: User) async -> Bool {
-        await firebaseStorageRepository.uploadProfileImage(user)
+        guard user.profileImage != nil else { return true }
+        return await firebaseStorageRepository.uploadProfileImage(user)
     }
     
     public func updateVoteChanceCount(_ count: Int) async -> Bool {

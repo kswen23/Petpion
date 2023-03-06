@@ -43,12 +43,10 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
-    var isFirstFetching: Bool { get }
+    var isFirstFetching: Bool { get set }
 }
 
 final class MainViewModel: MainViewModelProtocol {
-    
-    
     
     enum Section {
         case base

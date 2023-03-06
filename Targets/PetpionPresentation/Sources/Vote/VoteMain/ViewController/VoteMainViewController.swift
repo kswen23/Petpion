@@ -155,6 +155,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .white
         self.view.backgroundColor = .petpionIndigo
+        self.navigationItem.leftItemsSupplementBackButton = true
+        self.navigationItem.leftBarButtonItems = [trophyBarButton]
         viewModel.viewWillAppear()
     }
     
@@ -162,8 +164,6 @@ final class VoteMainViewController: HasCoordinatorViewController {
         super.viewDidLoad()
         layout()
         binding()
-        self.navigationItem.leftItemsSupplementBackButton = true
-        self.navigationItem.leftBarButtonItems = [trophyBarButton]
     }
     
     // MARK: - Layout
@@ -333,6 +333,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
                 self?.configureStart()
             case .disable:
                 self?.configureDisable()
+            case .noneVotePare:
+                self?.configureNoneVotePare()
             }
         }.store(in: &cancellables)
     }
@@ -379,6 +381,17 @@ final class VoteMainViewController: HasCoordinatorViewController {
         catLoadingView.isHidden = true
         appearCatView.stop()
         appearCatView.isHidden = true
+    }
+    
+    private func configureNoneVotePare() {
+        mainCommentLabel.text = "준비된 펫들이 없어요.. 😢"
+        startVoteButton.backgroundColor = .lightGray
+        startVoteButton.stopAnimating()
+        startVoteButton.isEnabled = false
+        appearCatView.isHidden = true
+        sleepingCatView.isHidden = true
+        startVoteLabel.isHidden = true
+        catLoadingView.isHidden = true
     }
 }
 

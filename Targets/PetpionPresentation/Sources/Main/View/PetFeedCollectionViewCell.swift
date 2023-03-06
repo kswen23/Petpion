@@ -303,7 +303,7 @@ extension PetFeedCollectionViewCell {
         
         init(petpionFeed: PetpionFeed) {
             self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
-            self.profileImage = petpionFeed.uploader.profileImage!
+            self.profileImage = petpionFeed.uploader.profileImage ?? User.defaultProfileImage
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount
             self.userNickname = petpionFeed.uploader.nickname

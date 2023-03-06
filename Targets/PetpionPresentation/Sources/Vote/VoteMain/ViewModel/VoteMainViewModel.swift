@@ -48,10 +48,11 @@ enum VoteMainViewControllerState {
     case preparing
     case ready
     case start
+    case noneVotePare
 }
 
 final class VoteMainViewModel: VoteMainViewModelProtocol {
-
+    
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
     let makeVoteListUseCase: MakeVoteListUseCase
     let fetchFeedUseCase: FetchFeedUseCase
@@ -136,14 +137,16 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
             let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10)
             fetchedVotePare = await prefetchAllPareDetailImage(origin: petpionVotePareArr)
             
-            if fetchedVotePare.isEmpty == false {
-                await MainActor.run {
+            await MainActor.run {
+                if fetchedVotePare.isEmpty {
+                    voteMainViewControllerStateSubject.send(.noneVotePare)
+                } else {
                     voteMainViewControllerStateSubject.send(.ready)
-                }
+                }   
             }
         }
     }
-
+    
     // MARK: - Private
     private func sendMainState(voteChance: Int) {
         voteMainViewControllerStateSubject.send(getCurrentState(with: voteChance))
