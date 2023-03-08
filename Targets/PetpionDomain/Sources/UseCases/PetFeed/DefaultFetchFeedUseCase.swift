@@ -57,15 +57,9 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월"
         let specificMonthFeedsKey = "\(dateFormatter.string(from: date))"
-        if let cachedPetpionFeed = PetpionFeedCache.shared.cachedSpecificMonthFeeds(key: specificMonthFeedsKey as NSString) as? [PetpionFeed],
-            isFirst == true {
-           return cachedPetpionFeed
-        }
-        
         let fetchedFeeds = await firestoreRepository.fetchSpecificMonthPopularFeedArray(with: date, isFirst: isFirst)
         let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: fetchedFeeds)
         let sortedResultFeeds = sortResultFeeds(sortBy: .popular, with: updatedFeed)
-        PetpionFeedCache.shared.saveSpecificMonthFeeds(value: sortedResultFeeds as AnyObject, key: specificMonthFeedsKey as NSString)
         return sortedResultFeeds
     }
     

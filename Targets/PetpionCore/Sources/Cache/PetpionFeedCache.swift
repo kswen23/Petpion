@@ -13,7 +13,6 @@ public final class PetpionFeedCache {
     public static let shared: PetpionFeedCache = .init()
     
     private let cachedTopPetpionFeed: NSCache<NSDate, AnyObject> = .init()
-    private let cachedSpecificMonthFeeds: NSCache<NSString, AnyObject> = .init()
     
     public func cachedTopPetpionFeed(date: NSDate) -> AnyObject? {
         cachedTopPetpionFeed.object(forKey: date)
@@ -23,11 +22,4 @@ public final class PetpionFeedCache {
         cachedTopPetpionFeed.setObject(value, forKey: key)
     }
     
-    public func cachedSpecificMonthFeeds(key: NSString) -> AnyObject? {
-        cachedSpecificMonthFeeds.object(forKey: key)
-    }
-    
-    public func saveSpecificMonthFeeds(value: AnyObject, key: NSString) {
-        cachedSpecificMonthFeeds.setObject(value, forKey: key)
-    }
 }

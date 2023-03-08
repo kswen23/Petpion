@@ -28,6 +28,7 @@ protocol FeedOfTheMonthViewModelProtocol: FeedOfTheMonthViewModelInput, FeedOfTh
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var feedOfTheMonthSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var isFirstFetching: Bool { get set }
+    var nextFeedIsFetching: Bool { get }
 }
 
 final class FeedOfTheMonthViewModel: FeedOfTheMonthViewModelProtocol {
@@ -36,22 +37,26 @@ final class FeedOfTheMonthViewModel: FeedOfTheMonthViewModelProtocol {
     var fetchFeedUseCase: FetchFeedUseCase
     var feedOfTheMonthSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([])
     var isFirstFetching: Bool = true
+    var nextFeedIsFetching = false
     
     init(targetDate: Date,
          fetchFeedUseCase: FetchFeedUseCase) {
         self.targetDate = targetDate
         self.fetchFeedUseCase = fetchFeedUseCase
+        fetchFeedOfTheMonth(isFirst: true)
     }
     
     // MARK: - Input
     func fetchFeedOfTheMonth(isFirst: Bool) {
         Task {
+            nextFeedIsFetching = true
             let fetchedFeeds = await fetchFeedUseCase.fetchSpecificMonthFeeds(with: targetDate, isFirst: isFirst)
             guard fetchedFeeds.isEmpty == false else { return }
             await MainActor.run(body: {
                 var resultFeed = feedOfTheMonthSubject.value
                 resultFeed = resultFeed + fetchedFeeds
                 feedOfTheMonthSubject.send(resultFeed)
+                nextFeedIsFetching = false
             })
         }
     }

@@ -49,7 +49,6 @@ final class FeedOfTheMonthViewController: HasCoordinatorViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         configureNavigationTitle()
-        viewModel.fetchFeedOfTheMonth(isFirst: true)
     }
     
     private func configureNavigationTitle() {
@@ -144,7 +143,7 @@ extension FeedOfTheMonthViewController: UICollectionViewDelegate, PetFeedCollect
     
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         let scrollViewHeight = scrollView.contentSize.height - scrollView.frame.height
-        if scrollViewHeight - scrollView.contentOffset.y <= 0 {
+        if scrollViewHeight - scrollView.contentOffset.y <= 0, viewModel.nextFeedIsFetching == false {
             viewModel.fetchFeedOfTheMonth(isFirst: false)
         }
     }
