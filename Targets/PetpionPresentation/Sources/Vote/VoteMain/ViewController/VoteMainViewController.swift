@@ -11,6 +11,7 @@ import UIKit
 
 import Lottie
 import PetpionDomain
+import AVFoundation
 
 final class VoteMainViewController: HasCoordinatorViewController {
     
@@ -61,12 +62,12 @@ final class VoteMainViewController: HasCoordinatorViewController {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .equalSpacing
-        stackView.spacing = 5
+        stackView.spacing = xValueRatio(5)
         stackView.alignment = .center
         stackView.layer.borderColor = UIColor.white.cgColor
         stackView.layer.borderWidth = 3
         stackView.roundCorners(cornerRadius: 15)
-        stackView.layoutMargins = UIEdgeInsets(top: 0, left: xValueRatio(15), bottom: xValueRatio(10), right: xValueRatio(15))
+        stackView.layoutMargins = UIEdgeInsets(top: xValueRatio(10), left: xValueRatio(15), bottom: xValueRatio(10), right: xValueRatio(15))
         stackView.isLayoutMarginsRelativeArrangement = true
         for i in 0 ..< User.voteMaxCountPolicy {
             let heartView = makeHeartView()
@@ -140,6 +141,58 @@ final class VoteMainViewController: HasCoordinatorViewController {
         return label
     }()
     
+    private lazy var tutorialButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = .clear
+        button.setTitle("투표하는 방법", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: xValueRatio(-10), bottom: 0, right: xValueRatio(10))
+        button.titleLabel?.font = .systemFont(ofSize: xValueRatio(20), weight: .bold)
+        button.setImage(.init(named: "tipImage"), for: .normal)
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        button.roundCorners(cornerRadius: 10)
+        button.addTarget(self, action: #selector(presentTutorialView), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var tutorialView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.borderWidth = 2.0
+        view.layer.borderColor = UIColor.systemGray.cgColor
+        view.roundCorners(cornerRadius: 10)
+        view.isHidden = true
+        return view
+    }()
+    
+    @objc private func presentTutorialView() {
+        tutorialView.isHidden = false
+        dismissButton.isHidden = false
+        if let videoURL = Bundle.main.url(forResource: "tutorial", withExtension: "mp4") {
+            let player = AVPlayer(url: videoURL)
+            let playerLayer = AVPlayerLayer(player: player)
+            playerLayer.frame = tutorialView.bounds
+            tutorialView.layer.addSublayer(playerLayer)
+            player.play()
+        }
+    }
+    
+    private lazy var dismissButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.init(systemName: "xmark.circle.fill"), for: .normal)
+        button.tintColor = .systemGray
+        button.addTarget(self, action: #selector(dismissTutorialView), for: .touchUpInside)
+        button.imageView?.contentMode = .scaleAspectFill
+        button.isHidden = true
+        return button
+    }()
+    
+    @objc private func dismissTutorialView() {
+        tutorialView.isHidden = true
+        dismissButton.isHidden = true
+    }
+    
     // MARK: - Initialize
     init(viewModel: VoteMainViewModelProtocol) {
         self.viewModel = viewModel
@@ -178,6 +231,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         layoutStartVoteButton()
         layoutStartVoteLabel()
         layoutAppearCatView()
+        layoutTutorialButton()
+        layoutTutorialView()
     }
     
     private func layoutBottomSheetView() {
@@ -292,6 +347,34 @@ final class VoteMainViewController: HasCoordinatorViewController {
         appearCatView.isHidden = true
     }
     
+    
+    private func layoutTutorialButton() {
+        view.addSubview(tutorialButton)
+        tutorialButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tutorialButton.bottomAnchor.constraint(equalTo: bottomSheetView.topAnchor, constant: yValueRatio(-5)),
+            tutorialButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(20)),
+            tutorialButton.widthAnchor.constraint(equalToConstant: xValueRatio(180)),
+            tutorialButton.heightAnchor.constraint(equalToConstant: yValueRatio(60))
+        ])
+    }
+    
+    private func layoutTutorialView() {
+        view.addSubview(tutorialView)
+        tutorialView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tutorialView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            tutorialView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            tutorialView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            tutorialView.heightAnchor.constraint(equalToConstant: yValueRatio(450))
+        ])
+        tutorialView.addSubview(dismissButton)
+        dismissButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            dismissButton.trailingAnchor.constraint(equalTo: tutorialView.trailingAnchor, constant: xValueRatio(-10)),
+            dismissButton.topAnchor.constraint(equalTo: tutorialView.topAnchor, constant: xValueRatio(10))
+        ])
+    }
     // MARK: - Binding
     private func binding() {
         bindHeartSubject()
@@ -357,7 +440,7 @@ final class VoteMainViewController: HasCoordinatorViewController {
     private func configureReady() {
         catLoadingView.stop()
         catLoadingView.isHidden = true
-        mainCommentLabel.text = "투표가 준비됐어요!"
+        mainCommentLabel.text = "투표가 준비됐어요!\n당신의 펫피언에 투표해주세요 😆"
         startVoteButton.startAnimating()
         startVoteButton.isEnabled = true
         appearCatView.isHidden = false
