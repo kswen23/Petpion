@@ -33,6 +33,15 @@ public final class VoteMainCoordinator: NSObject, Coordinator {
         votePetpionCoordinator.start()
     }
     
+    func pushPetpionHallViewController() {
+        guard let petpionHallCoordinator: Coordinator = DIContainer.shared.resolve(Coordinator.self, name: "PetpionHallCoordinator") else { return }
+        childCoordinators.append(petpionHallCoordinator)
+        petpionHallCoordinator.start()
+    }
+    
+    func popViewController() {
+        navigationController.popViewController(animated: true)
+    }
 }
 
 private extension VoteMainCoordinator {

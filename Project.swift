@@ -65,6 +65,7 @@ func makePetpionAppTarget(
         let platform = platform
         let infoPlist: [String: InfoPlist.Value] = [
             "CFBundleVersion": "1",
+            "UIUserInterfaceStyle": "Light",
             "UILaunchStoryboardName": "LaunchScreen",
             "UIApplicationSceneManifest": [
                 "UIApplicationSupportsMultipleScenes": false,
@@ -77,6 +78,9 @@ func makePetpionAppTarget(
                     ]
                 ]
             ],
+//            "CFBundleURLTypes": ["CFBundleTypeRole": "Editor", "CFBundleURLSchemes": ["kakao1dbd3642db36275e36ccaf9b6556752d"]],
+            "KAKAO_API_KEY": "1dbd3642db36275e36ccaf9b6556752d",
+            "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
             "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청"
         ]
         
@@ -89,6 +93,7 @@ func makePetpionAppTarget(
             infoPlist: .extendingDefault(with: infoPlist),
             sources: ["Targets/Petpion/Sources/**"],
             resources: ["Targets/Petpion/Resources/**"],
+            entitlements: "./Petpion.entitlements",
             dependencies: dependencies,
             settings: makeConfiguration()
         )
@@ -113,7 +118,8 @@ let project: Project = .init(
         .remote(url: "https://github.com/Yummypets/YPImagePicker.git", requirement: .upToNextMajor(from: "5.2.0")),
         .remote(url: "https://github.com/guoyingtao/Mantis.git", requirement: .exact("2.3.0")),
         .remote(url: "https://github.com/airbnb/lottie-ios.git"
-                ,requirement: .upToNextMajor(from: "4.0.0"))
+                ,requirement: .upToNextMajor(from: "4.0.0")),
+        .remote(url: "https://github.com/kakao/kakao-ios-sdk", requirement: .upToNextMajor(from: "2.11.0"))
     ],
     settings: makeConfiguration(),
     targets: [
@@ -153,7 +159,10 @@ let project: Project = .init(
                 .package(product: "FirebaseAnalytics"),
                 .package(product: "FirebaseFirestore"),
                 .package(product: "FirebaseStorage"),
-                .package(product: "GTMSessionFetcherFull")
+                .package(product: "GTMSessionFetcherFull"),
+                .package(product: "KakaoSDKCommon"),
+                .package(product: "KakaoSDKAuth"),
+                .package(product: "KakaoSDKUser")
             ]),
         makePetpionFrameworkTargets(
             name: Layer.domain.layerName,

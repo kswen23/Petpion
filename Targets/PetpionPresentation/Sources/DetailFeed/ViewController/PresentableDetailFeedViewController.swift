@@ -55,7 +55,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     
     private let profileImageButton: CircleButton = {
         let circleImageButton = CircleButton(diameter: 35)
-        circleImageButton.setImage(UIImage(systemName: "person.fill"), for: .normal)
+        circleImageButton.setImage(User.defaultProfileImage, for: .normal)
         circleImageButton.tintColor = .darkGray
         circleImageButton.backgroundColor = .white
         circleImageButton.layer.borderWidth = 1
@@ -90,7 +90,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     }()
     
     @objc func settingButtonDidTapped() {
-        if User.isLogin {
+        if User.isLogin() {
             self.present(detailFeedAlertController, animated: true)
         } else {
             detailFeedCoordinator?.presentLoginView(transitioningDelegate: self)
@@ -340,20 +340,21 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     
     private func configureProfileStackView() {
         profileNameLabel.text = viewModel.feed.uploader.nickname
-        profileImageButton.setImage(viewModel.feed.uploader.profileImage, for: .normal)
+        let profileImage = viewModel.feed.uploader.profileImage ?? User.defaultProfileImage
+        profileImageButton.setImage(profileImage, for: .normal)
     }
     
     private func configureDetailFeedAlertViewController() {
         
-        let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
-            //                self?.viewModel.editFeed()
-        })
+//        let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
+//                            self?.viewModel.editFeed()
+//        })
         let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
             self?.detailFeedCoordinator?.presentReportFeedViewController()
         })
         let cancel = UIAlertAction(title: "취소", style: .cancel)
         
-        [blockFeed, reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+        [reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
         
     }
     

@@ -30,7 +30,7 @@ final class SettingProfileView: UIView {
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(systemName: "person.fill")
+        imageView.image = User.defaultProfileImage
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .petpionLightGray
         imageView.tintColor = .lightGray
@@ -50,7 +50,7 @@ final class SettingProfileView: UIView {
     
     private var emailLabel: UILabel = {
         let emailLabel = UILabel()
-        emailLabel.text = "aaaa1234@gmail.com" // user.email
+        emailLabel.text = "aaaa1234@gmail.com"
         emailLabel.font = UIFont.systemFont(ofSize: 14)
         emailLabel.textColor = .systemGray2
         emailLabel.sizeToFit()
@@ -141,5 +141,6 @@ final class SettingProfileView: UIView {
     func configureSettingProfileView(with user: User) {
         profileImageView.image = user.profileImage
         nameLabel.text = user.nickname
+        emailLabel.text = user.email
     }
 }

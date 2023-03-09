@@ -28,6 +28,13 @@ public extension DateComponents {
         return currentDateComponents
     }
     
+    static func getPreviousMonthDateComponents() -> DateComponents {
+        let calendar = Calendar.current
+        let currentDate = calendar.date(from: DateComponents.currentDateTimeComponents())!
+        let previousMonthDate = calendar.date(byAdding: .month, value: -1, to: currentDate)!
+        return dateToDateComponents(previousMonthDate)
+    }
+    
     static func afterHourDateComponents(origin date: Date, after hour: Int) -> DateComponents {
         var afterHourDateComponents = userCalendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         afterHourDateComponents.hour = afterHourDateComponents.hour! + hour

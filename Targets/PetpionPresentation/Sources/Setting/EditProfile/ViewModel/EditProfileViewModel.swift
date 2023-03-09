@@ -31,8 +31,8 @@ protocol EditProfileViewModelProtocol: EditProfileViewModelInput, EditProfileVie
 
 enum EditProfileViewState {
     case startLoading
-    case duplicatedNickname
     case startUpdating
+    case duplicatedNickname
     case finishUpdating
     case error
 }
@@ -103,7 +103,7 @@ final class EditProfileViewModel: EditProfileViewModelProtocol {
                     editProfileViewStateSubject.send(.startUpdating)
                 }
             } else {
-                let nickNameIsDuplicated = await uploadUserUseCase.checkUserNicknameDuplication(with: nickname)
+                let nickNameIsDuplicated = await uploadUserUseCase.checkUserNicknameDuplication(with: nickname, field: .nickname)
                 
                 await MainActor.run { [nickNameIsDuplicated] in
                     if nickNameIsDuplicated {

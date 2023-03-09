@@ -17,7 +17,6 @@ public protocol ProfileImagePickerViewControllerDelegate: AnyObject {
 
 public final class ProfileImagePickerViewController: YPImagePicker {
     
-    weak var coordinator: EditProfileCoordinator?
     weak var profileImagePickerViewControllerListener: ProfileImagePickerViewControllerDelegate?
     // MARK: - Initialize
     required init(configuration: YPImagePickerConfiguration = YPImagePickerConfiguration()) {
@@ -46,7 +45,7 @@ public final class ProfileImagePickerViewController: YPImagePicker {
         self.didFinishPicking { [unowned self] items, cancelled in
             if cancelled {
                 profileImagePickerViewControllerListener?.profileImageDidChanged(nil)
-                coordinator?.dismissProfileImagePickerViewController()
+                dismiss(animated: true)
             }
             
             for item in items {
@@ -54,7 +53,7 @@ public final class ProfileImagePickerViewController: YPImagePicker {
                 case .photo(let photo):
                     print(photo.image)
                     profileImagePickerViewControllerListener?.profileImageDidChanged(photo.image)
-                    coordinator?.dismissProfileImagePickerViewController()
+                    dismiss(animated: true)
                 case .video:
                     break
                 }

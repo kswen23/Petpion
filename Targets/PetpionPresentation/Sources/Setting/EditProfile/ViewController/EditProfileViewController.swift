@@ -31,12 +31,12 @@ final class EditProfileViewController: SettingCustomViewController {
         editProfileCoordinator?.presentProfileImagePickerViewController(parentableViewController: self)
     }
     
-    private let emailLabel: UILabel = {
+    private lazy var emailLabel: UILabel = {
         let emailLabel = UILabel()
         emailLabel.translatesAutoresizingMaskIntoConstraints = false
         emailLabel.font = UIFont.systemFont(ofSize: 14)
         emailLabel.textColor = .systemGray2
-        emailLabel.text = "kswen0203@gmail.com"
+        emailLabel.text = viewModel.user.email
         emailLabel.sizeToFit()
         return emailLabel
     }()
@@ -52,6 +52,9 @@ final class EditProfileViewController: SettingCustomViewController {
     
     private lazy var nicknameTextField: UITextField = {
         let textField = UITextField()
+        textField.smartDashesType = .no
+        textField.smartQuotesType = .no
+        textField.autocorrectionType = .no
         textField.backgroundColor = .petpionLightGray
         textField.layer.borderWidth = 0.3
         textField.layer.borderColor = UIColor.lightGray.cgColor
@@ -205,7 +208,7 @@ final class EditProfileViewController: SettingCustomViewController {
     }
     
     private func configureProfileImage() {
-        guard let profileImage = viewModel.user.profileImage else { return }
+        let profileImage = viewModel.user.profileImage ?? User.defaultProfileImage
         editProfileButton.configureProfileImage(with: profileImage)
     }
     

@@ -173,7 +173,7 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
         }
     }
     
-    private func makeCellRegistration() -> UICollectionView.CellRegistration<DetailFeedImageCollection, URL> {
+    private func makeCellRegistration() -> UICollectionView.CellRegistration<DetailFeedImageCollectionViewCell, URL> {
         UICollectionView.CellRegistration { cell, indexPath, item in
             cell.configureDetailImageView(item)
         }

@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  LoginViewModelInput.swift
 //  PetpionPresentation
 //
 //  Created by 김성원 on 2023/01/03.
@@ -16,7 +16,9 @@ import PetpionDomain
 
 protocol LoginViewModelInput {
     func appleLoginButtonDidTapped(with viewController: UIViewController)
+    func kakaoLoginButtonDidTapped()
     func signIn(authorization: ASAuthorization)
+    func setUserDefaultsUserValue(_ firestoreUID: String?)
 }
 
 protocol LoginViewModelOutput {
@@ -24,17 +26,18 @@ protocol LoginViewModelOutput {
 }
 
 protocol LoginViewModelProtocol: LoginViewModelInput, LoginViewModelOutput {
+    
     var loginUseCase: LoginUseCase { get }
     var uploadUserUseCase: UploadUserUseCase { get }
     
-    var canDismissSubject: CurrentValueSubject<Bool, Never> { get }
+    var loginSubject: PassthroughSubject<(LoginType, String?), Never> { get }
 }
 
 final class LoginViewModel: LoginViewModelProtocol {
     
     let loginUseCase: LoginUseCase
     let uploadUserUseCase: UploadUserUseCase
-    let canDismissSubject: CurrentValueSubject<Bool, Never> = .init(false)
+    let loginSubject: PassthroughSubject<(LoginType, String?), Never> = .init()
     
     //MARK: - Initialize
     init(loginUseCase: LoginUseCase,
@@ -60,6 +63,16 @@ final class LoginViewModel: LoginViewModelProtocol {
         authorizationController.performRequests()
     }
     
+    func kakaoLoginButtonDidTapped() {
+        loginUseCase.getUserUIDWithKakao { [weak self] (FirestoreUIDIsExist, firestoreUID) in
+            if FirestoreUIDIsExist == true {
+                self?.loginSubject.send((.login, firestoreUID))
+            } else {
+                self?.loginSubject.send((.signInWithKakao, firestoreUID))
+            }
+        }
+    }
+    
     func signIn(authorization: ASAuthorization) {
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
             guard let nonce = currentNonce else {
@@ -74,35 +87,20 @@ final class LoginViewModel: LoginViewModelProtocol {
                 return
             }
             
-            getCurrentAppleUserState(appleUserID: appleIDCredential.user)
-            print(appleIDCredential.fullName)
-//            Task {
-//                let firebaseAuthResult = await loginUseCase.signInToFirebaseAuth(providerID: "apple.com",
-//                                                                                 idToken: idTokenString,
-//                                                                                 rawNonce: nonce)
-//                let loginResult: Bool = firebaseAuthResult.0
-//                let userUID: String = firebaseAuthResult.1
-//                let name = appleIDCredential.fullName?.description ?? ""
-//
-//                if loginResult == true {
-//                    UserDefaults.standard.setValue(true, forKey: UserInfoKey.isLogin)
-//                    UserDefaults.standard.setValue(userUID, forKey: UserInfoKey.firebaseUID)
-//
-//                    uploadUserUseCase.uploadNewUser(User.init(id: userUID,
-//                                                              nickName: name,
-//                                                              latestVoteTime: .init(),
-//                                                              voteChanceCount: User.voteMaxCountPolicy,
-//                                                              imageURL: nil))
-//
-//                    await MainActor.run {
-//                        canDismissSubject.send(true)
-//                    }
-//
-//                    // 로그인 성공, 실패 여부 loginResult로 분기
-//                    // isLogIn 활성화 -> 개인별기능시 보여줄 View 가 다르다, 파베서버에 사용자 db 생성 그리고 dismiss
-//                }
-//            }
-            
+            Task {
+                
+                guard let userUID = await loginUseCase.signInToFirebaseAuth(providerID: "apple.com", idToken: idTokenString, rawNonce: nonce) else { return }
+                
+                let userIsValid = await loginUseCase.checkUserIsValid(userUID)
+                
+                await MainActor.run {
+                    if userIsValid == true {
+                        loginSubject.send((.login, userUID))
+                    } else {
+                        loginSubject.send((.signInWithApple, userUID))
+                    }
+                }
+            }
         }
     }
     
@@ -146,22 +144,8 @@ final class LoginViewModel: LoginViewModelProtocol {
         return hashString
     }
     
-    private func getCurrentAppleUserState(appleUserID: String) {
-        let appleIDProvider = ASAuthorizationAppleIDProvider()
-        appleIDProvider.getCredentialState(forUserID: appleUserID) { (credentialState, error) in
-            switch credentialState {
-            case .authorized:
-                // The Apple ID credential is valid.
-                print("해당 ID는 연동되어있습니다.")
-            case .revoked:
-                // The Apple ID credential is either revoked or was not found, so show the sign-in UI.
-                print("해당 ID는 연동되어있지않습니다.")
-            case .notFound:
-                // The Apple ID credential is either was not found, so show the sign-in UI.
-                print("해당 ID를 찾을 수 없습니다.")
-            default:
-                break
-            }
-        }
+    func setUserDefaultsUserValue(_ firestoreUID: String?) {
+        loginUseCase.setUserDefaults(firestoreUID: firestoreUID)
     }
 }
+

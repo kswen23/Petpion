@@ -17,7 +17,7 @@ protocol MainViewModelInput {
     func initializeEssentialAppData()
     func fetchInit() async
     func fetchNextFeed()
-    func refreshCurrentFeed()
+    func refetchFeeds()
     func sortingOptionWillChange(with option: SortingOption)
     func sortingOptionDidChanged()
     func baseCollectionViewDidScrolled(to index: Int)
@@ -36,12 +36,15 @@ protocol MainViewModelProtocol: MainViewModelInput, MainViewModelOutput {
     var fetchFeedUseCase: FetchFeedUseCase { get }
     var fetchUserUseCase: FetchUserUseCase { get }
     var calculateVoteChanceUseCase: CalculateVoteChanceUseCase { get }
+    var checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase { get }
     var reportUseCase: ReportUseCase { get }
     var blockUseCase: BlockUseCase { get }
+    var firstFetchLoading: PassthroughSubject<Bool, Never> { get }
     var sortingOptionSubject: CurrentValueSubject<SortingOption, Never> { get }
     var popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
     var latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> { get }
-    var isFirstFetching: Bool { get }
+    var isFirstFetching: Bool { get set }
+    var willRefresh: Bool { get set }
 }
 
 final class MainViewModel: MainViewModelProtocol {
@@ -51,26 +54,31 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     var baseCollectionViewNeedToScroll: Bool = true
+    let firstFetchLoading: PassthroughSubject<Bool, Never> = .init()
     let popularFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let latestFeedSubject: CurrentValueSubject<[PetpionFeed], Never> = .init([.empty])
     let sortingOptionSubject: CurrentValueSubject<SortingOption, Never> = .init(.latest)
     var isFirstFetching: Bool = true
+    var willRefresh: Bool = false
     
     // MARK: - Initialize
     let fetchFeedUseCase: FetchFeedUseCase
     let fetchUserUseCase: FetchUserUseCase
     let calculateVoteChanceUseCase: CalculateVoteChanceUseCase
+    let checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase
     let reportUseCase: ReportUseCase
     let blockUseCase: BlockUseCase
     
     init(fetchFeedUseCase: FetchFeedUseCase,
          fetchUserUseCase: FetchUserUseCase,
          calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
+         checkPreviousMonthRanking: CheckPreviousMonthRankingUseCase,
          reportUseCase: ReportUseCase,
          blockUseCase: BlockUseCase) {
         self.fetchFeedUseCase = fetchFeedUseCase
         self.fetchUserUseCase = fetchUserUseCase
         self.calculateVoteChanceUseCase = calculateVoteChanceUseCase
+        self.checkPreviousMonthRanking = checkPreviousMonthRanking
         self.reportUseCase = reportUseCase
         self.blockUseCase = blockUseCase
     }
@@ -78,6 +86,9 @@ final class MainViewModel: MainViewModelProtocol {
     func fetchInit() async {
         let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
         await MainActor.run {
+            if isFirstFetching {
+                firstFetchLoading.send(true)
+            }
             latestFeedSubject.send(initialFeed[SortingOption.latest.rawValue])
             popularFeedSubject.send(initialFeed[SortingOption.popular.rawValue])
             isFirstFetching = false
@@ -86,6 +97,7 @@ final class MainViewModel: MainViewModelProtocol {
     
     func initializeEssentialAppData() {
         Task {
+            await checkPreviousMonthRanking.checkPreviousMonthRankingDidUpdated()
             guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else {
                 return await fetchInit()
             }
@@ -99,7 +111,6 @@ final class MainViewModel: MainViewModelProtocol {
                     User.currentUser = fetchedUser
                 }
             }
-            // voteMain 에서 언제만 바뀌는게 필요한지 체크후 notification으로 처리
         }
     }
     
@@ -117,19 +128,15 @@ final class MainViewModel: MainViewModelProtocol {
     
     
     // MARK: - Input
-    func refreshCurrentFeed() {
-        let currentOption = sortingOptionSubject.value
+    func refetchFeeds() {
         Task {
-            // 새로고침을 두 option 다 해줘야됨
-            let refreshedFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: currentOption)
+            let refreshedLatestFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: .latest)
+            let refreshedPopularFeed = await fetchFeedUseCase.fetchFeed(isFirst: true, option: .popular)
             await MainActor.run {
-                switch currentOption {
-                case .latest:
-                    latestFeedSubject.send(refreshedFeed)
-                case .popular:
-                    popularFeedSubject.send(refreshedFeed)
-                }
+                latestFeedSubject.send(refreshedLatestFeed)
+                popularFeedSubject.send(refreshedPopularFeed)
             }
+            willRefresh = false
         }
     }
     

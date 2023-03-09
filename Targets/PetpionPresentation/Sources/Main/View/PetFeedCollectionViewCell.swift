@@ -35,7 +35,7 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
     
     private lazy var profileImageView: UIImageView = {
         let imageView = UIImageView()
-        let radius: CGFloat = 13
+        let radius: CGFloat = xValueRatio(13)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             imageView.heightAnchor.constraint(equalToConstant: radius*2),
@@ -63,7 +63,7 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         [profileImageView, profileNameLabel].forEach {
             stackView.addArrangedSubview($0)
         }
-        stackView.spacing = 4
+        stackView.spacing = xValueRatio(4)
         stackView.alignment = .center
         stackView.addGestureRecognizer(profileStackViewTapGesture)
         return stackView
@@ -85,12 +85,12 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    private let winImageView: UIImageView = {
+    private lazy var winImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "win")
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.heightAnchor.constraint(equalToConstant: 25).isActive = true
-        imageView.widthAnchor.constraint(equalToConstant: 25).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: xValueRatio(25)).isActive = true
+        imageView.widthAnchor.constraint(equalToConstant: xValueRatio(25)).isActive = true
         return imageView
     }()
     
@@ -106,9 +106,16 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         [winImageView, likeCountLabel].forEach {
             stackView.addArrangedSubview($0)
         }
-        stackView.spacing = 3
+        stackView.spacing = xValueRatio(3)
         stackView.alignment = .bottom
         return stackView
+    }()
+    
+    private let rankingImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.isHidden = true
+        return imageView
     }()
     
     private var heightLayoutAnchor: NSLayoutConstraint?
@@ -118,9 +125,10 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
         heightLayoutAnchor?.isActive = false
         thumbnailImageView.image = nil
-        thumbnailImageView.stopShimmerAnimating()
         profileImageView.image = nil
         imageCountButton.isHidden = true
+        rankingImageView.image = nil
+        rankingImageView.isHidden = true
     }
     
     // MARK: - Initialize
@@ -141,6 +149,7 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         layoutProfileStackView()
         layoutCommentLabel()
         layoutLikeCountStackView()
+        layoutRankingImageView()
     }
     
     private func layoutBaseView() {
@@ -163,17 +172,16 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
             thumbnailImageView.trailingAnchor.constraint(equalTo: baseView.trailingAnchor),
         ])
         thumbnailImageView.roundCorners(cornerRadius: 10)
-        thumbnailImageView.startShimmerAnimating()
     }
     
     private func layoutImageCountButton() {
         thumbnailImageView.addSubview(imageCountButton)
         imageCountButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            imageCountButton.topAnchor.constraint(equalTo: baseView.topAnchor, constant: 7),
-            imageCountButton.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: -7),
-            imageCountButton.heightAnchor.constraint(equalToConstant: 20),
-            imageCountButton.widthAnchor.constraint(equalToConstant: 25)
+            imageCountButton.topAnchor.constraint(equalTo: baseView.topAnchor, constant: xValueRatio(7)),
+            imageCountButton.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: xValueRatio(-7)),
+            imageCountButton.heightAnchor.constraint(equalToConstant: yValueRatio(20)),
+            imageCountButton.widthAnchor.constraint(equalToConstant: xValueRatio(25))
         ])
         imageCountButton.roundCorners(cornerRadius: 10)
         imageCountButton.titleLabel?.font = .systemFont(ofSize: 14)
@@ -184,8 +192,8 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         baseView.addSubview(profileStackView)
         profileStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            profileStackView.topAnchor.constraint(equalTo: thumbnailImageView.bottomAnchor, constant: 5),
-            profileStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5)
+            profileStackView.topAnchor.constraint(equalTo: thumbnailImageView.bottomAnchor, constant: yValueRatio(5)),
+            profileStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: xValueRatio(5))
         ])
     }
     
@@ -193,9 +201,9 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         baseView.addSubview(commentLabel)
         commentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            commentLabel.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: 5),
-            commentLabel.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5),
-            commentLabel.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: -5)
+            commentLabel.topAnchor.constraint(equalTo: profileStackView.bottomAnchor, constant: yValueRatio(5)),
+            commentLabel.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: xValueRatio(5)),
+            commentLabel.trailingAnchor.constraint(equalTo: baseView.trailingAnchor, constant: xValueRatio(-5))
         ])
         commentLabel.numberOfLines = 2
     }
@@ -204,8 +212,19 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         baseView.addSubview(likeCountStackView)
         likeCountStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            likeCountStackView.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: 5),
-            likeCountStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: 5)
+            likeCountStackView.topAnchor.constraint(equalTo: commentLabel.bottomAnchor, constant: yValueRatio(5)),
+            likeCountStackView.leadingAnchor.constraint(equalTo: baseView.leadingAnchor, constant: xValueRatio(5))
+        ])
+    }
+    
+    private func layoutRankingImageView() {
+        thumbnailImageView.addSubview(rankingImageView)
+        rankingImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            rankingImageView.topAnchor.constraint(equalTo: thumbnailImageView.topAnchor, constant: yValueRatio(7)),
+            rankingImageView.leadingAnchor.constraint(equalTo: thumbnailImageView.leadingAnchor, constant: xValueRatio(7)),
+            rankingImageView.widthAnchor.constraint(equalToConstant: xValueRatio(25)),
+            rankingImageView.heightAnchor.constraint(equalToConstant: xValueRatio(25))
         ])
     }
     
@@ -214,7 +233,7 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         configureCellHeight(viewModel.thumbnailRatio)
         configureImageCountButtonTitle(with: viewModel.imageCount)
         configureThumbnailImageView(viewModel.thumbnailImageURL)
-//        configureImage(viewModel)
+        configureRankingImageView(viewModel.ranking)
         profileImageView.image = viewModel.profileImage
         profileNameLabel.text = viewModel.userNickname
         commentLabel.text = viewModel.comment
@@ -222,58 +241,27 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
     }
     
     func configureThumbnailImageView(_ url: URL?) {
-        Task {
-            guard let url = url else { return }
-            let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
-            await MainActor.run {
-                thumbnailImageView.stopShimmerAnimating()
-                thumbnailImageView.image = thumbnailImage
+        if let cachedImage = ImageCache.shared.image(url: url! as NSURL) {
+            thumbnailImageView.image = cachedImage
+        } else {
+            thumbnailImageView.startShimmerAnimating()
+            Task {
+                guard let url = url else { return }
+                let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
+                await MainActor.run {
+                    thumbnailImageView.stopShimmerAnimating()
+                    thumbnailImageView.image = thumbnailImage
+                }
+                
             }
         }
     }
-//    func configureThumbnailImageView(_ url: URL?) {
-//        guard let url = url else {
-//            thumbnailImageView.stopShimmerAnimating()
-//            thumbnailImageView.image = nil
-//            return
-//        }
-//
-//        // URL을 통해 이미지 다운로드
-//        let task = Task {
-//
-//            await MainActor.run {
-//                guard let data = try? Data(contentsOf: url),
-//                      let image = UIImage(data: data) else {
-//                    return
-//                }
-//                apply(image: image, to: thumbnailImageView)
-//            }
-//        }
-//
-//        // 이미지 로드 도중 셀이 재사용될 경우에 대비하여 취소 처리
-////        thumbnailImageView.taskIdentifier = task.id
-//    }
-    
-    func apply(image: UIImage, to thumbnailImageView: UIImageView) {
-        let fadeDuration = 0.2
-        let animator = UIViewPropertyAnimator(duration: fadeDuration, curve: .linear) {
-            thumbnailImageView.alpha = 0.0
-        }
-        animator.addCompletion { _ in
-            thumbnailImageView.image = image
-            UIViewPropertyAnimator.runningPropertyAnimator(withDuration: fadeDuration, delay: 0, options: .curveLinear) {
-                thumbnailImageView.alpha = 1.0
-            }
-        }
-        animator.startAnimation()
-    }
-
     
     private func configureCellHeight(_ thumbnailRatio: Double) {
         heightLayoutAnchor = thumbnailImageView.heightAnchor.constraint(equalToConstant: self.frame.width*thumbnailRatio)
         heightLayoutAnchor?.isActive = true
     }
-        
+    
     private func configureImageCountButtonTitle(with imageCount: Int) {
         if imageCount <= 1 {
             imageCountButton.isHidden = true
@@ -283,6 +271,21 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         }
     }
     
+    
+    private func configureRankingImageView(_ ranking: Int?) {
+        guard let ranking = ranking else { return }
+        switch ranking {
+        case 1:
+            rankingImageView.image = UIImage(named: Ranking.first.description)
+        case 2:
+            rankingImageView.image = UIImage(named: Ranking.second.description)
+        case 3:
+            rankingImageView.image = UIImage(named: Ranking.third.description)
+        default:
+            break
+        }
+        rankingImageView.isHidden = false
+    }
 }
 
 extension PetFeedCollectionViewCell {
@@ -296,19 +299,17 @@ extension PetFeedCollectionViewCell {
         let userNickname: String
         let comment: String
         let likeCount: Int
+        let ranking: Int?
         
-        var image: UIImage?
-
         init(petpionFeed: PetpionFeed) {
             self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
-            self.profileImage = petpionFeed.uploader.profileImage!
+            self.profileImage = petpionFeed.uploader.profileImage ?? User.defaultProfileImage
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount
             self.userNickname = petpionFeed.uploader.nickname
             self.comment = petpionFeed.message
             self.likeCount = petpionFeed.likeCount
-            
-            self.image = petpionFeed.image
+            self.ranking = petpionFeed.ranking
         }
     }
 }

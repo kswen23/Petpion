@@ -6,6 +6,7 @@
 //  Copyright © 2023 Petpion. All rights reserved.
 //
 
+import Combine
 import Foundation
 
 import PetpionCore
@@ -13,30 +14,31 @@ import PetpionDomain
 
 protocol SignOutViewModelProtocol {
     var user: User { get }
+    var signOutResultSubject: PassthroughSubject<Bool, Never> { get }
     func signOut()
 }
 
 final class SignOutViewModel: SignOutViewModelProtocol {
     
     var user: User
-    var deleteFeedUseCase: DeleteFeedUseCase
+    var signOutUseCase: SignOutUseCase
+    var signOutResultSubject: PassthroughSubject<Bool, Never> = .init()
     
     // MARK: - Initialize
     init(user: User,
-         deleteFeedUseCase: DeleteFeedUseCase) {
+         signOutUseCase: SignOutUseCase) {
         self.user = user
-        self.deleteFeedUseCase = deleteFeedUseCase
+        self.signOutUseCase = signOutUseCase
     }
     
     func signOut() {
-        // userDefaults, firebaseStrage, firestore, loginToken 삭제필요
         Task {
-            // userDefaults 관련 삭제
             UserInfoKey.deleteAllUserDefaultsValue()
-            // 유저가 올린 피드들, 관련 피드이미지 삭제
-            await deleteFeedUseCase.deleteUserTotalFeeds(user)
-            // 유저정보(firestore), 유저프로필이미지(firebaseStorage) 삭제해야됨
-            
+            User.currentUser = nil
+            let signOutResult = await signOutUseCase.signOut(user)
+            await MainActor.run {
+                signOutResultSubject.send(signOutResult)
+            }
         }
     }
 }

@@ -148,6 +148,7 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         case .user:
             blockButton.setTitle("유저 차단하기", for: .normal)
         case .feed:
+            blockButton.isHidden = true
             blockButton.setTitle("게시글 차단하기", for: .normal)
         }
         

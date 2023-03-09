@@ -98,7 +98,6 @@ final class VotePetpionViewController: HasCoordinatorViewController {
         let navigationAppearance = UINavigationBarAppearance()
         navigationAppearance.configureWithTransparentBackground()
         navigationController?.navigationBar.standardAppearance = navigationAppearance
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         navigationItem.leftBarButtonItem = customBackBarButton
         navigationController?.navigationBar.tintColor = .black
         navigationItem.titleView = titleLabel

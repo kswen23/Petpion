@@ -9,6 +9,8 @@
 import Foundation
 import UIKit
 
+import PetpionDomain
+
 final class EditProfileButton: UIButton {
     
     private let profileRadius: CGFloat
@@ -16,7 +18,7 @@ final class EditProfileButton: UIButton {
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(systemName: "person.fill")
+        imageView.image = User.defaultProfileImage
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .petpionLightGray
         imageView.tintColor = .lightGray

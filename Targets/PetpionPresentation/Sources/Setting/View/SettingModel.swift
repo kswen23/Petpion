@@ -19,9 +19,7 @@ struct SettingModel {
         // 앱설정
         case alert = "알림설정"
         // 약관 및 정책
-        case version = "앱 버전정보"
         case termsOfService = "서비스 이용약관"
-        case openLicense = "오픈라이센스"
         // 계정
         case manageBlockedUser = "차단 유저 관리"
         case logout = "로그아웃"
@@ -33,12 +31,8 @@ struct SettingModel {
                 return "EditProfileCoordinator"
             case .alert:
                 return "EditAlertCoordinator"
-            case .version:
-                return "EditProfileCoordinator"
             case .termsOfService:
-                return "EditProfileCoordinator"
-            case .openLicense:
-                return "EditProfileCoordinator"
+                return "TermsOfServiceCoordinator"
             case .manageBlockedUser:
                 return "ManageBlockedUserCoordinator"
             case .logout:
@@ -54,7 +48,7 @@ struct SettingModel {
         case .appSetting:
             return [.alert]
         case .appPolicy:
-            return [.version, .termsOfService, .openLicense]
+            return [.termsOfService]
         case .account:
             return [.manageBlockedUser, .logout, .signOut]
         }

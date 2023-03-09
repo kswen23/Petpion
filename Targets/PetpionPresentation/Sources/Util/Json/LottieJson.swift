@@ -23,4 +23,7 @@ struct LottieJson {
     static let cuteDog: String = "cuteDog"
     
     static let lazyCat: String = "lazyCat"
+    
+    static let launchAnimation: String = "launchAnimation"
+    
 }

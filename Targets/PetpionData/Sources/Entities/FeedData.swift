@@ -24,9 +24,9 @@ struct FeedData {
     public var message: String
     public var heightRatio: Double // width is 12
     public var imageRatio: Double
+    public var ranking: Double?
     
-    
-    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, battleCount: Double, likeCount: Double, imageCount: Double, message: String, heightRatio: Double, imageRatio: Double) {
+    public init(feedID: Identifier, uploaderID: Identifier, uploadTimestamp: Timestamp, battleCount: Double, likeCount: Double, imageCount: Double, message: String, heightRatio: Double, imageRatio: Double, ranking: Double?) {
         self.feedID = feedID
         self.uploaderID = uploaderID
         self.uploadTimestamp = uploadTimestamp
@@ -37,6 +37,7 @@ struct FeedData {
         self.heightRatio = heightRatio
         self.imageRatio = imageRatio
         self.imageReference = feedID + uploaderID
+        self.ranking = ranking
     }
     
     public init(feed: PetpionFeed) {
@@ -50,6 +51,7 @@ struct FeedData {
         self.imageReference = PetpionFeed.getImageReference(feed)
         self.heightRatio = feed.feedSize.height
         self.imageRatio = feed.imageRatio
+        self.ranking = Double(feed.ranking ?? 0)
     }
 }
 
@@ -63,7 +65,8 @@ extension FeedData {
                                    imageCount: 0,
                                    message: "",
                                    heightRatio: 0,
-                                   imageRatio: 0)
+                                   imageRatio: 0,
+                                   ranking: 0)
     
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
@@ -77,6 +80,7 @@ extension FeedData {
             "message": data.message,
             "heightRatio": data.heightRatio,
             "imageRatio": data.imageRatio,
+            "ranking": data.ranking ?? 0,
             "random": Int.random(in: 0..<Int.max)
         ]
     }
@@ -95,6 +99,7 @@ extension FeedData {
             case "message": result.message = value as? String ?? ""
             case "heightRatio": result.heightRatio = value as? Double ?? 0
             case "imageRatio": result.imageRatio = value as? Double ?? 0
+            case "ranking": result.ranking = value as? Double ?? 0
             default:
                 break
             }
@@ -115,6 +120,7 @@ extension PetpionFeed {
               imageCount: Int(data.imageCount),
               message: data.message,
               feedSize: CGSize(width: 12, height: data.heightRatio),
-              imageRatio: data.imageRatio)
+              imageRatio: data.imageRatio,
+              ranking: Int(data.ranking ?? 0))
     }
 }

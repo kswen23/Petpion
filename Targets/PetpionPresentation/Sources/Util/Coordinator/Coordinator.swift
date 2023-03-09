@@ -41,6 +41,11 @@ class HasCoordinatorViewController: UIViewController, CoordinatorWrapper {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.topItem?.title = ""
+        self.navigationController?.navigationBar.tintColor = .black
         view.backgroundColor = .white
+    }
+    
+    func postRefreshAction() {
+        NotificationCenter.default.post(name: Notification.Name(NotificationName.dataDidChange), object: nil, userInfo: ["action": "refresh"])
     }
 }

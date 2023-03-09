@@ -52,6 +52,14 @@ public struct PresentationDIContainer: Containable {
             VotePetpionCoordinator(navigationController: navigationController)
         }
         
+        container.register(Coordinator.self, name: "PetpionHallCoordinator") { _ in
+            PetpionHallCoordinator(navigationController: navigationController)
+        }
+        
+        container.register(Coordinator.self, name: "FeedOfTheMonthCoordinator") { _ in
+            FeedOfTheMonthCoordinator(navigationController: navigationController)
+        }
+        
         container.register(Coordinator.self, name: "UserPageCoordinator") { _ in
             UserPageCoordinator(navigationController: navigationController)
         }
@@ -79,12 +87,8 @@ public struct PresentationDIContainer: Containable {
                     return EditProfileCoordinator(navigationController: navigationController)
                 case .alert:
                     return EditAlertCoordinator(navigationController: navigationController)
-                case .version:
-                    return EditProfileCoordinator(navigationController: navigationController)
                 case .termsOfService:
-                    return EditProfileCoordinator(navigationController: navigationController)
-                case .openLicense:
-                    return EditProfileCoordinator(navigationController: navigationController)
+                    return TermsOfServiceCoordinator(navigationController: navigationController)
                 case .manageBlockedUser:
                     return ManageBlockedUserCoordinator(navigationController: navigationController)
                 case .logout:

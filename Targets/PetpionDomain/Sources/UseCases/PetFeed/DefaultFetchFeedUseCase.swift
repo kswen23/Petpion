@@ -14,7 +14,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     public var firestoreRepository: FirestoreRepository
     public var firebaseStorageRepository: FirebaseStorageRepository
-    
+     
     // MARK: - Initialize
     init(firestoreRepository: FirestoreRepository,
          firebaseStorageRepository: FirebaseStorageRepository) {
@@ -51,6 +51,16 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         
         let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: feedDataFromFirestore)
         return sortResultFeeds(sortBy: option, with: updatedFeed)
+    }
+    
+    public func fetchSpecificMonthFeeds(with date: Date, isFirst: Bool) async -> [PetpionFeed] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy년 M월"
+        let specificMonthFeedsKey = "\(dateFormatter.string(from: date))"
+        let fetchedFeeds = await firestoreRepository.fetchSpecificMonthPopularFeedArray(with: date, isFirst: isFirst)
+        let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: fetchedFeeds)
+        let sortedResultFeeds = sortResultFeeds(sortBy: .popular, with: updatedFeed)
+        return sortedResultFeeds
     }
     
     public func fetchFeedDetailImages(feed: PetpionFeed) async -> [URL] {
@@ -107,11 +117,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
                     var resultFeed = profileUpdatedFeed
                     resultFeed.imageURLArr = feed.imageURLArr
                     
-                    if let image = feed.image {
-                        print("이미지있음")
-                        resultFeed.image = image
-                    }
-                    
                     return resultFeed
                 }
             }
@@ -128,26 +133,49 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         }
     }
     
-    public func updateFeedsImage(origin: [PetpionFeed]) async -> [PetpionFeed] {
-        await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
-            for feed in origin {
-                taskGroup.addTask {
-                    var resultFeed = feed
-                    resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
-                    return resultFeed
-                }
-            }
-            var result = origin
-            for await value in taskGroup {
-                for i in 0 ..< result.count {
-                    if value.id == result[i].id {
-                        result[i] = value
+    public func fetchTopPetpionFeedForLast3Months(since date: Date) async -> [TopPetpionFeed] {
+        await withTaskGroup(of: TopPetpionFeed.self, body: { taskGroup -> [TopPetpionFeed] in
+            let last3MonthsDateArray: [Date] = self.makeLast3MonthsDateArray(date: date)
+            var result = [TopPetpionFeed]()
+            for month in last3MonthsDateArray {
+                if let cachedTopPetpionFeed = PetpionFeedCache.shared.cachedTopPetpionFeed(date: month as NSDate) as? TopPetpionFeed {
+                    result.append(cachedTopPetpionFeed)
+                } else {
+                    taskGroup.addTask {
+                        var topPetpionFeed = await self.firestoreRepository.fetchTop3FeedDataForThisMonth(when: month)
+                        topPetpionFeed.feedArray = await self.updateDetailInformation(feeds: topPetpionFeed.feedArray)
+                        topPetpionFeed.feedArray.sort { $0.ranking! < $1.ranking! }
+                        PetpionFeedCache.shared.saveTopPetpionFeed(value: topPetpionFeed as AnyObject, key: month as NSDate)
+                        return topPetpionFeed
                     }
                 }
             }
             
+            for await taskResult in taskGroup {
+                result.append(taskResult)
+            }
+                
             return result
+                .filter { !$0.feedArray.isEmpty }
+                .sorted { $0.date > $1.date }
+        })
+        
+    }
+    
+    private func makeLast3MonthsDateArray(date: Date) -> [Date] {
+        let calendar = Calendar.current
+        let firstDayDateComponents: DateComponents = {
+            var dateComponents: DateComponents = .dateToDateComponents(date)
+            dateComponents.day = 1
+            return dateComponents
+        }()
+        let firstDayDate: Date = calendar.date(from: firstDayDateComponents)!
+        var last3MonthsDate = [Date]()
+        for i in 1...3 {
+            let beforeMonthDate = calendar.date(byAdding: .month, value: -i, to: firstDayDate)!
+            last3MonthsDate.append(beforeMonthDate)
         }
+        return last3MonthsDate
     }
     
     // MARK: - Private
@@ -172,12 +200,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     private func addThumbnailImage(with feed: PetpionFeed) async -> PetpionFeed {
         var resultFeed = feed
         resultFeed.imageURLArr = await self.firebaseStorageRepository.fetchFeedThumbnailImageURL(feed)
-        return resultFeed
-    }
-    
-    private func addRealImage(with feed: PetpionFeed) async -> PetpionFeed {
-        var resultFeed = feed
-        resultFeed.image = await ImageCache.shared.loadImage(url: feed.imageURLArr![0] as NSURL)
         return resultFeed
     }
     
@@ -209,5 +231,4 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
         }
         return resultFeeds
     }
-    
 }

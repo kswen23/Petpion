@@ -9,6 +9,32 @@
 public protocol LoginUseCase {
     
     var firebaseAuthRepository: FirebaseAuthRepository { get }
+    var kakaoAuthReporitory: KakaoAuthRepository { get }
     
-    func signInToFirebaseAuth(providerID: String, idToken: String, rawNonce: String?) async -> (Bool, String)
+    // userDefaults
+    func setUserDefaults(firestoreUID: String?)
+    func logoutUserDefaults()
+    
+    // apple
+    func signInToFirebaseAuth(providerID: String,
+                              idToken: String,
+                              rawNonce: String?) async -> String?
+    func checkUserIsValid(_ firestoreUID: String) async -> Bool
+    
+    // kakao
+    func getKakaoUserID(_ completion: @escaping ((String) -> Void))
+    func getUserUIDWithKakao(_ completion: @escaping (((Bool, String)) -> Void))
+    func unlink()
+    
+    // email
+    func signInToFirebaseAuthWithEmail(providerEmail: String,
+                                       providerID: String) async -> String?
+    
+    // logout
+    func unlinkFirebaseAuth() async -> Bool
+}
+
+public enum SignInType: String {
+    case appleID = "Apple"
+    case kakaoID = "Kakako"
 }

@@ -29,7 +29,6 @@ final class EditProfileCoordinator: NSObject, Coordinator {
     
     func presentProfileImagePickerViewController(parentableViewController: ProfileImagePickerViewControllerDelegate) {
         let profileImagePickerViewController = getProfileImagePickerViewController()
-        profileImagePickerViewController.coordinator = self
         profileImagePickerViewController.profileImagePickerViewControllerListener = parentableViewController
         navigationController.present(profileImagePickerViewController, animated: true)
     }

@@ -12,27 +12,47 @@ import UIKit
 public struct User: Identifiable {
     public typealias Identifier = String
     
-    public let id: Identifier
+    public var id: Identifier
+    public var email: String
     public var nickname: String
     public var latestVoteTime: Date
     public var voteChanceCount: Int
     public var imageURL: URL?
-    public var profileImage: UIImage? = UIImage(systemName: "person.fill")
+    public var profileImage: UIImage?
+    public var kakaoID: String?
+    public var signInType: SignInType
+    public var first: Int
+    public var second: Int
+    public var third: Int
     
     public init(id: String,
+                email: String,
                 nickName: String,
                 latestVoteTime: Date,
                 voteChanceCount: Int,
-                imageURL: URL?) {
+                imageURL: URL?,
+                profileImage: UIImage? = nil,
+                signInType: SignInType,
+                kakaoID: String?,
+                first: Int = 0,
+                second: Int = 0,
+                third: Int = 0) {
         self.id = id
+        self.email = email
         self.nickname = nickName
         self.latestVoteTime = latestVoteTime
         self.voteChanceCount = voteChanceCount
         self.imageURL = imageURL
+        self.signInType = signInType
+        self.kakaoID = kakaoID
+        self.first = first
+        self.second = second
+        self.third = third
     }
 }
 
 public extension User {
+    static let defaultProfileImage: UIImage = .init(named: "userImage")!
     static var currentUser: Self?
     static var reportedUserIDArray: [String]?
     static var reportedFeedIDArray: [String]?
@@ -40,9 +60,9 @@ public extension User {
     static var blockedFeedIDArray: [String]?
     static var blockedUserArray: [User]?
     
-    static let isLogin: Bool = {
+    static func isLogin() -> Bool {   
         currentUser != nil
-    }()
+    }
     
     static func isReportedUser(user: User?) -> Bool {
         guard let reportedUserIDArray = User.reportedUserIDArray,
@@ -82,7 +102,7 @@ public extension User {
     
     static let voteMaxCountPolicy: Int = 5
     
-    static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: 0, imageURL: nil)
+    static let empty: Self = .init(id: "", email: "", nickName: "", latestVoteTime: .init(), voteChanceCount: voteMaxCountPolicy, imageURL: nil, signInType: .appleID, kakaoID: nil)
     
     static func getProfileImageData(user: Self) -> Data {
         guard let image = user.profileImage else { return .init() }

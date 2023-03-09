@@ -24,15 +24,21 @@ protocol LoggedInSettingViewModelOutput {
 
 protocol LoggedInSettingViewModelProtocol: LoggedInSettingViewModelInput, LoggedInSettingViewModelOutput {
     var user: User { get }
+    var loginUseCase: LoginUseCase { get }
+    var logoutResultSubject: PassthroughSubject<Bool, Never> { get }
 }
 
 final class LoggedInSettingViewModel: LoggedInSettingViewModelProtocol {
     
     var user: User
+    var loginUseCase: LoginUseCase
+    var logoutResultSubject: PassthroughSubject<Bool, Never> = .init()
     
     // MARK: - Initialize
-    init(user: User) {
+    init(user: User,
+         loginUseCase: LoginUseCase) {
         self.user = user
+        self.loginUseCase = loginUseCase
     }
     
     // MARK: - Input
@@ -41,7 +47,13 @@ final class LoggedInSettingViewModel: LoggedInSettingViewModelProtocol {
     }
     
     func logoutDidTapped() {
-        
+        loginUseCase.logoutUserDefaults()
+        Task {
+            let logoutResult = await loginUseCase.unlinkFirebaseAuth()
+            await MainActor.run {
+                logoutResultSubject.send(logoutResult)
+            }
+        }
     }
     // MARK: - Output
 

@@ -14,5 +14,4 @@ public protocol DeleteFeedUseCase {
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
     func deleteFeed(_ feed: PetpionFeed) async -> Bool
-    func deleteUserTotalFeeds(_ user: User) async -> Bool
 }

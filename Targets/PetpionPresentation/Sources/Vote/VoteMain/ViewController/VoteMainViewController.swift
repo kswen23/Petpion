@@ -11,6 +11,7 @@ import UIKit
 
 import Lottie
 import PetpionDomain
+import AVFoundation
 
 final class VoteMainViewController: HasCoordinatorViewController {
     
@@ -21,27 +22,52 @@ final class VoteMainViewController: HasCoordinatorViewController {
     private var cancellables = Set<AnyCancellable>()
     private let viewModel: VoteMainViewModelProtocol
     
-    private let bottomSheetView: UIView = {
+    private lazy var bottomSheetView: UIView = {
         let view = UIView()
-        view.roundCorners(cornerRadius: 20)
+        view.roundCorners(cornerRadius: xValueRatio(20))
         view.backgroundColor = .white
         view.layer.shadowColor = UIColor.white.cgColor
         view.layer.masksToBounds = false
-        view.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.layer.shadowOffset = CGSize(width: 0, height: xValueRatio(4))
         view.layer.shadowRadius = 5
         view.layer.shadowOpacity = 0.3
         return view
     }()
+    
+    private lazy var backBarButton: UIBarButtonItem = {
+        let barButton = UIBarButtonItem()
+        barButton.title = ""
+        barButton.tintColor = .white
+        barButton.image = UIImage(systemName: "chevron.backward")
+        barButton.target = self
+        barButton.action = #selector(popViewController)
+        return barButton
+    }()
+    
+    @objc private func popViewController() {
+        voteMainCoordinator?.popViewController()
+    }
+    
+    private lazy var trophyBarButton: UIBarButtonItem = {
+        let barButton = UIBarButtonItem(image: UIImage(systemName: "trophy"), style: .done, target: self, action: #selector(trophyButtonDidTapped))
+        barButton.tintColor = .white
+        return barButton
+    }()
+    
+    @objc private func trophyButtonDidTapped() {
+        voteMainCoordinator?.pushPetpionHallViewController()
+    }
+    
     private lazy var userHeartStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .equalSpacing
-        stackView.spacing = 5
+        stackView.spacing = xValueRatio(5)
         stackView.alignment = .center
-        stackView.layer.borderColor = UIColor.lightGray.cgColor
+        stackView.layer.borderColor = UIColor.white.cgColor
         stackView.layer.borderWidth = 3
         stackView.roundCorners(cornerRadius: 15)
-        stackView.layoutMargins = UIEdgeInsets(top: 0, left: 15, bottom: 10, right: 15)
+        stackView.layoutMargins = UIEdgeInsets(top: xValueRatio(10), left: xValueRatio(15), bottom: xValueRatio(10), right: xValueRatio(15))
         stackView.isLayoutMarginsRelativeArrangement = true
         for i in 0 ..< User.voteMaxCountPolicy {
             let heartView = makeHeartView()
@@ -58,9 +84,9 @@ final class VoteMainViewController: HasCoordinatorViewController {
         return imageView
     }()
     
-    private let remainingTimeLabel: UILabel = {
+    private lazy var remainingTimeLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.font = UIFont.boldSystemFont(ofSize: xValueRatio(18))
         label.text = "00:00"
         label.textColor = .white
         return label
@@ -85,9 +111,9 @@ final class VoteMainViewController: HasCoordinatorViewController {
         return animationView
     }()
     
-    private let mainCommentLabel: UILabel = {
+    private lazy var mainCommentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 25)
+        label.font = UIFont.boldSystemFont(ofSize: xValueRatio(25))
         label.textAlignment = .center
         label.textColor = .black
         label.numberOfLines = 0
@@ -98,7 +124,7 @@ final class VoteMainViewController: HasCoordinatorViewController {
         let button = CustomShimmerButton(gradientColorOne: UIColor.petpionOrange.cgColor,
                                          gradientColorTwo: UIColor.petpionLightOrange.cgColor)
         button.setTitle("투표 시작", for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 30, weight: .bold)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: xValueRatio(30), weight: .bold)
         button.addTarget(self, action: #selector(startVoteButtonDidTapped), for: .touchUpInside)
         return button
     }()
@@ -110,10 +136,62 @@ final class VoteMainViewController: HasCoordinatorViewController {
     private lazy var startVoteLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 30, weight: .bold)
+        label.font = UIFont.systemFont(ofSize: xValueRatio(30), weight: .bold)
         label.text = "투표 시작"
         return label
     }()
+    
+    private lazy var tutorialButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = .clear
+        button.setTitle("투표하는 방법", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: xValueRatio(-10), bottom: 0, right: xValueRatio(10))
+        button.titleLabel?.font = .systemFont(ofSize: xValueRatio(20), weight: .bold)
+        button.setImage(.init(named: "tipImage"), for: .normal)
+        button.contentHorizontalAlignment = .center
+        button.contentVerticalAlignment = .center
+        button.roundCorners(cornerRadius: 10)
+        button.addTarget(self, action: #selector(presentTutorialView), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var tutorialView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.borderWidth = 2.0
+        view.layer.borderColor = UIColor.systemGray.cgColor
+        view.roundCorners(cornerRadius: 10)
+        view.isHidden = true
+        return view
+    }()
+    
+    @objc private func presentTutorialView() {
+        tutorialView.isHidden = false
+        dismissButton.isHidden = false
+        if let videoURL = Bundle.main.url(forResource: "tutorial", withExtension: "mp4") {
+            let player = AVPlayer(url: videoURL)
+            let playerLayer = AVPlayerLayer(player: player)
+            playerLayer.frame = tutorialView.bounds
+            tutorialView.layer.addSublayer(playerLayer)
+            player.play()
+        }
+    }
+    
+    private lazy var dismissButton: UIButton = {
+        let button = UIButton()
+        button.setImage(.init(systemName: "xmark.circle.fill"), for: .normal)
+        button.tintColor = .systemGray
+        button.addTarget(self, action: #selector(dismissTutorialView), for: .touchUpInside)
+        button.imageView?.contentMode = .scaleAspectFill
+        button.isHidden = true
+        return button
+    }()
+    
+    @objc private func dismissTutorialView() {
+        tutorialView.isHidden = true
+        dismissButton.isHidden = true
+    }
     
     // MARK: - Initialize
     init(viewModel: VoteMainViewModelProtocol) {
@@ -130,7 +208,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .white
         self.view.backgroundColor = .petpionIndigo
-        self.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        self.navigationItem.leftItemsSupplementBackButton = true
+        self.navigationItem.leftBarButtonItems = [trophyBarButton]
         viewModel.viewWillAppear()
     }
     
@@ -152,6 +231,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         layoutStartVoteButton()
         layoutStartVoteLabel()
         layoutAppearCatView()
+        layoutTutorialButton()
+        layoutTutorialView()
     }
     
     private func layoutBottomSheetView() {
@@ -169,8 +250,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
         view.addSubview(userHeartStackView)
         userHeartStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            userHeartStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 80),
-            userHeartStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            userHeartStackView.topAnchor.constraint(equalTo: view.topAnchor, constant: yValueRatio(80)),
+            userHeartStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: xValueRatio(-20)),
         ])
     }
     
@@ -178,9 +259,9 @@ final class VoteMainViewController: HasCoordinatorViewController {
         view.addSubview(remainingTimeLabel)
         remainingTimeLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            remainingTimeLabel.topAnchor.constraint(equalTo: userHeartStackView.bottomAnchor, constant: 5),
-            remainingTimeLabel.trailingAnchor.constraint(equalTo: userHeartStackView.trailingAnchor, constant: -3),
-            remainingTimeLabel.widthAnchor.constraint(equalToConstant: 60)
+            remainingTimeLabel.topAnchor.constraint(equalTo: userHeartStackView.bottomAnchor, constant: yValueRatio(5)),
+            remainingTimeLabel.trailingAnchor.constraint(equalTo: userHeartStackView.trailingAnchor, constant: xValueRatio(-3)),
+            remainingTimeLabel.widthAnchor.constraint(equalToConstant: xValueRatio(60))
         ])
     }
     
@@ -189,9 +270,9 @@ final class VoteMainViewController: HasCoordinatorViewController {
         heartChargingImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             heartChargingImageView.centerYAnchor.constraint(equalTo: remainingTimeLabel.centerYAnchor),
-            heartChargingImageView.trailingAnchor.constraint(equalTo: remainingTimeLabel.leadingAnchor, constant: -3),
-            heartChargingImageView.widthAnchor.constraint(equalToConstant: 25),
-            heartChargingImageView.heightAnchor.constraint(equalToConstant: 25)
+            heartChargingImageView.trailingAnchor.constraint(equalTo: remainingTimeLabel.leadingAnchor, constant: xValueRatio(-3)),
+            heartChargingImageView.widthAnchor.constraint(equalToConstant: xValueRatio(25)),
+            heartChargingImageView.heightAnchor.constraint(equalToConstant: yValueRatio(25))
         ])
     }
     
@@ -199,9 +280,9 @@ final class VoteMainViewController: HasCoordinatorViewController {
         bottomSheetView.addSubview(mainCommentLabel)
         mainCommentLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            mainCommentLabel.topAnchor.constraint(equalTo: bottomSheetView.topAnchor, constant: 20),
-            mainCommentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            mainCommentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            mainCommentLabel.topAnchor.constraint(equalTo: bottomSheetView.topAnchor, constant: yValueRatio(20)),
+            mainCommentLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(20)),
+            mainCommentLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: xValueRatio(-20))
         ])
     }
     
@@ -209,10 +290,10 @@ final class VoteMainViewController: HasCoordinatorViewController {
         bottomSheetView.addSubview(catLoadingView)
         catLoadingView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            catLoadingView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: 20),
+            catLoadingView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: yValueRatio(20)),
             catLoadingView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
-            catLoadingView.widthAnchor.constraint(equalToConstant: 300),
-            catLoadingView.heightAnchor.constraint(equalToConstant: 300)
+            catLoadingView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            catLoadingView.heightAnchor.constraint(equalToConstant: xValueRatio(300))
         ])
         bottomSheetView.bringSubviewToFront(catLoadingView)
         catLoadingView.isHidden = true
@@ -222,10 +303,10 @@ final class VoteMainViewController: HasCoordinatorViewController {
         bottomSheetView.addSubview(sleepingCatView)
         sleepingCatView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            sleepingCatView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: 20),
+            sleepingCatView.topAnchor.constraint(equalTo: mainCommentLabel.bottomAnchor, constant: yValueRatio(20)),
             sleepingCatView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
-            sleepingCatView.widthAnchor.constraint(equalToConstant: 300),
-            sleepingCatView.heightAnchor.constraint(equalToConstant: 300)
+            sleepingCatView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            sleepingCatView.heightAnchor.constraint(equalToConstant: xValueRatio(300))
         ])
         bottomSheetView.bringSubviewToFront(sleepingCatView)
         sleepingCatView.isHidden = true
@@ -235,13 +316,13 @@ final class VoteMainViewController: HasCoordinatorViewController {
         bottomSheetView.addSubview(startVoteButton)
         startVoteButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            startVoteButton.leadingAnchor.constraint(equalTo: bottomSheetView.leadingAnchor, constant: 20),
-            startVoteButton.trailingAnchor.constraint(equalTo: bottomSheetView.trailingAnchor, constant: -20),
-            startVoteButton.bottomAnchor.constraint(equalTo: bottomSheetView.bottomAnchor, constant: -70),
-            startVoteButton.heightAnchor.constraint(equalToConstant: 80)
+            startVoteButton.leadingAnchor.constraint(equalTo: bottomSheetView.leadingAnchor, constant: xValueRatio(20)),
+            startVoteButton.trailingAnchor.constraint(equalTo: bottomSheetView.trailingAnchor, constant: xValueRatio(-20)),
+            startVoteButton.bottomAnchor.constraint(equalTo: bottomSheetView.bottomAnchor, constant: yValueRatio(-70)),
+            startVoteButton.heightAnchor.constraint(equalToConstant: yValueRatio(80))
         ])
         bottomSheetView.bringSubviewToFront(startVoteButton)
-        startVoteButton.roundCorners(cornerRadius: 20)
+        startVoteButton.roundCorners(cornerRadius: xValueRatio(20))
     }
     
     private func layoutStartVoteLabel() {
@@ -260,12 +341,40 @@ final class VoteMainViewController: HasCoordinatorViewController {
         NSLayoutConstraint.activate([
             appearCatView.centerXAnchor.constraint(equalTo: bottomSheetView.centerXAnchor),
             appearCatView.bottomAnchor.constraint(equalTo: startVoteButton.topAnchor),
-            appearCatView.widthAnchor.constraint(equalToConstant: 300),
-            appearCatView.heightAnchor.constraint(equalToConstant: 300)
+            appearCatView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            appearCatView.heightAnchor.constraint(equalToConstant: xValueRatio(300))
         ])
         appearCatView.isHidden = true
     }
     
+    
+    private func layoutTutorialButton() {
+        view.addSubview(tutorialButton)
+        tutorialButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tutorialButton.bottomAnchor.constraint(equalTo: bottomSheetView.topAnchor, constant: yValueRatio(-5)),
+            tutorialButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: xValueRatio(20)),
+            tutorialButton.widthAnchor.constraint(equalToConstant: xValueRatio(180)),
+            tutorialButton.heightAnchor.constraint(equalToConstant: yValueRatio(60))
+        ])
+    }
+    
+    private func layoutTutorialView() {
+        view.addSubview(tutorialView)
+        tutorialView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tutorialView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            tutorialView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            tutorialView.widthAnchor.constraint(equalToConstant: xValueRatio(300)),
+            tutorialView.heightAnchor.constraint(equalToConstant: yValueRatio(450))
+        ])
+        tutorialView.addSubview(dismissButton)
+        dismissButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            dismissButton.trailingAnchor.constraint(equalTo: tutorialView.trailingAnchor, constant: xValueRatio(-10)),
+            dismissButton.topAnchor.constraint(equalTo: tutorialView.topAnchor, constant: xValueRatio(10))
+        ])
+    }
     // MARK: - Binding
     private func binding() {
         bindHeartSubject()
@@ -307,6 +416,8 @@ final class VoteMainViewController: HasCoordinatorViewController {
                 self?.configureStart()
             case .disable:
                 self?.configureDisable()
+            case .noneVotePare:
+                self?.configureNoneVotePare()
             }
         }.store(in: &cancellables)
     }
@@ -329,7 +440,7 @@ final class VoteMainViewController: HasCoordinatorViewController {
     private func configureReady() {
         catLoadingView.stop()
         catLoadingView.isHidden = true
-        mainCommentLabel.text = "투표가 준비됐어요!"
+        mainCommentLabel.text = "투표가 준비됐어요!\n당신의 펫피언에 투표해주세요 😆"
         startVoteButton.startAnimating()
         startVoteButton.isEnabled = true
         appearCatView.isHidden = false
@@ -354,6 +465,17 @@ final class VoteMainViewController: HasCoordinatorViewController {
         appearCatView.stop()
         appearCatView.isHidden = true
     }
+    
+    private func configureNoneVotePare() {
+        mainCommentLabel.text = "준비된 펫들이 없어요.. 😢"
+        startVoteButton.backgroundColor = .lightGray
+        startVoteButton.stopAnimating()
+        startVoteButton.isEnabled = false
+        appearCatView.isHidden = true
+        sleepingCatView.isHidden = true
+        startVoteLabel.isHidden = true
+        catLoadingView.isHidden = true
+    }
 }
 
 extension VoteMainViewController {
@@ -370,18 +492,17 @@ extension VoteMainViewController {
             animation.repeatCount = Float.infinity
             imageView.layer.add(animation, forKey: "pulse")
             imageView.translatesAutoresizingMaskIntoConstraints = false
-            imageView.widthAnchor.constraint(equalToConstant: 30).isActive = true
-            imageView.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            imageView.widthAnchor.constraint(equalToConstant: xValueRatio(30)).isActive = true
+            imageView.heightAnchor.constraint(equalToConstant: xValueRatio(30)).isActive = true
             return imageView
         }()
         
         return heartAnimatingView
     }
-
 }
 
 extension HeartType {
-        
+    
     func configureHeartImage(to view: UIImageView) {
         switch self {
         case .fill:

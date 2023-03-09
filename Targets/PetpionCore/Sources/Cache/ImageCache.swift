@@ -32,7 +32,7 @@ public final class ImageCache {
             }
         }
     }
-
+    
     // MARK: - Private Method
     public func image(url: NSURL) -> UIImage? {
         cachedImages.object(forKey: url)

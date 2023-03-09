@@ -24,7 +24,7 @@ final class MainViewController: HasCoordinatorViewController {
     lazy var mainCoordinator: MainCoordinator? = {
         return coordinator as? MainCoordinator
     }()
-    private let viewModel: MainViewModelProtocol
+    private var viewModel: MainViewModelProtocol
     private var cancellables = Set<AnyCancellable>()
     
     lazy var baseCollectionView: UICollectionView = UICollectionView(frame: .zero,
@@ -32,6 +32,8 @@ final class MainViewController: HasCoordinatorViewController {
     private lazy var popularBarButton = UIBarButtonItem(title: "#인기", style: .done, target: self, action: #selector(popularDidTapped))
     private lazy var latestBarButton = UIBarButtonItem(title: "#최신", style: .done, target: self, action: #selector(latestDidTapped))
     private lazy var baseCollectionViewDataSource = viewModel.makeBaseCollectionViewDataSource(parentViewController: self, collectionView: baseCollectionView)
+    
+    private let mainLoadingView: MainLoadingView = .init(frame: .zero)
     
     // MARK: - Initialize
     init(viewModel: MainViewModelProtocol) {
@@ -53,10 +55,12 @@ final class MainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
-        if viewModel.isFirstFetching {
-            viewModel.initializeEssentialAppData()
-        } else {
-            viewModel.updateCurrentFeeds()
+        if viewModel.willRefresh == false {
+            if viewModel.isFirstFetching {
+                viewModel.initializeEssentialAppData()
+            } else {
+                viewModel.updateCurrentFeeds()
+            }
         }
     }
     
@@ -70,6 +74,7 @@ final class MainViewController: HasCoordinatorViewController {
     // MARK: - Layout
     private func layout() {
         layoutBaseCollectionView()
+        layoutMainLoadingView()
     }
     
     private func layoutBaseCollectionView() {
@@ -83,6 +88,19 @@ final class MainViewController: HasCoordinatorViewController {
         ])
         baseCollectionView.contentInsetAdjustmentBehavior = .never
         baseCollectionView.alwaysBounceVertical = false
+    }
+    
+    
+    private func layoutMainLoadingView() {
+        view.addSubview(mainLoadingView)
+        mainLoadingView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            mainLoadingView.topAnchor.constraint(equalTo: view.topAnchor),
+            mainLoadingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mainLoadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mainLoadingView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        navigationController?.setNavigationBarHidden(true, animated: true)
     }
     
     // MARK: - Configure
@@ -183,7 +201,18 @@ final class MainViewController: HasCoordinatorViewController {
     
     // MARK: - binding
     private func binding() {
+        bindFirstFetchLoading()
         bindSortingOption()
+    }
+    
+    private func bindFirstFetchLoading() {
+        viewModel.firstFetchLoading.sink { [weak self] loadingFinish in
+            guard let strongSelf = self else { return }
+            if loadingFinish == true {
+                strongSelf.mainLoadingView.isHidden = true
+                strongSelf.navigationController?.setNavigationBarHidden(false, animated: true)
+            }
+        }.store(in: &cancellables)
     }
     
     private func bindSortingOption() {
@@ -211,7 +240,7 @@ extension MainViewController: BaseCollectionViewCellDelegation {
     }
     
     func refreshBaseCollectionView() {
-        viewModel.refreshCurrentFeed()
+        viewModel.refetchFeeds()
     }
     
     func profileStackViewDidTapped(with user: User) {
@@ -228,10 +257,14 @@ extension MainViewController: NotificationObservable {
     
     func addObserver() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidChange), name: Notification.Name(NotificationName.profileUpdated), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(updateData), name: Notification.Name(NotificationName.dataDidChange), object: nil)
     }
     
     func removeObserver() {
         NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.profileUpdated), object: nil)
+        
+        NotificationCenter.default.removeObserver(self, name: Notification.Name(NotificationName.dataDidChange), object: nil)
     }
     
     @objc func handleUserProfileDidChange(notification: Notification) {
@@ -239,4 +272,18 @@ extension MainViewController: NotificationObservable {
         viewModel.userDidUpdated(to: updatedUserProfile)
     }
     
+    @objc func updateData(notification: Notification) {
+        guard let userInfo = notification.userInfo, let action = userInfo["action"] as? String else {
+            return
+        }
+        
+        switch action {
+        case "refresh":
+            viewModel.willRefresh = true
+            viewModel.refetchFeeds()
+        default:
+            break
+        }
+    }
+
 }
