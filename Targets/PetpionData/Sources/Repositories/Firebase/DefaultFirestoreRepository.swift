@@ -692,13 +692,11 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                                 print("Error updating latestVoteTime field: \(error.localizedDescription)")
                                 return continuation.resume(returning: false)
                             } else {
-                                print("Successfully updated latestVoteTime field")
                                 return continuation.resume(returning: true)
                             }
                         }
                     } else {
                         return continuation.resume(returning: false)
-                        print("latestVoteTime field does not exist or is not of type Timestamp")
                     }
                 }
         }
