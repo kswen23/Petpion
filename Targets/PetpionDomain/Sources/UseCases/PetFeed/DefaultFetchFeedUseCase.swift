@@ -56,7 +56,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     public func fetchSpecificMonthFeeds(with date: Date, isFirst: Bool) async -> [PetpionFeed] {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월"
-        let specificMonthFeedsKey = "\(dateFormatter.string(from: date))"
         let fetchedFeeds = await firestoreRepository.fetchSpecificMonthPopularFeedArray(with: date, isFirst: isFirst)
         let updatedFeed: [PetpionFeed] = await updateDetailInformation(feeds: fetchedFeeds)
         let sortedResultFeeds = sortResultFeeds(sortBy: .popular, with: updatedFeed)
