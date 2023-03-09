@@ -22,7 +22,11 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
     
     // MARK: - Public
     public func initializeUserVoteChance(user: User) async -> Bool {
-        return await firestoreRepository.updateUserHeart(getVoteChance(user: user))
+        let willAddVoteChanceCount = getVoteChance(user: user)
+        let passedHour = getPassedHour(user: user)
+        let updatedUserHeartResult = await firestoreRepository.updateUserHeart(willAddVoteChanceCount)
+        let updatedUserLatestVoteTimeResult = await firestoreRepository.updateLatestVoteTime(passedHour)
+        return updatedUserHeartResult && updatedUserLatestVoteTimeResult
     }
         
     public func getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: Date) -> TimeInterval {
@@ -39,6 +43,17 @@ public final class DefaultCalculateVoteChanceUseCase: CalculateVoteChanceUseCase
             return maxVoteChance
         } else {
             return max(min(passedHour + user.voteChanceCount, maxVoteChance), 0)
+        }
+    }
+    
+    private func getPassedHour(user: User) -> Int {
+        let passedTimeInterval: Int = Int(Date.init().timeIntervalSince(user.latestVoteTime))
+        guard user.voteChanceCount != maxVoteChance else { return maxVoteChance}
+        let passedHour: Int = passedTimeInterval/3600
+        if passedHour >= maxVoteChance {
+            return maxVoteChance
+        } else {
+            return passedHour
         }
     }
 }
