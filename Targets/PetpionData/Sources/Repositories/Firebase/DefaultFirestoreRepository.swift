@@ -18,7 +18,6 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var specificDatePopularCursor: DocumentSnapshot?
     
     private let numberOfShards = 10
-    private let firestoreUID = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue)
     
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
@@ -325,7 +324,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func addUserListener(completion: @escaping ((User)-> Void)) {
-        guard let uid = firestoreUID else { return }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
         db
             .collection(FirestoreCollection.user.reference)
             .document(uid)
@@ -641,7 +640,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func updateUserLatestVoteTime() {
-        guard let uid = firestoreUID else { return }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
         db
             .collection(FirestoreCollection.user.reference)
             .document(uid)
@@ -653,7 +652,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func updateUserHeart(_ count: Int) async -> Bool {
-        guard let uid = firestoreUID else { return false }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return false }
         return await withCheckedContinuation { continuation in
             db
                 .collection(FirestoreCollection.user.reference)
@@ -669,8 +668,44 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
+    public func updateLatestVoteTime(_ hour: Int) async -> Bool {
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return false }
+        return await withCheckedContinuation { continuation in
+            let userRef = db
+                .collection(FirestoreCollection.user.reference)
+                .document(uid)
+            
+            userRef
+                .getDocument { (snapshot, error) in
+                    guard let snapshot = snapshot, snapshot.exists, error == nil else {
+                        print("Error retrieving latestVoteTime field: \(error?.localizedDescription ?? "unknown error")")
+                        return continuation.resume(returning: false)
+                    }
+                    
+                    if let latestVoteTime = snapshot.data()?["latestVoteTime"] as? Timestamp {
+                        let updatedLatestVoteTime = latestVoteTime.dateValue().addingTimeInterval(TimeInterval(hour * 60 * 60))
+                        
+                        userRef.updateData([
+                            "latestVoteTime": updatedLatestVoteTime
+                        ]) { error in
+                            if let error = error {
+                                print("Error updating latestVoteTime field: \(error.localizedDescription)")
+                                return continuation.resume(returning: false)
+                            } else {
+                                print("Successfully updated latestVoteTime field")
+                                return continuation.resume(returning: true)
+                            }
+                        }
+                    } else {
+                        return continuation.resume(returning: false)
+                        print("latestVoteTime field does not exist or is not of type Timestamp")
+                    }
+                }
+        }
+    }
+    
     public func updateUserNickname(_ nickname: String) async -> Bool {
-        guard let uid = firestoreUID else { return false }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return false }
         return await withCheckedContinuation { continuation in
             db
                 .collection(FirestoreCollection.user.reference)
@@ -687,7 +722,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func plusUserHeart() {
-        guard let uid = firestoreUID else { return }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
         db
             .collection(FirestoreCollection.user.reference)
             .document(uid)
@@ -699,7 +734,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     }
     
     public func minusUserHeart() {
-        guard let uid = firestoreUID else { return }
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else { return }
         db
             .collection(FirestoreCollection.user.reference)
             .document(uid)
