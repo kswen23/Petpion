@@ -314,15 +314,15 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
     private func configureDetailFeedAlertViewController() {
         detailFeedAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         if let detailFeedAlertController = detailFeedAlertController {
-            let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
-                guard let strongSelf = self else { return }
-                if User.isBlockedFeed(feed: strongSelf.viewModel.feed) {
-                    self?.configureToastAnimationLabel(actionType: .block)
-                    self?.startToastLabelAnimation()
-                } else {
-                    
-                }
-            })
+//            let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
+//                guard let strongSelf = self else { return }
+//                if User.isBlockedFeed(feed: strongSelf.viewModel.feed) {
+//                    self?.configureToastAnimationLabel(actionType: .block)
+//                    self?.startToastLabelAnimation()
+//                } else {
+//
+//                }
+//            })
             let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
                 guard let strongSelf = self else { return }
                 if User.isReportedFeed(feed: strongSelf.viewModel.feed) {
@@ -334,7 +334,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             })
             let cancel = UIAlertAction(title: "취소", style: .cancel)
             
-            [blockFeed, reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+            [reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
         }
     }
     

@@ -37,7 +37,7 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-
+    
     private lazy var settingCategoryStackViewArray: [SettingCategoryStackView] = SettingModel.SettingCategory.allCases.map { SettingCategoryStackView(category: $0) }
     
     private lazy var profileSettingView: SettingProfileView = .init()
@@ -48,6 +48,15 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         stackView.spacing = 20
         settingCategoryStackViewArray.forEach { stackView.addArrangedSubview($0) }
         return stackView
+    }()
+    
+    private lazy var appVersionLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .lightGray
+        label.font = .systemFont(ofSize: 12)
+        label.text = "앱 버전: 1.0.0"
+        label.sizeToFit()
+        return label
     }()
     
     // MARK: - Initialize
@@ -74,7 +83,6 @@ final class LoggedInSettingViewController: SettingCustomViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
         layout()
         configureLogoutAlertController()
         settingCategoryStackViewArray.forEach { $0.settingCategoryStackViewListener = self }
@@ -86,6 +94,7 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         layoutBaseScrollView()
         layoutProfileSettingView()
         layoutStackview()
+        layoutAppVersionLabel()
     }
     
     private func layoutBaseScrollView() {
@@ -130,6 +139,15 @@ final class LoggedInSettingViewController: SettingCustomViewController {
         ])
     }
     
+    private func layoutAppVersionLabel() {
+        baseContentView.addSubview(appVersionLabel)
+        appVersionLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            appVersionLabel.bottomAnchor.constraint(equalTo: baseContentView.bottomAnchor, constant: yValueRatio(-30)),
+            appVersionLabel.centerXAnchor.constraint(equalTo: baseContentView.centerXAnchor)
+        ])
+    }
+    
     // MARK: - Configure
     private func configureProfileSettingView(with user: User) {
         profileSettingView.configureSettingProfileView(with: user)
@@ -170,7 +188,7 @@ extension LoggedInSettingViewController: SettingCategoryStackViewDelegate, Setti
     func profileViewDidTapped() {
         loggedInSettingCoordinator?.startSettingActionScene(with: .profile)
     }
-
+    
 }
 
 extension LoggedInSettingViewController: NotificationObservable {

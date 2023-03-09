@@ -87,12 +87,8 @@ public struct PresentationDIContainer: Containable {
                     return EditProfileCoordinator(navigationController: navigationController)
                 case .alert:
                     return EditAlertCoordinator(navigationController: navigationController)
-                case .version:
-                    return EditProfileCoordinator(navigationController: navigationController)
                 case .termsOfService:
-                    return EditProfileCoordinator(navigationController: navigationController)
-                case .openLicense:
-                    return EditProfileCoordinator(navigationController: navigationController)
+                    return TermsOfServiceCoordinator(navigationController: navigationController)
                 case .manageBlockedUser:
                     return ManageBlockedUserCoordinator(navigationController: navigationController)
                 case .logout:

@@ -205,11 +205,12 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
     // MARK: - Private
     private func getFeedSize(imageRatio: CellAspectRatio, message: String) -> CGSize {
         var height = imageRatio.heightRatio*12 + 4
-        if message.count > 15 {
+        if message.contains("\n") || message.count > 15 {
+            height += 4
+        } else {
             height += 2
-        } else if message.count > 0 {
-            height += 1
         }
+        
         return CGSize(width: 12, height: height)
     }
 }
