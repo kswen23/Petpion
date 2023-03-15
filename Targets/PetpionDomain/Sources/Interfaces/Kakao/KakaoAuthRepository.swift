@@ -10,10 +10,8 @@ public protocol KakaoAuthRepository {
     
     func checkKakaoAccessTokenExistence() -> Bool
     
-    func startKakaoLogin() async -> Bool
     func startKakaoLogin(_ completion: @escaping ((Bool) -> Void))
 
-    func getKakaoUserIdentifier() async -> String
     func getKakaoUserIdentifier(_ completion: @escaping ((String)-> Void))
     func unlink()
 }

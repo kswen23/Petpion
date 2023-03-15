@@ -20,75 +20,71 @@ public struct DomainDIContainer: Containable {
     }
     
     private func registerUseCases() {
-        guard let firestoreRepository: FirestoreRepository = container.resolve(FirestoreRepository.self),
-              let firebaseStorageRepository: FirebaseStorageRepository = container.resolve(FirebaseStorageRepository.self),
-              let firebaseAuthRepository: FirebaseAuthRepository = container.resolve(FirebaseAuthRepository.self),
-              let kakaoAuthRepository: KakaoAuthRepository = container.resolve(KakaoAuthRepository.self)
-        else { return }
-        
-        container.register(FetchFeedUseCase.self) { _ in
-            DefaultFetchFeedUseCase(firestoreRepository: firestoreRepository,
-                                           firebaseStorageRepository: firebaseStorageRepository)
+        container.register(FetchFeedUseCase.self) { resolver in
+            DefaultFetchFeedUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                    firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(FetchUserUseCase.self) { _ in
-            DefaultFetchUserUseCase(firestoreRepository: firestoreRepository,
-                                    firebaseStorageRepository: firebaseStorageRepository)
+        container.register(FetchUserUseCase.self) { resolver in
+            DefaultFetchUserUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                    firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(DeleteFeedUseCase.self) { _ in
-            DefaultDeleteFeedUseCase(firestoreRepository: firestoreRepository,
-                                     firebaseStorageRepository: firebaseStorageRepository)
+        container.register(DeleteFeedUseCase.self) { resolver in
+            DefaultDeleteFeedUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                     firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(UploadFeedUseCase.self) { _ in
-            DefaultUploadFeedUseCase(firestoreRepository: firestoreRepository,
-                                            firebaseStorageRepository: firebaseStorageRepository)
+        container.register(UploadFeedUseCase.self) { resolver in
+            DefaultUploadFeedUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                     firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(MakeVoteListUseCase.self) { _ in
-            DefaultMakeVoteListUseCase(firestoreRepository: firestoreRepository,
-                                              firebaseStorageRepository: firebaseStorageRepository)
+        container.register(MakeVoteListUseCase.self) { resolver in
+            DefaultMakeVoteListUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                       firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(VotePetpionUseCase.self) { _ in
-            DefaultVotePetpionUseCase(firestoreRepository: firestoreRepository)
+        container.register(VotePetpionUseCase.self) { resolver in
+            DefaultVotePetpionUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!)
         }
         
-        container.register(LoginUseCase.self) { _ in
-            DefaultLoginUseCase(firebaseAuthRepository: firebaseAuthRepository,
-                                firestoreRepository: firestoreRepository,
-                                kakaoAuthReporitory: kakaoAuthRepository)
+        container.register(LoginUseCase.self) { resolver in
+            DefaultLoginUseCase(firebaseAuthRepository: resolver.resolve(FirebaseAuthRepository.self)!,
+                                firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                kakaoAuthReporitory: resolver.resolve(KakaoAuthRepository.self)!)
         }
         
-        container.register(UploadUserUseCase.self) { _ in
-            DefaultUploadUserUseCase(firestoreRepository: firestoreRepository,
-                                     firebaseStorageRepository: firebaseStorageRepository)
+        container.register(UploadUserUseCase.self) { resolver in
+            DefaultUploadUserUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                     firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!)
         }
         
-        container.register(CalculateVoteChanceUseCase.self) { _ in
-            DefaultCalculateVoteChanceUseCase(firestoreRepository: firestoreRepository)
+        container.register(CalculateVoteChanceUseCase.self) { resolver in
+            DefaultCalculateVoteChanceUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!)
         }
         
-        container.register(CheckPreviousMonthRankingUseCase.self) { _ in
-            DefaultCheckPreviousMonthRankingUseCase(firestoreRepository: firestoreRepository)
+        container.register(CheckPreviousMonthRankingUseCase.self) { resolver in
+            DefaultCheckPreviousMonthRankingUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!)
         }
         
         container.register(MakeNotificationUseCase.self) { _ in
             DefaultMakeNotificationUseCase()
         }
         
-        container.register(ReportUseCase.self) { _ in
-            DefaultReportUseCase(firestoreRepository: firestoreRepository)
+        container.register(ReportUseCase.self) { resolver in
+            DefaultReportUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!)
         }
         
-        container.register(BlockUseCase.self) { _ in
-            DefaultBlockUseCase(firestoreRepository: firestoreRepository)
+        container.register(BlockUseCase.self) { resolver in
+            DefaultBlockUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!)
         }
         
-        container.register(SignOutUseCase.self) { _ in
-            DefaultSignOutUseCase(firestoreRepository: firestoreRepository, firebaseStorageRepository: firebaseStorageRepository, firebaseAuthRepository: firebaseAuthRepository)
+        container.register(SignOutUseCase.self) { resolver in
+            DefaultSignOutUseCase(firestoreRepository: resolver.resolve(FirestoreRepository.self)!,
+                                  firebaseStorageRepository: resolver.resolve(FirebaseStorageRepository.self)!,
+                                  firebaseAuthRepository: resolver.resolve(FirebaseAuthRepository.self)!)
         }
-        
     }
+
 }

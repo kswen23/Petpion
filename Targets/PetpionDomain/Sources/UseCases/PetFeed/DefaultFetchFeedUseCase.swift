@@ -24,7 +24,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     
     // MARK: - Public
     public func fetchInitialFeedPerSortingOption() async -> [[PetpionFeed]] {
-        let result = await withTaskGroup(of: (SortingOption, [PetpionFeed]).self) { taskGroup -> [[PetpionFeed]] in
+        await withTaskGroup(of: (SortingOption, [PetpionFeed]).self) { taskGroup -> [[PetpionFeed]] in
             for option in SortingOption.allCases {
                 taskGroup.addTask {
                     let fetchedFeed: [PetpionFeed] = await self.fetchFeed(isFirst: true, option: option)
@@ -37,7 +37,6 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
             }
             return resultFeedArr
         }
-        return result
     }
     
     public func fetchFeed(isFirst: Bool, option: SortingOption) async -> [PetpionFeed] {

@@ -16,14 +16,6 @@ final class DefaultKakaoAuthRepository: KakaoAuthRepository {
         AuthApi.hasToken()
     }
     
-    func startKakaoLogin() async -> Bool {
-        if UserApi.isKakaoTalkLoginAvailable() == true {
-            return await kakaoLoginWithApp()
-        } else {
-            return await kakaoLoginWithWeb()
-        }
-    }
-    
     func startKakaoLogin(_ completion: @escaping ((Bool) -> Void)) {
         if UserApi.isKakaoTalkLoginAvailable() == true {
             kakaoLoginWithApp { result in
@@ -32,22 +24,6 @@ final class DefaultKakaoAuthRepository: KakaoAuthRepository {
         } else {
             kakaoLoginWithWeb { result in
                 completion(result)
-            }
-        }
-    }
-    
-    func getKakaoUserIdentifier() async -> String {
-        await withCheckedContinuation { continuation in
-            UserApi.shared.me() { (user, error) in
-                if let error = error {
-                    print(error.localizedDescription)
-                }
-                
-                if let userID = user?.id {
-                    continuation.resume(returning: String(describing: userID))
-                } else {
-                    continuation.resume(returning: "error")
-                }
             }
         }
     }
@@ -63,49 +39,20 @@ final class DefaultKakaoAuthRepository: KakaoAuthRepository {
             }
         }
     }
-
+    
     
     // MARK: - Login with App/Web
-    func kakaoLoginWithApp() async -> Bool {
-        await withCheckedContinuation { continuation in
-            UserApi.shared.loginWithKakaoTalk {(_, error) in
-                if let error = error {
-                    print(error)
-                    continuation.resume(returning: false)
-                }
-                else {
-                    print("kakaoLoginWithApp() success.")
-                    continuation.resume(returning: true)
-                }
-            }
-        }
-    }
-
     func kakaoLoginWithApp(_ completion: @escaping ((Bool) -> Void)) {
-        UserApi.shared.loginWithKakaoTalk {(_, error) in
+        UserApi.shared.loginWithKakaoTalk {(token, error) in
             if let error = error {
                 print(error)
                 completion(false)
             }
             else {
+                print("token?.accessToken): \(String(describing: token?.accessToken))")
+                print("token?.refreshToken): \(String(describing: token?.refreshToken))")
                 print("kakaoLoginWithApp() success.")
                 completion(true)
-            }
-        }
-    }
-
-    
-    func kakaoLoginWithWeb() async -> Bool {
-        await withCheckedContinuation { continuation in
-            UserApi.shared.loginWithKakaoAccount {(_, error) in
-                if let error = error {
-                    print(error)
-                    continuation.resume(returning: false)
-                }
-                else {
-                    print("kakaoLoginWithApp() success.")
-                    continuation.resume(returning: true)
-                }
             }
         }
     }
