@@ -412,12 +412,10 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                 .getDocuments { (snapshot, error) in
                     if let error = error {
                         print(error.localizedDescription)
-                        return continuation.resume(returning: false)
                     }
-                    if snapshot != nil {
-                        return continuation.resume(returning: true)
+                    if let documentIsEmpty = snapshot?.documents.isEmpty {
+                        return continuation.resume(returning: !documentIsEmpty)
                     }
-                    return continuation.resume(returning: false)
                 }
         }
     }

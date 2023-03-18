@@ -227,13 +227,13 @@ final class InputProfileViewController: SettingCustomViewController {
                 self?.navigationItem.rightBarButtonItem = strongSelf.indicatorBarButton
             case .duplicatedEmail:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
-                self?.configureEmailResultLabel()
+                self?.configureDuplicatedEmail()
             case .duplicatedNickname:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
                 self?.configureDuplicatedNickName()
             case .duplicatedEmailNickname:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
-                self?.configureEmailResultLabel()
+                self?.configureDuplicatedEmail()
                 self?.configureDuplicatedNickName()
             case .startUpdating:
                 self?.viewModel.signIn()
