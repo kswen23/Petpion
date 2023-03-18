@@ -40,10 +40,12 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
     private func animatePresent(using transitionContext: UIViewControllerContextTransitioning) {
         let containerView = transitionContext.containerView
         guard let transitionViewController = transitionContext.viewController(forKey: .from),
-              let fromViewController = (transitionViewController as? UINavigationController)?.viewControllers[0] as? MainViewController,
+              let fromViewController = (transitionViewController as? UINavigationController)?.viewControllers.last as? MainViewController,
               let toViewController = transitionViewController.presentedViewController as? PresentableDetailFeedViewController,
               let baseCollectionViewCell = fromViewController.baseCollectionView.cellForItem(at: dependency.baseCellIndexPath) as? BaseCollectionViewCell,
-              let selectedFeedCell = baseCollectionViewCell.petFeedCollectionView.cellForItem(at: dependency.feedCellIndexPath) as? PetFeedCollectionViewCell else { return }
+              let selectedFeedCell = baseCollectionViewCell.petFeedCollectionView.cellForItem(at: dependency.feedCellIndexPath) as? PetFeedCollectionViewCell else {
+            return
+        }
         let cellImageViewFrame = selectedFeedCell.convert(selectedFeedCell.thumbnailImageView.frame, to: toViewController.view)
         let cellBaseViewFrame = selectedFeedCell.convert(selectedFeedCell.baseView.frame, to: toViewController.view)
         
@@ -75,7 +77,7 @@ final class FeedTransitionAnimation: NSObject, UIViewControllerAnimatedTransitio
         let containerView = transitionContext.containerView
         guard let transitionViewController = transitionContext.viewController(forKey: .from),
               let fromViewController = transitionViewController as? PresentableDetailFeedViewController,
-              let toViewController = (transitionContext.viewController(forKey: .to) as? UINavigationController)?.viewControllers[0] as? MainViewController,
+              let toViewController = (transitionContext.viewController(forKey: .to) as? UINavigationController)?.viewControllers.last as? MainViewController,
               let baseCollectionViewCell = toViewController.baseCollectionView.cellForItem(at: dependency.baseCellIndexPath) as? BaseCollectionViewCell,
               let selectedFeedCell = baseCollectionViewCell.petFeedCollectionView.cellForItem(at: dependency.feedCellIndexPath) as? PetFeedCollectionViewCell else { return }
         let originImage = selectedFeedCell.thumbnailImageView.image
