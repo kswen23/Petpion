@@ -413,7 +413,9 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
             imageSlider.isHidden = false
         }
         detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
-        settingButton.isHidden = false
+        if User.isLogin() {
+            settingButton.isHidden = false
+        }
         profileStackView.isHidden = false
         battleStackView.isHidden = false
         commentLabel.isHidden = false
