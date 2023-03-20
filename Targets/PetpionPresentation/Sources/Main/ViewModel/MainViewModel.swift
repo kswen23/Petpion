@@ -98,18 +98,26 @@ final class MainViewModel: MainViewModelProtocol {
     func initializeEssentialAppData() {
         Task {
             await checkPreviousMonthRanking.checkPreviousMonthRankingDidUpdated()
-            guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else {
-                return await fetchInit()
+            if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) {
+                await isLoginEssentialInit()
+            } else {
+                await fetchInit()
             }
-            let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
-            User.currentUser = fetchedUser
-            await initializeUserActionData()
-            await fetchInit()
-            await fetchBlockedUser()
-            if await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser) {
-                fetchUserUseCase.bindUser { fetchedUser in
-                    User.currentUser = fetchedUser
-                }
+        }
+    }
+    
+    private func isLoginEssentialInit() async {
+        guard let uid = UserDefaults.standard.string(forKey: UserInfoKey.firebaseUID.rawValue) else {
+            return
+        }
+        let fetchedUser = await fetchUserUseCase.fetchUser(uid: uid)
+        User.currentUser = fetchedUser
+        await initializeUserActionData()
+        await fetchInit()
+        await fetchBlockedUser()
+        if await calculateVoteChanceUseCase.initializeUserVoteChance(user: fetchedUser) {
+            fetchUserUseCase.bindUser { fetchedUser in
+                User.currentUser = fetchedUser
             }
         }
     }

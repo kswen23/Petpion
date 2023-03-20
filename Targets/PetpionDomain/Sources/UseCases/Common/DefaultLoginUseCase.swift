@@ -80,7 +80,13 @@ public final class DefaultLoginUseCase: LoginUseCase {
          UserInfoKey.firebaseUID.rawValue].forEach {
             UserDefaults.standard.removeObject(forKey: $0)
         }
+
         User.currentUser = nil
+        User.reportedUserIDArray = nil
+        User.reportedFeedIDArray = nil
+        User.blockedUserIDArray = nil
+        User.blockedFeedIDArray = nil
+        User.blockedUserArray = nil
     }
     
     public func unlinkFirebaseAuth() async -> Bool {
