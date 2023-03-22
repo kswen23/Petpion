@@ -64,9 +64,29 @@ func makePetpionAppTarget(
         
         let platform = platform
         let infoPlist: [String: InfoPlist.Value] = [
+            "CFBundleDevelopmentRegion": "$(DEVELOPMENT_LANGUAGE)",
+            "CFBundleExecutable": "$(EXECUTABLE_NAME)",
+            "CFBundleIdentifier": "$(PRODUCT_BUNDLE_IDENTIFIER)",
+            "CFBundleName": "$(PRODUCT_NAME)",
+            "CFBundlePackageType": "APPL",
+            "CFBundleShortVersionString": "1.0",
+            "CFBundleURLTypes": [
+                [
+                    "CFBundleTypeRole": "Editor",
+                    "CFBundleURLSchemes": [
+                        "kakao1dbd3642db36275e36ccaf9b6556752d"
+                    ]
+                ]
+            ],
             "CFBundleVersion": "1",
-            "UIUserInterfaceStyle": "Light",
-            "UILaunchStoryboardName": "LaunchScreen",
+            "KAKAO_API_KEY": "1dbd3642db36275e36ccaf9b6556752d",
+            "LSApplicationQueriesSchemes": [
+                "kakaokompassauth",
+                "kakaolink"
+            ],
+            "LSRequiresIPhoneOS": true,
+            "NSCameraUsageDescription": "카메라 접근 권한 요청",
+            "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청",
             "UIApplicationSceneManifest": [
                 "UIApplicationSupportsMultipleScenes": false,
                 "UISceneConfigurations": [
@@ -74,15 +94,23 @@ func makePetpionAppTarget(
                         [
                             "UISceneConfigurationName": "Default Configuration",
                             "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
-                        ],
+                        ]
                     ]
                 ]
             ],
-//            "CFBundleURLTypes": ["CFBundleTypeRole": "Editor", "CFBundleURLSchemes": ["kakao1dbd3642db36275e36ccaf9b6556752d"]],
-            "KAKAO_API_KEY": "1dbd3642db36275e36ccaf9b6556752d",
-            "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
-            "NSPhotoLibraryUsageDescription": "사진첩 접근 권한 요청"
+            "UILaunchStoryboardName": "LaunchScreen",
+            "UIRequiredDeviceCapabilities": [
+                "arm64"
+            ],
+            "UISupportedInterfaceOrientations": [
+                "UIInterfaceOrientationPortrait"
+            ],
+            "UISupportedInterfaceOrientations~ipad": [
+                "UIInterfaceOrientationPortrait"
+            ],
+            "UIUserInterfaceStyle": "Light"
         ]
+
         
         return .init(
             name: "Petpion",

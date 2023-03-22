@@ -98,6 +98,7 @@ final class MainViewModel: MainViewModelProtocol {
     func initializeEssentialAppData() {
         Task {
             await checkPreviousMonthRanking.checkPreviousMonthRankingDidUpdated()
+            
             if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) {
                 await isLoginEssentialInit()
             } else {
