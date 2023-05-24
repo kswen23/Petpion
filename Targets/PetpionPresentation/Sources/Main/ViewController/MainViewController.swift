@@ -55,13 +55,7 @@ final class MainViewController: HasCoordinatorViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.tintColor = .black
         configureNavigationItem()
-        if viewModel.willRefresh == false {
-            if viewModel.isFirstFetching {
-                viewModel.initializeEssentialAppData()
-            } else {
-                viewModel.updateCurrentFeeds()
-            }
-        }
+        viewModel.startFetchingFeed()
     }
     
     override func viewDidLoad() {

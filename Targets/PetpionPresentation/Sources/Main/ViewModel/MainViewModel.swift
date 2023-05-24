@@ -14,6 +14,7 @@ import PetpionCore
 import PetpionDomain
 
 protocol MainViewModelInput {
+    func startFetchingFeed()
     func initializeEssentialAppData()
     func fetchInit() async
     func fetchNextFeed()
@@ -83,6 +84,17 @@ final class MainViewModel: MainViewModelProtocol {
         self.blockUseCase = blockUseCase
     }
     
+    func startFetchingFeed() {
+        if willRefresh == false {
+            if isFirstFetching {
+                initializeEssentialAppData()
+            } else {
+                updateCurrentFeeds()
+            }
+        }
+    }
+
+    
     func fetchInit() async {
         let initialFeed = await fetchFeedUseCase.fetchInitialFeedPerSortingOption()
         await MainActor.run {
@@ -96,7 +108,8 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     func initializeEssentialAppData() {
-        Task {
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
             await checkPreviousMonthRanking.checkPreviousMonthRankingDidUpdated()
             
             if UserDefaults.standard.bool(forKey: UserInfoKey.isLogin.rawValue) {
@@ -217,13 +230,15 @@ final class MainViewModel: MainViewModelProtocol {
     }
     
     func updateCurrentFeeds() {
-        Task {
-            let popularFeeds = await fetchFeedUseCase.updateFeeds(origin: popularFeedSubject.value)
-            let latestFeeds = await fetchFeedUseCase.updateFeeds(origin: latestFeedSubject.value)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            
+            async let popularFeeds =  fetchFeedUseCase.updateFeeds(origin: popularFeedSubject.value)
+            async let latestFeeds =  fetchFeedUseCase.updateFeeds(origin: latestFeedSubject.value)
             
             await MainActor.run { [popularFeeds, latestFeeds] in
-                popularFeedSubject.send(popularFeeds)
-                latestFeedSubject.send(latestFeeds)
+                self.popularFeedSubject.send(popularFeeds)
+                self.latestFeedSubject.send(latestFeeds)
             }
         }
     }

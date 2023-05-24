@@ -240,13 +240,12 @@ final class PetFeedCollectionViewCell: UICollectionViewCell {
         likeCountLabel.text = String(viewModel.likeCount)
     }
     
-    func configureThumbnailImageView(_ url: URL?) {
-        if let cachedImage = ImageCache.shared.image(url: url! as NSURL) {
+    func configureThumbnailImageView(_ url: URL) {
+        if let cachedImage = ImageCache.shared.image(url: url as NSURL) {
             thumbnailImageView.image = cachedImage
         } else {
             thumbnailImageView.startShimmerAnimating()
             Task {
-                guard let url = url else { return }
                 let thumbnailImage = await ImageCache.shared.loadImage(url: url as NSURL)
                 await MainActor.run {
                     thumbnailImageView.stopShimmerAnimating()
@@ -292,7 +291,7 @@ extension PetFeedCollectionViewCell {
     
     struct ViewModel {
         
-        let thumbnailImageURL: URL?
+        let thumbnailImageURL: URL
         let profileImage: UIImage
         let thumbnailRatio: Double
         let imageCount: Int
@@ -302,7 +301,7 @@ extension PetFeedCollectionViewCell {
         let ranking: Int?
         
         init(petpionFeed: PetpionFeed) {
-            self.thumbnailImageURL = petpionFeed.imageURLArr?[0]
+            self.thumbnailImageURL = petpionFeed.imageURLArr![0]
             self.profileImage = petpionFeed.uploader.profileImage ?? User.defaultProfileImage
             self.thumbnailRatio = petpionFeed.imageRatio
             self.imageCount = petpionFeed.imageCount
