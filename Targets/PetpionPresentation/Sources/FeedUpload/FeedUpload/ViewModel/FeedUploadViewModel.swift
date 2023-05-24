@@ -97,7 +97,7 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
         return snapshot
     }.eraseToAnyPublisher()
     
-    let textViewPlaceHolder: String = "내 펫을 소개해주세요!"
+    let textViewPlaceHolder: String = "부적절하거나 불쾌감을 줄 수 있는 컨텐츠는 제재를 받을 수 있습니다."
     let selectedImages: [UIImage]
     let uploadFeedUseCase: UploadFeedUseCase
     
@@ -106,10 +106,6 @@ final class FeedUploadViewModel: FeedUploadViewModelProtocol {
          uploadFeedUseCase: UploadFeedUseCase) {
         self.selectedImages = selectedImages
         self.uploadFeedUseCase = uploadFeedUseCase
-    }
-    
-    deinit {
-        print("FeedUploadViewModel deinit")
     }
     
     // MARK: - Input
