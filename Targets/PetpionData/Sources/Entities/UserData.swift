@@ -15,7 +15,6 @@ struct UserData {
     public typealias Identifier = String
     
     public var userID: Identifier
-    public var email: String
     public var nickname: String
     public var latestVoteTimestamp: Timestamp
     public var voteChanceCount: Double
@@ -25,9 +24,8 @@ struct UserData {
     public var second: Double
     public var third: Double
     
-    public init(userID: Identifier, email: String, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double, signInType: String, kakaoID: String?, first: Double, second: Double, third: Double) {
+    public init(userID: Identifier, nickname: String, latestVoteTimestamp: Timestamp, voteChanceCount: Double, signInType: String, kakaoID: String?, first: Double, second: Double, third: Double) {
         self.userID = userID
-        self.email = email
         self.nickname = nickname
         self.latestVoteTimestamp = latestVoteTimestamp
         self.voteChanceCount = voteChanceCount
@@ -40,7 +38,6 @@ struct UserData {
     
     public init(user: User) {
         self.userID = user.id
-        self.email = user.email
         self.nickname = user.nickname
         self.latestVoteTimestamp = Timestamp.init()
         self.voteChanceCount = Double(user.voteChanceCount)
@@ -56,7 +53,6 @@ struct UserData {
 extension UserData {
     
     static let empty: Self = .init(userID: "",
-                                   email: "",
                                    nickname: "",
                                    latestVoteTimestamp: .init(),
                                    voteChanceCount: .nan,
@@ -69,7 +65,6 @@ extension UserData {
     static func toKeyValueCollections(_ data: Self) -> [String: Any] {
         return [
             "userID": data.userID,
-            "userEmail": data.email,
             "userNickname": data.nickname,
             "latestVoteTime": data.latestVoteTimestamp,
             "voteChanceCount": data.voteChanceCount,
@@ -86,7 +81,6 @@ extension UserData {
         for (key, value) in data {
             switch key {
             case "userID": result.userID = value as? String ?? .init()
-            case "userEmail": result.email = value as? String ?? ""
             case "userNickname": result.nickname = value as? String ?? ""
             case "latestVoteTime": result.latestVoteTimestamp = value as? Timestamp ?? Timestamp.init()
             case "voteChanceCount": result.voteChanceCount = value as? Double ?? 0
@@ -104,7 +98,6 @@ extension UserData {
 
     static func toUser(_ data: Self) -> User {
         .init(id: data.userID,
-              email: data.email,
               nickName: data.nickname,
               latestVoteTime: data.latestVoteTimestamp.dateValue(),
               voteChanceCount: Int(data.voteChanceCount),

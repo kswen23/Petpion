@@ -241,7 +241,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
         
         return await withCheckedContinuation { [weak self] continuation in
-            guard let strongSelf = self else { return }
+            guard let self else { return }
             var query = getSpecificMonthFamousQuery(date: date)
             
             if let specificDatePopularCursor = specificDatePopularCursor,
@@ -256,7 +256,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         continuation.resume(returning: [])
                     } else {
                         if let result = snapshot?.documents {
-                            strongSelf.specificDatePopularCursor = result.last
+                            self.specificDatePopularCursor = result.last
                             
                             let fetchedFeedArray = result
                                 .map { $0.data() }
@@ -774,7 +774,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
                         resultUploaderArr.append((rank, userID))
                         previousLikeCount = likeCount
                     }
-                    
+                    return continuation.resume(returning: (true, resultUploaderArr))
                 }
         }
     }

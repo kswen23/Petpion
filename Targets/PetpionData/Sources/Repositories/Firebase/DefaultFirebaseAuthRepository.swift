@@ -82,7 +82,7 @@ final class DefaultFirebaseAuthRepository: FirebaseAuthRepository {
         var deleteResult = false
         if let kakaoUser = Auth.auth().currentUser,
            let kakaoID = user.kakaoID {
-            let credential = EmailAuthProvider.credential(withEmail: user.email, password: kakaoID)
+            let credential = EmailAuthProvider.credential(withEmail: "\(kakaoID)@kakao.com", password: kakaoID)
             do {
                 _ = try await kakaoUser.reauthenticate(with: credential)
                 deleteResult = await deleteFirebaseAuthUser(user: kakaoUser)

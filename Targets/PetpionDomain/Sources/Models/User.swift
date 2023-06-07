@@ -13,7 +13,6 @@ public struct User: Identifiable {
     public typealias Identifier = String
     
     public var id: Identifier
-    public var email: String
     public var nickname: String
     public var latestVoteTime: Date
     public var voteChanceCount: Int
@@ -26,7 +25,6 @@ public struct User: Identifiable {
     public var third: Int
     
     public init(id: String,
-                email: String,
                 nickName: String,
                 latestVoteTime: Date,
                 voteChanceCount: Int,
@@ -38,7 +36,6 @@ public struct User: Identifiable {
                 second: Int = 0,
                 third: Int = 0) {
         self.id = id
-        self.email = email
         self.nickname = nickName
         self.latestVoteTime = latestVoteTime
         self.voteChanceCount = voteChanceCount
@@ -102,7 +99,7 @@ public extension User {
     
     static let voteMaxCountPolicy: Int = 5
     
-    static let empty: Self = .init(id: "", email: "", nickName: "", latestVoteTime: .init(), voteChanceCount: voteMaxCountPolicy, imageURL: nil, signInType: .appleID, kakaoID: nil)
+    static let empty: Self = .init(id: "", nickName: "", latestVoteTime: .init(), voteChanceCount: voteMaxCountPolicy, imageURL: nil, signInType: .appleID, kakaoID: nil)
     
     static func getProfileImageData(user: Self) -> Data {
         guard let image = user.profileImage else { return .init() }

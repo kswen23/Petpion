@@ -31,52 +31,6 @@ final class InputProfileViewController: SettingCustomViewController {
         inputProfileCoordinator?.presentProfileImagePickerViewController(parentableViewController: self)
     }
     
-    private let emailTitleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .lightGray
-        label.text = "이메일"
-        label.sizeToFit()
-        return label
-    }()
-    
-    private lazy var emailTextField: UITextField = {
-        let textField = UITextField()
-        textField.smartDashesType = .no
-        textField.smartQuotesType = .no
-        textField.autocorrectionType = .no
-        textField.backgroundColor = .petpionLightGray
-        textField.layer.borderWidth = 0.3
-        textField.layer.borderColor = UIColor.lightGray.cgColor
-        textField.roundCorners(cornerRadius: 15)
-        textField.font = .systemFont(ofSize: 15)
-        textField.placeholder = "이메일을 설정해 주세요."
-        textField.textColor = .black
-        textField.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        textField.clearButtonMode = .always
-        textField.addLeftPadding()
-        return textField
-    }()
-    
-    private let emailResultLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .lightGray
-        label.text = "이메일은 한번 설정하면 변경할수 없으니 신중히 입력해주세요."
-        label.textAlignment = .right
-        label.sizeToFit()
-        return label
-    }()
-    
-    private lazy var emailStackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-        stackView.spacing = 5
-        [emailTitleLabel, emailTextField, emailResultLabel].forEach { stackView.addArrangedSubview($0) }
-        return stackView
-    }()
-    
     private let nicknameTitleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 12)
@@ -138,9 +92,8 @@ final class InputProfileViewController: SettingCustomViewController {
     }()
     
     @objc private func doneButtonDidTapped() {
-        guard let email = emailTextField.text,
-              let nickname = nicknameTextField.text else { return }
-        viewModel.checkUserNicknameDuplication(email: email, nickname: nickname)
+        guard let nickname = nicknameTextField.text else { return }
+        viewModel.checkUserNicknameDuplication(nickname: nickname)
     }
     
     private lazy var tapGesture = UITapGestureRecognizer(target: self, action: #selector(UIInputViewController.dismissKeyboard))
@@ -181,7 +134,6 @@ final class InputProfileViewController: SettingCustomViewController {
     // MARK: - Layout
     private func layout() {
         layoutEditProfileButton()
-        layoutEmailStackView()
         layoutNicknameStackView()
     }
     
@@ -193,22 +145,12 @@ final class InputProfileViewController: SettingCustomViewController {
         ])
         editProfileButton.addTarget(self, action: #selector(editProfileButtonDidTapped), for: .touchUpInside)
     }
-    
-    private func layoutEmailStackView() {
-        view.addSubview(emailStackView)
-        NSLayoutConstraint.activate([
-            emailStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emailStackView.topAnchor.constraint(equalTo: editProfileButton.bottomAnchor, constant: 70),
-            emailStackView.widthAnchor.constraint(equalToConstant: textFieldWidth)
-        ])
-        emailTextField.delegate = self
-    }
-    
+        
     private func layoutNicknameStackView() {
         view.addSubview(nicknameStackView)
         NSLayoutConstraint.activate([
             nicknameStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            nicknameStackView.topAnchor.constraint(equalTo: emailStackView.bottomAnchor, constant: 20),
+            nicknameStackView.topAnchor.constraint(equalTo: editProfileButton.bottomAnchor, constant: 70),
             nicknameStackView.widthAnchor.constraint(equalToConstant: textFieldWidth)
         ])
         nicknameTextField.delegate = self
@@ -225,20 +167,17 @@ final class InputProfileViewController: SettingCustomViewController {
             switch viewState {
             case .startLoading:
                 self?.navigationItem.rightBarButtonItem = strongSelf.indicatorBarButton
-            case .duplicatedEmail:
-                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
-                self?.configureDuplicatedEmail()
+                
             case .duplicatedNickname:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
                 self?.configureDuplicatedNickName()
-            case .duplicatedEmailNickname:
-                self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
-                self?.configureDuplicatedEmail()
-                self?.configureDuplicatedNickName()
+                
             case .startUpdating:
                 self?.viewModel.signIn()
+                
             case .finishUpdating:
                 self?.inputProfileCoordinator?.restart()
+                
             case .error:
                 self?.navigationItem.rightBarButtonItem = strongSelf.doneRightBarButton
                 self?.configureUpdatingError()
@@ -247,23 +186,6 @@ final class InputProfileViewController: SettingCustomViewController {
     }
     
     // MARK: - Configure
-    private func configureEmailResultLabel() {
-        guard let emailText = emailTextField.text else { return }
-        if emailText.count == 0 {
-            emailResultLabel.text = "이메일은 한번 설정하면 변경할수 없으니 신중히 입력해주세요."
-        } else if viewModel.checkEmailValidate(email: emailText) == true {
-            emailResultLabel.text = " "
-        } else {
-            nicknameResultLabel.textColor = .lightGray
-            emailResultLabel.text = "유효하지 않은 이메일 주소입니다."
-        }
-    }
-    
-    private func configureDuplicatedEmail() {
-        emailResultLabel.textColor = .systemRed
-        emailResultLabel.text = "중복된 이메일입니다."
-    }
-    
     private func configureNicknameResultLabel() {
         guard let nicknameText = nicknameTextField.text else { return }
         if viewModel.checkNickNameValidate(nickname: nicknameText) == true {
@@ -280,8 +202,6 @@ final class InputProfileViewController: SettingCustomViewController {
     }
     
     private func configureUpdatingError() {
-        emailResultLabel.textColor = .systemRed
-        emailResultLabel.text = "업데이트 에러입니다."
         nicknameResultLabel.textColor = .systemRed
         nicknameResultLabel.text = "업데이트 에러입니다."
     }
@@ -316,29 +236,21 @@ extension InputProfileViewController: UITextFieldDelegate {
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        if textField == emailTextField {
-            emailTitleLabel.textColor = .systemBlue
-            nicknameTitleLabel.textColor = .lightGray
-        } else if textField == nicknameTextField {
-            emailTitleLabel.textColor = .lightGray
+        if textField == nicknameTextField {
             nicknameTitleLabel.textColor = .systemBlue
         }
     }
     
     func textFieldDidChangeSelection(_ textField: UITextField) {
-        guard let emailText = emailTextField.text,
-              let nicknameText = nicknameTextField.text
+        guard let nicknameText = nicknameTextField.text
         else { return }
-        if textField == emailTextField {
-            configureEmailResultLabel()
-        } else if textField == nicknameTextField {
+        if textField == nicknameTextField {
             configureNicknameResultLabel()
         }
         
-        let emailValidation =  viewModel.checkEmailValidate(email: emailText)
         let nicknameValidation = viewModel.checkNickNameValidate(nickname: nicknameText)
         
-        if emailValidation && nicknameValidation == true {
+        if nicknameValidation == true {
             configureDoneBarButton(isEnabled: true)
         } else {
             configureDoneBarButton(isEnabled: false)

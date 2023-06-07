@@ -73,14 +73,15 @@ public final class DetailFeedCoordinator: NSObject, Coordinator {
         editFeedCoordinator.start()
     }
     
-    func presentReportFeedViewController() {
+    func presentReportFeedViewController(type: ReportBlockType) {
         guard let reportCoordinator = DIContainer.shared.resolve(Coordinator.self, name: "ReportCoordinator") as? ReportCoordinator else { return }
         childCoordinators.append(reportCoordinator)
         let reportFeedNavigationController = UINavigationController()
         reportCoordinator.navigationController = reportFeedNavigationController
         reportCoordinator.parentableNavigationController = navigationController
-        reportCoordinator.reportBlockType = .feed
+        reportCoordinator.reportBlockType = type
         reportCoordinator.feed = feed
+        reportCoordinator.user = feed?.uploader
         reportCoordinator.start()
         navigationController.visibleViewController?.present(reportFeedNavigationController, animated: true)
     }

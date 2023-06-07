@@ -30,6 +30,7 @@ protocol DetailFeedViewModelInput {
     func editFeed()
     func deleteFeed()
     func blockFeed()
+    func blockUser()
 }
 
 protocol DetailFeedViewModelOutput {
@@ -44,6 +45,7 @@ protocol DetailFeedViewModelProtocol: DetailFeedViewModelInput, DetailFeedViewMo
     var feed: PetpionFeed { get }
     var detailFeedStyle: DetailFeedStyle { get }
     var feedManagingSubject: PassthroughSubject<FeedManagingState, Never> { get }
+    var blockUserStateSubject: PassthroughSubject<BlockUserState,Never> { get }
     var blockFeedStateSubject: PassthroughSubject<BlockFeedState,Never> { get }
     var urlSubject: CurrentValueSubject<[URL], Never> { get }
     var currentPageSubject: CurrentValueSubject<Int, Never> { get }
@@ -60,9 +62,9 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
     
     lazy var feedManagingSubject: PassthroughSubject<FeedManagingState, Never> = .init()
     lazy var blockFeedStateSubject: PassthroughSubject<BlockFeedState,Never> = .init()
+    lazy var blockUserStateSubject: PassthroughSubject<BlockUserState,Never> = .init()
     lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([self.feed.imageURLArr![0]])
-    // no data일시 
-//    lazy var urlSubject: CurrentValueSubject<[URL], Never> = .init([])
+    
     let currentPageSubject: CurrentValueSubject<Int, Never> = .init(0)
     var currentPageChangedByPageControl = false
     lazy var snapshotSubject = urlSubject.map { items -> NSDiffableDataSourceSnapshot<Int, URL> in
@@ -133,6 +135,21 @@ final class DetailFeedViewModel: DetailFeedViewModelProtocol {
                     blockFeedStateSubject.send(.done)
                 } else {
                     blockFeedStateSubject.send(.error)
+                }
+            }
+        }
+    }
+    
+    func blockUser() {
+        Task {
+            let isBlocked = await blockUseCase.block(blocked: feed.uploader)
+            await MainActor.run {
+                if isBlocked {
+                    User.blockedUserIDArray?.append(feed.uploader.id)
+                    User.blockedUserArray?.append(feed.uploader)
+                    blockUserStateSubject.send(.done)
+                } else {
+                    blockUserStateSubject.send(.error)
                 }
             }
         }

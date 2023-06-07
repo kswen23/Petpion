@@ -33,7 +33,7 @@ final class ReportFeedViewController: HasCoordinatorViewController {
     
     private let headerTextLabel: UILabel = {
         let label = UILabel()
-        label.text = "만약 이 게시글이 커뮤니티 가이드라인이나 이용약관을 위반하고 있다고 생각하신다면, 신고를 통해 알려주시기 바랍니다. 신고 내용을 검토한 후 적절한 조치를 취하겠습니다."
+        label.text = "만약 이 게시글이 커뮤니티 가이드라인이나 이용약관을 위반하고 있다고 생각하신다면, 신고를 통해 알려주시기 바랍니다. 신고 내용을 검토한 후 24시간 이내에 적절한 조치를 취하겠습니다."
         label.textColor = .darkGray
         label.lineBreakMode = .byCharWrapping
         label.numberOfLines = 0

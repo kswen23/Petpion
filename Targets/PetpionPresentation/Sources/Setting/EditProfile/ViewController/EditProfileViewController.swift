@@ -31,16 +31,6 @@ final class EditProfileViewController: SettingCustomViewController {
         editProfileCoordinator?.presentProfileImagePickerViewController(parentableViewController: self)
     }
     
-    private lazy var emailLabel: UILabel = {
-        let emailLabel = UILabel()
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailLabel.font = UIFont.systemFont(ofSize: 14)
-        emailLabel.textColor = .systemGray2
-        emailLabel.text = viewModel.user.email
-        emailLabel.sizeToFit()
-        return emailLabel
-    }()
-    
     private let nicknameTitleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 12)
@@ -144,7 +134,6 @@ final class EditProfileViewController: SettingCustomViewController {
     // MARK: - Layout
     private func layout() {
         layoutEditProfileButton()
-        layoutEmailLabel()
         layoutNicknameStackView()
     }
     
@@ -157,19 +146,11 @@ final class EditProfileViewController: SettingCustomViewController {
         editProfileButton.addTarget(self, action: #selector(editProfileButtonDidTapped), for: .touchUpInside)
     }
     
-    private func layoutEmailLabel() {
-        view.addSubview(emailLabel)
-        NSLayoutConstraint.activate([
-            emailLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emailLabel.topAnchor.constraint(equalTo: editProfileButton.bottomAnchor, constant: 60)
-        ])
-    }
-    
     private func layoutNicknameStackView() {
         view.addSubview(nicknameStackView)
         NSLayoutConstraint.activate([
             nicknameStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            nicknameStackView.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 50),
+            nicknameStackView.topAnchor.constraint(equalTo: editProfileButton.bottomAnchor, constant: 60),
             nicknameStackView.widthAnchor.constraint(equalToConstant: nicknameTextViewWidth)
         ])
         nicknameTextField.delegate = self

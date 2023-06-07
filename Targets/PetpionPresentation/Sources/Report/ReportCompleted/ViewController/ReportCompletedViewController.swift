@@ -117,7 +117,7 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
     private func layoutDefaultView() {
         [completedImageView, headerStackView, blockButton].forEach { view.addSubview($0) }
         NSLayoutConstraint.activate([
-            completedImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
+            completedImageView.bottomAnchor.constraint(equalTo: view.centerYAnchor),
             completedImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             completedImageView.heightAnchor.constraint(equalToConstant: 150),
             completedImageView.widthAnchor.constraint(equalToConstant: 150),
@@ -148,8 +148,7 @@ final class ReportCompletedViewController: HasCoordinatorViewController {
         case .user:
             blockButton.setTitle("유저 차단하기", for: .normal)
         case .feed:
-            blockButton.isHidden = true
-            blockButton.setTitle("게시글 차단하기", for: .normal)
+            blockButton.setTitle("해당 게시글 유저 차단하기", for: .normal)
         }
         
         blockButton.sizeToFit()
@@ -183,18 +182,13 @@ private extension ReportCompletedViewController {
             guard let user = viewModel.user else { return }
             toastAnimationLabel.text = "\(user.nickname) 님을 차단했습니다"
         case .feed:
-            toastAnimationLabel.text = "피드를 차단했습니다."
+            guard let user = viewModel.feed?.uploader else { return }
+            toastAnimationLabel.text = "\(user.nickname) 님을 차단했습니다"
         }
     }
     
     private func configureDuplicated() {
-        switch viewModel.reportBlockType {
-            
-        case .user:
-            toastAnimationLabel.text = "이미 차단한 유저입니다."
-        case .feed:
-            toastAnimationLabel.text = "이미 차단한 피드입니다."
-        }
+        toastAnimationLabel.text = "이미 차단한 유저입니다."
     }
     
     private func startToastLabelAnimation() {

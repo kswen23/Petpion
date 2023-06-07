@@ -193,7 +193,6 @@ public final class DefaultFirebaseStorageRepository: FirebaseStorageRepository {
                         URLCache.shared.saveURLCache(url: url, key: reference)
                         continuation.resume(returning: .success(url))
                     case .failure(let error):
-                        print(error.localizedDescription)
                         continuation.resume(returning: .failure(error))
                     }
                 }

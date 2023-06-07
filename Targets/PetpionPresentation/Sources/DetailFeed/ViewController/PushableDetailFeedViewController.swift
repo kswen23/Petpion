@@ -279,7 +279,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         case .otherUserDetailFeed:
             layoutToastAnimationLabel()
             configureEllipsisBarButton()
-            configureDetailFeedAlertViewController()
+             configureDetailFeedAlertViewController()
         }
     }
     
@@ -310,31 +310,42 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
             present(detailFeedAlertController, animated: true)
         }
     }
-    
     private func configureDetailFeedAlertViewController() {
         detailFeedAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         if let detailFeedAlertController = detailFeedAlertController {
-//            let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
-//                guard let strongSelf = self else { return }
-//                if User.isBlockedFeed(feed: strongSelf.viewModel.feed) {
-//                    self?.configureToastAnimationLabel(actionType: .block)
-//                    self?.startToastLabelAnimation()
-//                } else {
-//
-//                }
-//            })
             let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
                 guard let strongSelf = self else { return }
+                
                 if User.isReportedFeed(feed: strongSelf.viewModel.feed) {
-                    self?.configureToastAnimationLabel(actionType: .report)
+                    strongSelf.toastAnimationLabel.text = "이미 신고한 게시글입니다."
                     self?.startToastLabelAnimation()
                 } else {
-                    self?.detailFeedCoordinator?.presentReportFeedViewController()
+                    self?.detailFeedCoordinator?.presentReportFeedViewController(type: .feed)
                 }
             })
+            let blockUser = UIAlertAction(title: "유저 차단", style: .destructive, handler: { [weak self] _ in
+                guard let strongSelf = self else { return }
+                
+                if User.isBlockedUser(user: strongSelf.viewModel.feed.uploader) {
+                    strongSelf.toastAnimationLabel.text = "이미 차단한 유저입니다."
+                    self?.startToastLabelAnimation()
+                } else {
+                    self?.viewModel.blockUser()
+                }
+            })
+            let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
+                guard let strongSelf = self else { return }
+                if User.isReportedUser(user: strongSelf.viewModel.feed.uploader) {
+                    strongSelf.toastAnimationLabel.text = "이미 신고한 유저입니다."
+                    self?.startToastLabelAnimation()
+                } else {
+                    self?.detailFeedCoordinator?.presentReportFeedViewController(type: .user)
+                }
+            })
+            
             let cancel = UIAlertAction(title: "취소", style: .cancel)
             
-            [reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+            [reportFeed, reportUser, blockUser, cancel].forEach { detailFeedAlertController.addAction($0) }
         }
     }
     
@@ -470,7 +481,7 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         case .uneditableUserDetailFeed:
             return
         case .otherUserDetailFeed:
-            bindBlockFeedStateSubject()
+            bindBlockUserStateSubject()
         }
     }
     
@@ -490,18 +501,20 @@ final class PushableDetailFeedViewController: HasCoordinatorViewController {
         }.store(in: &cancellables)
     }
     
-    private func bindBlockFeedStateSubject() {
-        viewModel.blockFeedStateSubject.sink { [weak self] blockState in
+    private func bindBlockUserStateSubject() {
+        viewModel.blockUserStateSubject.sink { [weak self] blockState in
             guard let strongSelf = self else { return }
             switch blockState {
             case .done:
-                self?.configureToastAnimationLabel(actionType: .block)
+                self?.postRefreshAction()
+                strongSelf.toastAnimationLabel.text = "\(strongSelf.viewModel.feed.uploader.nickname) 님을 차단했습니다."
             case .error:
                 strongSelf.toastAnimationLabel.text = "에러가 발생했습니다."
             }
             self?.startToastLabelAnimation()
         }.store(in: &cancellables)
     }
+
     
     private func makeSymbolCountStackView(imageName: String, countInt: Int?, countDouble: Double?) -> UIStackView {
         

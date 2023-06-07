@@ -77,6 +77,11 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
         binding()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        postRefreshAction()
+    }
+    
     // MARK: - Layout
     private func layout() {
         layoutBlockedUserTableView()
@@ -152,7 +157,6 @@ final class ManageBlockedUserViewController: SettingCustomViewController {
         viewModel.toastAnimationSubject.sink { [weak self] unblockSuccess in
             guard let strongSelf = self else { return }
             if unblockSuccess == true {
-                self?.postRefreshAction()
                 self?.startToastLabelAnimation()
             } else {
                 strongSelf.toastAnimationLabel.text = "에러가 발생했습니다."

@@ -9,7 +9,6 @@
 import UIKit
 
 public enum UserInformationField: String {
-    case email = "userEmail"
     case nickname = "userNickname"
 }
 

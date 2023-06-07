@@ -61,15 +61,9 @@ final class ReportCoordinator: NSObject, Coordinator {
     }
     
     func pushReportCompletedView() {
-        guard let customPresentationController = parentableNavigationController?.presentedViewController?.presentationController as? CustomPresentationController else { return }
         let reportCompletedViewController = getReportCompletedViewController()
         reportCompletedViewController.coordinator = self
-        customPresentationController.fractionalHeight = 0.45
         navigationController.pushViewController(reportCompletedViewController, animated: true)
-        let finalFrame = customPresentationController.frameOfPresentedViewInContainerView
-        UIView.animate(withDuration: 0.3) {
-            customPresentationController.presentedView?.frame = finalFrame
-        }
     }
     
 }

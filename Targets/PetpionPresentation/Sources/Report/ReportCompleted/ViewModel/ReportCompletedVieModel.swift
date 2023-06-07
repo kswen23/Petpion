@@ -45,19 +45,14 @@ final class ReportCompletedViewModel: ReportCompletedViewModelProtocol {
     }
     
     func block() {
-        switch reportBlockType {
-        case .user:
-            if User.isBlockedUser(user: user) {
-                reportCompletedViewStateSubject.send(.duplicated)
-            } else {
-                blockUser()
-            }
-        case .feed:
-            if User.isBlockedFeed(feed: feed) {
-                reportCompletedViewStateSubject.send(.duplicated)
-            } else {
-                blockFeed()
-            }
+        if user == nil {
+            user = feed?.uploader
+        }
+        
+        if User.isBlockedUser(user: user) {
+            reportCompletedViewStateSubject.send(.duplicated)
+        } else {
+            blockUser()
         }
     }
     
@@ -69,6 +64,7 @@ final class ReportCompletedViewModel: ReportCompletedViewModelProtocol {
             await MainActor.run {
                 if isBlocked {
                     User.blockedUserIDArray?.append(user.id)
+                    User.blockedUserArray?.append(user)
                     reportCompletedViewStateSubject.send(.blocked)
                 } else {
                     reportCompletedViewStateSubject.send(.error)

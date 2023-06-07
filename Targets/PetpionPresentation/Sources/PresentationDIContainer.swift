@@ -95,6 +95,8 @@ public struct PresentationDIContainer: Containable {
                     fatalError()
                 case .signOut:
                     return SignOutCoordinator(navigationController: navigationController)
+                case .inquire:
+                    fatalError()
                 }
                 
             }

@@ -191,6 +191,10 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         binding()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.post(name: Notification.Name(NotificationName.dataDidChange), object: nil, userInfo: ["action": "refresh"])
+        
+    }
     // MARK: - Layout
     private func layout() {
         layoutDetailFeedImageCollectionView()
@@ -201,6 +205,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         layoutBattleStackView()
         layoutCommentLabel()
         layoutTimeLogLabel()
+        layoutToastAnimationLabel()
     }
     
     private func layoutDetailFeedImageCollectionView() {
@@ -346,15 +351,39 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     
     private func configureDetailFeedAlertViewController() {
         
-//        let blockFeed = UIAlertAction(title: "게시글 차단", style: .destructive, handler: { [weak self] _ in
-//                            self?.viewModel.editFeed()
-//        })
         let reportFeed = UIAlertAction(title: "게시글 신고", style: .destructive, handler: { [weak self] _ in
-            self?.detailFeedCoordinator?.presentReportFeedViewController()
+            guard let strongSelf = self else { return }
+            
+            if User.isReportedFeed(feed: strongSelf.viewModel.feed) {
+                strongSelf.toastAnimationLabel.text = "이미 신고한 게시글입니다."
+                self?.startToastLabelAnimation()
+            } else {
+                self?.detailFeedCoordinator?.presentReportFeedViewController(type: .feed)
+            }
         })
+        let blockUser = UIAlertAction(title: "유저 차단", style: .destructive, handler: { [weak self] _ in
+            guard let strongSelf = self else { return }
+            
+            if User.isBlockedUser(user: strongSelf.viewModel.feed.uploader) {
+                strongSelf.toastAnimationLabel.text = "이미 차단한 유저입니다."
+                self?.startToastLabelAnimation()
+            } else {
+                self?.viewModel.blockUser()
+            }
+        })
+        let reportUser = UIAlertAction(title: "유저 신고", style: .destructive, handler: { [weak self] _ in
+            guard let strongSelf = self else { return }
+            if User.isReportedUser(user: strongSelf.viewModel.feed.uploader) {
+                strongSelf.toastAnimationLabel.text = "이미 신고한 유저입니다."
+                self?.startToastLabelAnimation()
+            } else {
+                self?.detailFeedCoordinator?.presentReportFeedViewController(type: .user)
+            }
+        })
+        
         let cancel = UIAlertAction(title: "취소", style: .cancel)
         
-        [reportFeed, cancel].forEach { detailFeedAlertController.addAction($0) }
+        [reportFeed, reportUser, blockUser, cancel].forEach { detailFeedAlertController.addAction($0) }
         
     }
     
@@ -362,6 +391,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
     private func binding() {
         bindSnapshot()
         bindCurrentImageIndex()
+        bindBlockUserStateSubject()
     }
     
     private func bindSnapshot() {
@@ -381,6 +411,20 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
         }.store(in: &cancellables)
         
     }
+    
+    private func bindBlockUserStateSubject() {
+        viewModel.blockUserStateSubject.sink { [weak self] blockState in
+            guard let strongSelf = self else { return }
+            switch blockState {
+            case .done:
+                strongSelf.toastAnimationLabel.text = "\(strongSelf.viewModel.feed.uploader.nickname) 님을 차단했습니다."
+            case .error:
+                strongSelf.toastAnimationLabel.text = "에러가 발생했습니다."
+            }
+            self?.startToastLabelAnimation()
+        }.store(in: &cancellables)
+    }
+    
     // MARK: - Animating
     enum ZoomState {
         case zoomIn
@@ -413,7 +457,7 @@ final class PresentableDetailFeedViewController: CustomPresentableViewController
             imageSlider.isHidden = false
         }
         detailFeedImageCollectionView.layer.shadowOffset = CGSize(width: 0, height: 4)
-        if User.isLogin() {
+        if User.isLogin() && viewModel.feed.uploader.id != User.currentUser?.id {
             settingButton.isHidden = false
         }
         profileStackView.isHidden = false

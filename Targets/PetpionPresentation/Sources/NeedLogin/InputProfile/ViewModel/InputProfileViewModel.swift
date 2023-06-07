@@ -15,10 +15,9 @@ import PetpionDomain
 
 protocol InputProfileViewModelInput {
     func changeCurrentProfileImage(_ image: UIImage)
-    func checkEmailValidate(email text: String) -> Bool
     func checkNickNameValidate(nickname text: String) -> Bool
     func signIn()
-    func checkUserNicknameDuplication(email: String, nickname: String)
+    func checkUserNicknameDuplication(nickname: String)
 }
 
 protocol InputProfileViewModelOutput {
@@ -36,8 +35,6 @@ protocol InputProfileViewModelProtocol: InputProfileViewModelInput, InputProfile
 
 enum InputProfileViewState {
     case startLoading
-    case duplicatedEmailNickname
-    case duplicatedEmail
     case duplicatedNickname
     case startUpdating
     case finishUpdating
@@ -92,7 +89,7 @@ final class InputProfileViewModel: InputProfileViewModelProtocol {
     }
     
     func signInWithKakaoUserID(kakaoUserID: String) async {
-        let signInResult = await loginUseCase.signInToFirebaseAuthWithEmail(providerEmail: user.email, providerID: kakaoUserID)
+        let signInResult = await loginUseCase.signInToFirebaseAuthWithEmail(providerEmail: "\(kakaoUserID)@kakao.com", providerID: kakaoUserID)
         if let signInResult = signInResult {
             user.id = signInResult
             user.kakaoID = kakaoUserID
@@ -115,28 +112,16 @@ final class InputProfileViewModel: InputProfileViewModelProtocol {
         return nicknameTest.evaluate(with: text)
     }
     
-    func checkEmailValidate(email text: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailTest = NSPredicate(format:"SELF MATCHES %@", emailRegex)
-        return emailTest.evaluate(with: text)
-    }
-    
     // MARK: - Output
-    func checkUserNicknameDuplication(email: String, nickname: String) {
+    func checkUserNicknameDuplication(nickname: String) {
         inputProfileViewStateSubject.send(.startLoading)
         Task {
-            let emailIsDuplicated = await uploadUserUseCase.checkUserNicknameDuplication(with: email, field: .email)
             let nickNameIsDuplicated = await uploadUserUseCase.checkUserNicknameDuplication(with: nickname, field: .nickname)
             
-            await MainActor.run { [emailIsDuplicated, nickNameIsDuplicated] in
-                if emailIsDuplicated, nickNameIsDuplicated {
-                    inputProfileViewStateSubject.send(.duplicatedEmailNickname)
-                } else if emailIsDuplicated {
-                    inputProfileViewStateSubject.send(.duplicatedEmail)
-                } else if nickNameIsDuplicated {
+            await MainActor.run { [nickNameIsDuplicated] in
+                if nickNameIsDuplicated {
                     inputProfileViewStateSubject.send(.duplicatedNickname)
                 } else {
-                    user.email = email
                     user.nickname = nickname
                     inputProfileViewStateSubject.send(.startUpdating)
                 }

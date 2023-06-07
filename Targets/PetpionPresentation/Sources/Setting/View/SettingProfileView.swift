@@ -48,13 +48,13 @@ final class SettingProfileView: UIView {
         return nameLabel
     }()
     
-    private var emailLabel: UILabel = {
-        let emailLabel = UILabel()
-        emailLabel.text = "aaaa1234@gmail.com"
-        emailLabel.font = UIFont.systemFont(ofSize: 14)
-        emailLabel.textColor = .systemGray2
-        emailLabel.sizeToFit()
-        return emailLabel
+    private var editProfileLabel: UILabel = {
+        let editProfileLabel = UILabel()
+        editProfileLabel.text = "프로필 수정"
+        editProfileLabel.font = UIFont.systemFont(ofSize: 14)
+        editProfileLabel.textColor = .systemGray2
+        editProfileLabel.sizeToFit()
+        return editProfileLabel
     }()
     
     private lazy var nameEmailStackView: UIStackView = {
@@ -62,7 +62,7 @@ final class SettingProfileView: UIView {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
         stackView.spacing = 7
-        [nameLabel, emailLabel].forEach { stackView.addArrangedSubview($0) }
+        [nameLabel, editProfileLabel].forEach { stackView.addArrangedSubview($0) }
         return stackView
     }()
     
@@ -141,6 +141,5 @@ final class SettingProfileView: UIView {
     func configureSettingProfileView(with user: User) {
         profileImageView.image = user.profileImage
         nameLabel.text = user.nickname
-        emailLabel.text = user.email
     }
 }

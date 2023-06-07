@@ -15,9 +15,10 @@ struct SettingModel {
     }
     
     enum SettingAction: String, CaseIterable {
-        case profile = "프로필 설정"
+        case profile = "프로필"
         // 앱설정
         case alert = "알림설정"
+        case inquire = "문의하기"
         // 약관 및 정책
         case termsOfService = "서비스 이용약관"
         // 계정
@@ -39,6 +40,8 @@ struct SettingModel {
                 return ""
             case .signOut:
                 return "SignOutCoordinator"
+            case .inquire:
+                return ""
             }
         }
     }
@@ -46,7 +49,7 @@ struct SettingModel {
     static func getSettingActions(with category: SettingCategory) -> [SettingAction] {
         switch category {
         case .appSetting:
-            return [.alert]
+            return [.alert, .inquire]
         case .appPolicy:
             return [.termsOfService]
         case .account:
