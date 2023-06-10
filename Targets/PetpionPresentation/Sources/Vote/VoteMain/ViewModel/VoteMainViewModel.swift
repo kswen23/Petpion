@@ -15,6 +15,7 @@ import PetpionDomain
 protocol VoteMainViewModelInput {
     func startVoting()
     func viewWillAppear()
+    func viewWillDisappear()
 }
 
 protocol VoteMainViewModelOutput {
@@ -31,7 +32,7 @@ protocol VoteMainViewModelProtocol: VoteMainViewModelInput, VoteMainViewModelOut
     var uploadUserUseCase: UploadUserUseCase { get }
     var makeNotificationUseCase: MakeNotificationUseCase { get }
     var user: User { get }
-    var voteMainViewControllerStateSubject: CurrentValueSubject<VoteMainViewControllerState, Never> { get }
+    var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> { get }
     var heartSubject: CurrentValueSubject<[HeartType], Never> { get }
     var remainingTimeSubject: CurrentValueSubject<TimeInterval, Never> { get }
     var maxTimeInterval: TimeInterval { get }
@@ -61,7 +62,7 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     let makeNotificationUseCase: MakeNotificationUseCase
     var user: User
     
-    lazy var voteMainViewControllerStateSubject: CurrentValueSubject<VoteMainViewControllerState, Never> = .init(getCurrentState(with: user.voteChanceCount))
+    var voteMainViewControllerStateSubject: PassthroughSubject<VoteMainViewControllerState, Never> = .init()
     lazy var heartSubject: CurrentValueSubject<[HeartType], Never> = .init(getUserVoteChance(with: user.voteChanceCount))
     lazy var remainingTimeSubject: CurrentValueSubject<TimeInterval, Never> = .init(calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: user.latestVoteTime))
     var maxTimeInterval: TimeInterval = .infinity
@@ -69,6 +70,8 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
     lazy var fetchedVotePare: [PetpionVotePare] = .init()
     private var currentTimer: Timer?
     private var viewWillDisappeared: Bool = false
+    
+    private var fetchingVotePareTask: Task<Void, Never>?
     
     // MARK: - Initialize
     init(calculateVoteChanceUseCase: CalculateVoteChanceUseCase,
@@ -119,30 +122,35 @@ final class VoteMainViewModel: VoteMainViewModelProtocol {
         voteMainViewControllerStateSubject.send(getCurrentState(with: user.voteChanceCount))
     }
     
+    func viewWillDisappear() {
+        fetchingVotePareTask?.cancel()
+    }
+    
     // MARK: - Output
     public func synchronizeWithServer() {
         fetchUserUseCase.bindUser { [weak self] user in
             guard let chanceRemainingTime = self?.calculateVoteChanceUseCase.getRemainingTimeIntervalToCreateVoteChance(latestVoteTime: user.latestVoteTime) else { return }
             self?.user = user
             self?.sendHeart(voteChance: user.voteChanceCount)
-            self?.sendRemainingTime(voteChance: user.voteChanceCount, timeInterval: chanceRemainingTime)
-            if self?.viewWillDisappeared == false {
-                self?.sendMainState(voteChance: user.voteChanceCount)
-            }
+            self?.sendRemainingTime(voteChance: user.voteChanceCount,
+                                    timeInterval: chanceRemainingTime)
         }
     }
     
     func startFetchingVotePareArray() {
-        Task {
-            let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10)
+        fetchingVotePareTask = Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            
+            let petpionVotePareArr = await makeVoteListUseCase.fetchVoteList(pare: 10, parentsTask: fetchingVotePareTask!)
+            
             fetchedVotePare = await prefetchAllPareDetailImage(origin: petpionVotePareArr)
             
-            await MainActor.run {
+            await MainActor.run { [fetchedVotePare] in
                 if fetchedVotePare.isEmpty {
-                    voteMainViewControllerStateSubject.send(.noneVotePare)
+                    self.voteMainViewControllerStateSubject.send(.noneVotePare)
                 } else {
-                    voteMainViewControllerStateSubject.send(.ready)
-                }   
+                    self.voteMainViewControllerStateSubject.send(.ready)
+                }
             }
         }
     }

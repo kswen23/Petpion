@@ -180,7 +180,7 @@ public final class DefaultFetchFeedUseCase: FetchFeedUseCase {
     private func updateDetailInformation(feeds: [PetpionFeed]) async -> [PetpionFeed] {
         await withTaskGroup(of: PetpionFeed.self) { taskGroup -> [PetpionFeed] in
             for feed in feeds {
-                taskGroup.addTask {
+                taskGroup.addTask(priority: .utility) {
                     let countUpdatedFeed = await self.firestoreRepository.fetchFeedCounts(feed)
                     let profileUpdatedFeed = await self.addUserProfile(with: countUpdatedFeed)
                     let thumbnailUpdatedFeed = await self.addThumbnailImage(with: profileUpdatedFeed)

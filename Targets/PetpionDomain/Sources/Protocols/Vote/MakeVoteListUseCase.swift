@@ -11,5 +11,5 @@ public protocol MakeVoteListUseCase {
     var firestoreRepository: FirestoreRepository { get } 
     var firebaseStorageRepository: FirebaseStorageRepository { get }
     
-    func fetchVoteList(pare: Int) async -> [PetpionVotePare]
+    func fetchVoteList(pare: Int, parentsTask: Task<Void, Never>) async -> [PetpionVotePare]
 }

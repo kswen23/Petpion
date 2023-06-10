@@ -19,8 +19,9 @@ public final class DefaultMakeVoteListUseCase: MakeVoteListUseCase {
     }
     
     // MARK: - Public
-    public func fetchVoteList(pare: Int) async -> [PetpionVotePare] {
-        let randomFeedArr = await fetchRandomFeedArray(to: pare*2)
+    public func fetchVoteList(pare: Int, parentsTask: Task<Void, Never>) async -> [PetpionVotePare] {
+        let randomFeedArr = await fetchRandomFeedArray(to: pare*2,
+                                                       parentsTask: parentsTask)
         let randomFeedArrWithThumbnail = await addThumbnailImageURL(feeds: randomFeedArr)
         return makePetpionVotePare(with: randomFeedArrWithThumbnail.shuffled())
     }
@@ -38,9 +39,15 @@ public final class DefaultMakeVoteListUseCase: MakeVoteListUseCase {
         return result
     }
 
-    private func fetchRandomFeedArray(to count: Int) async -> [PetpionFeed] {
-        let randomFeeds = await firestoreRepository.fetchRandomFeedArrayWithLimit(to: count)
+    private func fetchRandomFeedArray(to count: Int,
+                                      parentsTask: Task<Void, Never>) async -> [PetpionFeed] {
+        let randomFeeds = await firestoreRepository.fetchRandomFeedArrayWithLimit(to: count, parentsTask: parentsTask)
         var removeDuplicateRandomFeeds = removeDuplicate(with: randomFeeds)
+        
+        if removeDuplicateRandomFeeds.count < 2 {
+            return []
+        }
+        
         var roopRunCount = 1
         
         while true {
@@ -52,7 +59,7 @@ public final class DefaultMakeVoteListUseCase: MakeVoteListUseCase {
             if neededFeedCount == 0 {
                 break
             }
-            let neededFeeds = await firestoreRepository.fetchRandomFeedArrayWithLimit(to: neededFeedCount)
+            let neededFeeds = await firestoreRepository.fetchRandomFeedArrayWithLimit(to: neededFeedCount, parentsTask: parentsTask)
             removeDuplicateRandomFeeds = removeDuplicate(with: removeDuplicateRandomFeeds + neededFeeds)
             roopRunCount += 1
         }

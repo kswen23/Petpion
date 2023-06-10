@@ -213,6 +213,11 @@ final class VoteMainViewController: HasCoordinatorViewController {
         viewModel.viewWillAppear()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        viewModel.viewWillDisappear()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         layout()

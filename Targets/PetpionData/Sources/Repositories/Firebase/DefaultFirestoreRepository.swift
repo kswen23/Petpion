@@ -18,6 +18,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
     private var specificDatePopularCursor: DocumentSnapshot?
     
     private let numberOfShards = 10
+    private var fetchingVotePareTaskGroup: TaskGroup<[PetpionFeed]>?
     
     // MARK: - Create
     public func uploadNewFeed(_ feed: PetpionFeed) async -> Bool {
@@ -269,9 +270,16 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
         }
     }
     
-    public func fetchRandomFeedArrayWithLimit(to count: Int) async -> [PetpionFeed] {
-        return await withTaskGroup(of: [PetpionFeed].self) { taskGroup -> [PetpionFeed] in
+    public func fetchRandomFeedArrayWithLimit(to count: Int, parentsTask: Task<Void, Never>) async -> [PetpionFeed] {
+        return await withTaskGroup(of: [PetpionFeed].self) { taskGroup in
+            fetchingVotePareTaskGroup = taskGroup
+            
             for _ in 0 ..< count {
+                if parentsTask.isCancelled {
+                    fetchingVotePareTaskGroup?.cancelAll()
+                    break
+                }
+                
                 taskGroup.addTask {
                     let singleCollection = await self.fetchSingleRandomFeedCollection()
                     return self.convertCollectionToModel(singleCollection)
@@ -286,6 +294,7 @@ public final class DefaultFirestoreRepository: FirestoreRepository {
             return resultArr
         }
     }
+
     
     public func fetchFeedCounts(_ feed: PetpionFeed) async -> PetpionFeed {
         var resultFeed = feed
